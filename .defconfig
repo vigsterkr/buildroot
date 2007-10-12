@@ -1,0 +1,76 @@
+#
+# Automatically generated make config: don't edit
+#
+BR2_HAVE_DOT_CONFIG=y
+# BR2_arm is not set
+# BR2_armeb is not set
+# BR2_cris is not set
+BR2_i386=y
+# BR2_m68k is not set
+# BR2_mips is not set
+# BR2_mipsel is not set
+# BR2_powerpc is not set
+# BR2_sh is not set
+# BR2_sparc is not set
+BR2_ARCH="i386"
+BR2_WGET="wget --passive-ftp"
+
+#
+# Kernel Header Options
+#
+# BR2_KERNEL_HEADERS_2_4_25 is not set
+# BR2_KERNEL_HEADERS_2_4_27 is not set
+# BR2_KERNEL_HEADERS_2_4_29 is not set
+# BR2_KERNEL_HEADERS_2_4_31 is not set
+# BR2_KERNEL_HEADERS_2_6_9 is not set
+# BR2_KERNEL_HEADERS_2_6_11 is not set
+# BR2_KERNEL_HEADERS_2_6_12 is not set
+BR2_KERNEL_HEADERS_2_6_22=y
+BR2_DEFAULT_KERNEL_HEADERS="2.6.22.8"
+
+#
+# uClibc Options
+#
+# BR2_UCLIBC_VERSION_0_9_28_3 is not set
+BR2_UCLIBC_VERSION_0_9_29=y
+# BR2_UCLIBC_VERSION_SNAPSHOT is not set
+BR2_USE_UCLIBC_SNAPSHOT="snapshot"
+BR2_UCLIBC_CONFIG="toolchain/uClibc/uClibc-0.9.29.config"
+# BR2_ENABLE_LOCALE is not set
+# BR2_PTHREADS_NONE is not set
+# BR2_PTHREADS is not set
+BR2_PTHREADS_OLD=y
+# BR2_PTHREADS_NATIVE is not set
+# BR2_PTHREAD_DEBUG is not set
+
+#
+# Binutils Options
+#
+BR2_BINUTILS_VERSION_2_18=y
+# BR2_BINUTILS_VERSION_2_18_50_0_1 is not set
+BR2_BINUTILS_VERSION="2.18"
+BR2_EXTRA_BINUTILS_CONFIG_OPTIONS=""
+
+
+#
+# Gcc Options
+#
+# BR2_GCC_VERSION_3_4_6 is not set
+# BR2_GCC_VERSION_4_0_4 is not set
+# BR2_GCC_VERSION_4_1_2 is not set
+# BR2_GCC_VERSION_4_2_0 is not set
+BR2_GCC_VERSION_4_2_1=y
+# BR2_GCC_IS_SNAP is not set
+BR2_GCC_VERSION="4.2.1"
+# BR2_GCC_USE_SJLJ_EXCEPTIONS is not set
+BR2_EXTRA_GCC_CONFIG_OPTIONS=""
+BR2_GCC_SHARED_LIBGCC=y
+# BR2_INSTALL_LIBSTDCPP is not set
+# BR2_PACKAGE_GDB is not set
+# BR2_PACKAGE_GDB_SERVER is not set
+# BR2_ENABLE_MULTILIB is not set
+BR2_LARGEFILE=y
+BR2_TARGET_OPTIMIZATION="-Os -pipe"
+
+BR2_PACKAGE_BUSYBOX_HIDE_OTHERS=y
+

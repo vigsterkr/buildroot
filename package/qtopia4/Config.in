@@ -1,0 +1,111 @@
+config BR2_PACKAGE_QTOPIA4
+	bool "qtopia4"
+	default n
+	select BR2_INSTALL_LIBSTDCPP
+	select BR2_PTHREADS_NATIVE
+	select BR2_PACKAGE_JPEG
+	select BR2_PACKAGE_LIBPNG
+	help
+	  Qtopia core 4.
+
+	  http://www.trolltech.com/
+
+config BR2_PACKAGE_QTOPIA4_DEBUG
+	bool "Compile with debug support"
+	default y
+	depends BR2_PACKAGE_QTOPIA4
+	help
+
+choice
+	prompt "Qtopia 4 Core license type"
+	default BR2_PACKAGE_QTOPIA4_LICENSE_TYPE_GPL
+	depends BR2_PACKAGE_QTOPIA4
+	help
+	  Selects the type of license you which to use for Qtopia 4 Core.
+
+config BR2_PACKAGE_QTOPIA4_LICENSE_TYPE_GPL
+	bool "GPL license"
+
+config BR2_PACKAGE_QTOPIA4_LICENSE_TYPE_COMMERCIAL
+	bool "Commercial license"
+
+endchoice
+
+config BR2_PACKAGE_QTOPIA4_GPL_LICENSE_APPROVED
+	bool "Approve Qtopia Core 4 GPL licence"
+	default n
+	depends BR2_PACKAGE_QTOPIA4 && BR2_PACKAGE_QTOPIA4_LICENSE_TYPE_GPL
+	help
+	  Select this if you approve the GNU GENERAL PUBLIC LICENSE Version 2
+	  on the Qtopia Core 4 library. By doing this you will not be asked
+	  while the library is compiled. Please read and understand the GPL
+	  licence before approving this.
+
+	  For full GPL version 2 see http://www.gnu.org/licenses/gpl.txt
+
+
+config BR2_PACKAGE_QTOPIA4_COMMERCIAL_USERNAME
+	string "Qtopia Core 4 Commercial License Username"
+	default ""
+	depends BR2_PACKAGE_QTOPIA4 && BR2_PACKAGE_QTOPIA4_LICENSE_TYPE_COMMERCIAL
+	help
+	    Commercial users can download their source directly by providing a username.
+
+
+config BR2_PACKAGE_QTOPIA4_COMMERCIAL_PASSWORD
+	string "Qtopia Core 4 Commercial License Password"
+	default ""
+	depends BR2_PACKAGE_QTOPIA4 && BR2_PACKAGE_QTOPIA4_LICENSE_TYPE_COMMERCIAL
+	help
+	    Commercial users can download their source directly by providing a password.
+
+config BR2_PACKAGE_QTOPIA4_QT3SUPPORT
+	bool "Compatibility with Qt3"
+	default y
+	depends BR2_PACKAGE_QTOPIA4
+	help
+	    Turns on support for older Qt3.
+
+config BR2_PACKAGE_QTOPIA4_DEPTHS
+	string "color depths to support"
+	default "-depths 8"
+	depends BR2_PACKAGE_QTOPIA4
+	help
+	    Which color depths to support for the library. Default is "-depths
+	    8". Is specified by a comma separated list, i.e. -depths 24,16,8.
+
+config BR2_PACKAGE_QTOPIA4_GIF
+	bool "Enable GIF support"
+	default n
+	depends BR2_PACKAGE_QTOPIA4
+	help
+	  This compiles and installs the plugin for GIF reading support.
+
+config BR2_PACKAGE_QTOPIA4_LIBMNG
+	bool "Enable libmng support"
+	default n
+	depends BR2_PACKAGE_QTOPIA4
+	help
+	  This compiles and installs the plugin for MNG support.
+
+config BR2_PACKAGE_QTOPIA4_EMB_PLATFORM
+	string "The embedded platform we are making Qtopia4 for"
+	default "arm"	if BR2_arm
+	default "arm"	if BR2_armeb
+	default "avr32"	if BR2_avr32
+	default "x86"	if BR2_i386
+	default "x86_64"	if BR2_x86_64
+	default "mips"	if BR2_mips
+	default "mips"	if BR2_mipsel
+# Not that I really believe these will work..
+	default "generic"	if BR2_alpha
+	default "generic"	if BR2_chris
+	default "generic"	if BR2_m68k
+	default "generic"	if BR2_nios2
+	default "generic"	if BR2_powerpc
+	default "generic"	if BR2_sh
+	default "generic"	if BR2_sh64
+	default "generic"	if BR2_sparc
+	depends BR2_PACKAGE_QTOPIA4
+	help
+	    The platform.

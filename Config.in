@@ -1,0 +1,223 @@
+#
+
+mainmenu "Buildroot2 Configuration"
+
+config BR2_HAVE_DOT_CONFIG
+	bool
+	default y
+
+config BR2_VERSION
+	string
+	default "0.10.0-svn"
+
+source "target/Config.in.arch"
+source "target/device/Config.in"
+
+menu "Build options"
+
+config BR2_WGET
+	string "Wget command"
+	default "wget --passive-ftp -nd"
+
+config BR2_SVN_CO
+	string "Subversion (svn) command to download source tree"
+	default "svn co"
+
+config BR2_SVN_UP
+	string "Subversion (svn) command to update source tree"
+	default "svn up"
+
+config BR2_GIT
+	string "Git command to download source tree"
+	default "git clone"
+
+config BR2_ZCAT
+	string "zcat command"
+	default "gzip -d -c"
+	help
+	  Command to be used to extract a gzip'ed file to stdout.
+	  zcat is identical to gunzip -c except that the former may
+	  not be available on your system.
+	  Default is "gzip -d -c"
+	  Other possible values include "gunzip -c" or "zcat".
+
+config BR2_BZCAT
+	string "bzcat command"
+	default "bzcat"
+	help
+	  Command to be used to extract a bzip2'ed file to stdout.
+	  bzcat is identical to bunzip2 -c except that the former may
+	  not be available on your system.
+	  Default is "bzcat"
+	  Other possible values include "bunzip2 -c" or "bzip2 -d -c".
+
+config BR2_TAR_OPTIONS
+	string "Tar options"
+	default ""
+	help
+	  Options to pass to tar when extracting the sources.
+	  E.g. " -v --exclude='*.svn*'" to exclude all .svn internal files
+	  and to be verbose.
+
+config BR2_DL_DIR
+	string "Download dir"
+	default "$(BASE_DIR)/dl"
+	help
+	  Directory to store all the source files that we need to fetch.
+	  If the Linux shell environment has defined the BUILDROOT_DL_DIR
+	  environment variable, then this overrides this configuration item.
+
+	  The default is $(BASE_DIR)/dl
+
+source	"target/device/Config.in.mirrors"
+
+config BR2_STAGING_DIR
+	string "Toolchain and header file location?"
+	default "$(BUILD_DIR)/staging_dir"
+	help
+	  This is the location where the toolchain will be installed.  The
+	  toolchain will not work if it is moved from this location.
+	  Therefore, if you wish to package up a uClibc toolchain, it is
+	  important that is is set to the final location where the toolchain
+	  will be used.
+
+	  Most people will leave this set to the default value of
+	  "$(BUILD_DIR)/staging_dir".
+
+config BR2_TOPDIR_PREFIX
+	string "Custom build dir prefix"
+	default ""
+	help
+	  Add a custom string to the beginning of the build directories.
+
+	  build_ARCH -> [PREFIX]_build_ARCH
+	  toolchain_build_ARCH -> [PREFIX]_toolchain_build_ARCH
+
+config BR2_TOPDIR_SUFFIX
+	string "Custom build dir suffix"
+	default ""
+	help
+	  Add a custom string to the end of the build directories.
+
+	  build_ARCH -> build_ARCH_[SUFFIX]
+	  toolchain_build_ARCH -> toolchain_build_ARCH_[SUFFIX]
+
+config BR2_GNU_BUILD_SUFFIX
+	string "GNU build hostname suffix"
+	default "pc-linux-gnu"
+	help
+	  The string used to pass to configure scripts via the
+	  --build= option.  Just specify the suffix here, the leading
+	  arch will be filled in automatically.
+
+	  Here's some copy and paste build host options for you:
+	      linux:   pc-linux-gnu
+	      cygwin:  pc-cygwin
+	      os x:    apple-darwin7 / apple-darwin8
+
+config BR2_GNU_TARGET_SUFFIX
+	string "GNU target suffix"
+	default "linux-uclibcgnueabi" if BR2_ARM_EABI
+	default "linux-uclibc"
+	help
+	  The string used to pass to configure scripts via the
+	  --target= option.  Just specify the suffix here, the leading
+	  arch will be filled in automatically.
+
+	  Most users will want to stick with the default setting, though
+	  other users (most notably ARM EABI) like to add on to this in
+	  order to stay in line with gcc conventions.
+
+	  Default options are:
+	      linux-uclibcgnueabi for ARM EABI
+	      linux-uclibc for the rest
+	      gnuhurd-uclibc for the hurd
+
+config BR2_JLEVEL
+	int "Number of jobs to run simultaneously"
+	default "1"
+	help
+	  Number of jobs to run simultaneously
+
+config BR2_PREFER_IMA
+	bool "prefer IMA compiles"
+	default n
+	help
+	  Where possible, compile package with Inter Module Analysis.
+	  This potentially uses alot of system resources on your compile
+	  host with the benefit of creating smaller binaries for the target.
+
+	  If unsure, say No.
+
+	  WARNING: This is highly experimental at the moment.
+
+config BR2_DEPRECATED
+	bool "Show packages that are deprecated or obsolete"
+	default n
+	help
+	  This option hides outdated/obsolete versions of packages.
+
+choice
+	prompt "strip"
+	default BR2_STRIP_strip
+	help
+	  Select whether to strip binaries and libraries for the target
+	  or not.
+	  strip   is the normal strip command
+	  sstrip  is a strip that discards more than the normal strip
+	  none    do not strip (only for debugging!)
+
+config BR2_STRIP_strip
+	bool "strip"
+	help
+	  strip   is the normal strip command
+
+config BR2_STRIP_sstrip
+	bool "sstrip"
+	select BR2_PACKAGE_SSTRIP_HOST
+	help
+	  sstrip  is a strip that discards more than the normal strip
+
+config BR2_STRIP_none
+	bool "none"
+	help
+	  none    do not strip (only for debugging!)
+endchoice
+
+config BR2_PREFER_STATIC_LIB
+	bool "prefer static libraries"
+	default n
+	help
+	  Where possible, build and use static libraries for the target.
+	  This potentially increases your code size and should only be
+	  used if you know what you do.
+	  The default is to build dynamic libraries and use those on
+	  the target filesystem.
+
+	  WARNING: This is highly experimental at the moment.
+
+config BR2_HAVE_MANPAGES
+	bool "manpages on the target"
+	default n
+	help
+	  Leave the manpages on the target.
+	  If you say n here, your target will not contain any
+	  manpage.
+
+config BR2_HAVE_INFOPAGES
+	bool "infopages on the target"
+	default n
+	help
+	  Leave the infopages on the target.
+	  If you say n here, your target will not contain any
+	  infopage.
+
+source package/gnuconfig/Config.in
+
+endmenu
+
+source "toolchain/Config.in"
+
+source "package/Config.in"
+
+source "target/Config.in"

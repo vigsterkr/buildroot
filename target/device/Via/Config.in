@@ -1,0 +1,8 @@
+config BR2_TARGET_VIA_EPIA_MII
+	bool "EPIA MII"
+	depends BR2_i386
+	default n
+	select BR2_PACKAGE_LINUX
+	help
+	  The Via EPIA MII board
+

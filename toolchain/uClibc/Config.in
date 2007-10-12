@@ -1,0 +1,88 @@
+# Choose uClibc options
+#
+
+comment "uClibc Options"
+
+choice
+	prompt "uClibc C library Version"
+	default BR2_UCLIBC_VERSION_0_9_29
+	help
+	  Select the version of uClibc you wish to use.
+
+	config BR2_UCLIBC_VERSION_0_9_28_3
+		depends BR2_avr32 || BR2_DEPRECATED
+		bool "uClibc 0.9.28.3"
+
+	config BR2_UCLIBC_VERSION_0_9_29
+		depends !BR2_avr32
+		bool "uClibc 0.9.29"
+
+	config BR2_UCLIBC_VERSION_SNAPSHOT
+		depends !BR2_avr32
+		bool "daily snapshot"
+
+endchoice
+
+
+config BR2_USE_UCLIBC_SNAPSHOT
+	string "Date (yyyymmdd) of snapshot or 'snapshot' for latest"
+	default "snapshot"
+	depends on BR2_UCLIBC_VERSION_SNAPSHOT
+	help
+	    Use latest snapshot or one from a specific date?
+
+config BR2_UCLIBC_CONFIG
+	string "uClibc configuration file to use?"
+	default "toolchain/uClibc/uClibc-0.9.28.config" if BR2_UCLIBC_VERSION_0_9_28_3
+	default "toolchain/uClibc/uClibc-0.9.29.config" if BR2_UCLIBC_VERSION_0_9_29
+	default "toolchain/uClibc/uClibc-0.9.29.config" if BR2_UCLIBC_VERSION_0_9_30
+	default "toolchain/uClibc/uClibc-0.9.29.config" if BR2_UCLIBC_VERSION_SNAPSHOT
+	help
+	  Some people may wish to use their own modified uClibc configuration
+	  file and will specify their config file location with this option.
+	  See also docs/README in this package.
+	  If unsure, use the default.
+
+config BR2_ENABLE_LOCALE
+	bool "Enable locale/gettext/i18n support?"
+	default n
+	help
+	    Enable locale/gettext/i18n support?
+
+choice
+	prompt "Thread library implementation"
+	default BR2_PTHREADS_OLD
+	help
+	  Select the version of libpthreads you want to use.
+	  Not all thread variants work with all versions of uClibc,
+	  the "linuxthreads (stable/old)" may be a working fallback
+	  if you need threading at all.
+
+	config BR2_PTHREADS_NONE
+		bool "none"
+
+	config BR2_PTHREADS
+		bool "linuxthreads"
+
+	config BR2_PTHREADS_OLD
+		bool "linuxthreads (stable/old)"
+
+	config BR2_PTHREADS_NATIVE
+		bool "Native POSIX Threading (NPTL)"
+endchoice
+
+config BR2_PTHREAD_DEBUG
+	bool "Thread library debugging"
+	depends on BR2_PTHREADS || BR2_PTHREADS_OLD || BR2_PTHREADS_NATIVE
+	default n
+	help
+	  Build the thread library with debugging enabled.
+
+config BR2_UCLIBC_PROGRAM_INVOCATION
+	bool "Enable 'program invocation name'"
+	default n
+	help
+	  Support for the GNU-specific program_invocation_name and
+	  program_invocation_short_name strings.  Some GNU packages 
+	  (like tar and coreutils) utilize these for extra useful
+	  output, but in general are not required.

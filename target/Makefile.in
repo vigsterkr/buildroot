@@ -1,0 +1,27 @@
+BR2_PACKAGE_LINUX_FORMAT:=$(strip $(subst ",,$(BR2_PACKAGE_LINUX_FORMAT)))
+#"))
+BR2_PACKAGE_LINUX_KCONFIG:=$(strip $(subst ",,$(BR2_PACKAGE_LINUX_KCONFIG)))
+#"))
+
+# make sure to put everything that is board-specific before the tarroot targets
+include target/generic/Makefile.in
+
+# this eventually adds the kernel target to TARGETS:
+include target/device/Makefile.in
+include target/x86/Makefile.in
+include target/powerpc/Makefile.in
+# and finally build the filesystems/tarballs
+include target/*/*.mk
+
+# kernel rules
+# We already did add the kernel target to TARGETS and now just pull in the rules
+# to actually build this target.
+
+#ifeq ($(strip $(subst ",,$(BR2_PACKAGE_LINUX_EXPERIMENTAL_CONFIG))),y)
+#"))
+#include target/linux/Makefile.in
+##include target/linux-experimental/Makefile.in
+#else
+include target/linux/Makefile.in
+#endif
+include target/hurd/Makefile.in

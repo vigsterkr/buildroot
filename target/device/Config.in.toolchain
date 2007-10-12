@@ -1,0 +1,81 @@
+if BR2_TOOLCHAIN_EXTERNAL_SOURCE
+choice
+	prompt "Source location:"
+	default BR2_TOOLCHAIN_ATMEL_AVR32 if BR2_avr32
+	help
+	  Select whether to use the toolchain built by the buildroot
+	  system or an external pre-built toolchain.
+
+config BR2_TOOLCHAIN_ATMEL_AVR32
+	bool "Use prepatched source for AVR32 toolchain"
+	depends on BR2_avr32
+	select BR2_GCC_VERSION_4_1_2
+	select BR2_BINUTILS_VERSION_2_17
+	select BR2_UCLIBC_VERSION_0_9_28_3
+
+config BR2_TOOLCHAIN_UNKNOWNVENDOR
+	bool "Use prepatched source from unknown vendor"
+
+endchoice
+
+if BR2_TOOLCHAIN_ATMEL_AVR32
+config BR2_VENDOR_SITE
+	string
+	default "$(BR2_ATMEL_MIRROR)/Source" if BR2_TOOLCHAIN_ATMEL_AVR32
+
+config BR2_VENDOR_SUFFIX
+	string
+	default "-avr32" if BR2_TOOLCHAIN_ATMEL_AVR32
+
+config BR2_VENDOR_BINUTILS_RELEASE
+	string
+	default "-2.0" if BR2_TOOLCHAIN_ATMEL_AVR32
+
+config BR2_VENDOR_GCC_RELEASE
+	string
+	default "-2.0" if BR2_TOOLCHAIN_ATMEL_AVR32
+
+config BR2_VENDOR_UCLIBC_RELEASE
+	string
+	default "-2.0" if BR2_TOOLCHAIN_ATMEL_AVR32
+
+config BR2_VENDOR_GDB_RELEASE
+	string
+	default "-2.0" if BR2_TOOLCHAIN_ATMEL_AVR32
+
+config BR2_VENDOR_PATCH_DIR
+	string
+	default "target/device/Atmel/toolchain/avr32" if BR2_TOOLCHAIN_ATMEL_AVR32
+endif
+if BR2_TOOLCHAIN_UNKNOWNVENDOR
+config BR2_VENDOR_SITE
+	string "vendor site"
+	default "http://vendor.com/somewhere/"
+
+config BR2_VENDOR_SUFFIX
+	string "vendor suffix"
+	default ""
+
+config BR2_VENDOR_BINUTILS_RELEASE
+	string "binutils suffix"
+	default ""
+
+config BR2_VENDOR_GCC_RELEASE
+	string "gcc suffix"
+	default ""
+
+config BR2_VENDOR_UCLIBC_RELEASE
+	string "uClibc suffix"
+	default ""
+
+config BR2_VENDOR_GDB_RELEASE
+	string "gdb suffix"
+	default ""
+
+config BR2_VENDOR_PATCH_DIR
+	string "local accumulated patchdir"
+	default "target/device/$(VENDOR)/toolchain/"
+endif
+
+
+endif

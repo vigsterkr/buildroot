@@ -1,0 +1,108 @@
+#
+
+if BR2_TOOLCHAIN_EXTERNAL
+comment "External Toolchain Options"
+
+
+config BR2_TOOLCHAIN_EXTERNAL_LIB_C
+	string "The core C library from the external toolchain"
+	default "libc.so.6"
+	help
+	  Specify the core C shared library found in the external
+	  toolchain. This is required in addition to any other
+	  libraries to be copied.
+
+config BR2_TOOLCHAIN_EXTERNAL_LIBS
+	string "Libraries to copy from the external toolchain"
+	default ""
+	help
+	  A space separated list of the shared libraries to be copied
+	  from the external toolchain into the root filesystem. Only
+	  the top-level name is needed, i.e. libc.so, libpthread.so as
+	  the actual shared library symlinked to will be copied also.
+
+config BR2_TOOLCHAIN_EXTERNAL_STRIP
+        bool
+        default y
+        prompt "Strip shared libraries"
+	help
+	  Strip shared libraries copied from the external toolchain.
+
+comment "Common Toolchain Options"
+
+source "toolchain/gdb/Config.in.2"
+
+config BR2_TOOLCHAIN_EXTERNAL_PATH
+	string "External toolchain path"
+	default ""
+	help
+	  Path to where the external toolchain is installed.
+
+config BR2_TOOLCHAIN_EXTERNAL_PREFIX
+	string "External toolchain prefix"
+	default ""
+	help
+	  This the the external toolchain prefix. For example:
+	    armeb-unknown-linux-gnu, mipsel-unknown-linux-gnu, etc.
+
+choice
+	prompt "Thread library implementation"
+	default BR2_EXT_PTHREADS_OLD
+	help
+	  Select the version of libpthreads used in the external toolchain.
+
+	config BR2_EXT_PTHREADS_NONE
+		bool
+		prompt "none"
+
+	config BR2_EXT_PTHREADS
+		bool
+		prompt "linuxthreads"
+
+	config BR2_EXT_PTHREADS_OLD
+		bool
+		prompt "linuxthreads (stable/old)"
+
+	config BR2_EXT_PTHREADS_NATIVE
+		bool
+		prompt "Native POSIX Threading (NPTL)"
+endchoice
+
+config BR2_LARGEFILE
+	bool "Enable large file (files > 2 GB) support?"
+	depends on !BR2_cris
+	default y
+	help
+	  Enable large file (files > 2 GB) support
+
+config BR2_INET_IPV6
+	bool "Enable IPv6"
+	default n
+	help
+	    Enable IPv6.
+
+config BR2_INET_RPC
+	bool "Enable RPC"
+	default n
+	help
+	    Enable RPC. RPC support is needed for nfs.
+
+config BR2_SOFT_FLOAT
+	bool "Use software floating point by default"
+	default n
+	depends on BR2_arm || BR2_armeb || BR2_mips || BR2_mipsel || BR2_powerpc
+	help
+	  If your target CPU does not have a Floating Point Unit (FPU) or a
+	  kernel FPU emulator, but you still wish to support floating point
+	  functions, then everything will need to be compiled with soft
+	  floating point support (-msoft-float).
+
+	  Most people will answer N.
+
+config BR2_TARGET_OPTIMIZATION
+	string "Target Optimizations"
+	default "-Os -pipe"
+	help
+	  Optimizations to use when building for the target host.
+
+endif

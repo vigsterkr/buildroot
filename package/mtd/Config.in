@@ -1,0 +1,166 @@
+menuconfig BR2_PACKAGE_MTD
+	bool "mtd/jffs2 utilities"
+	default n
+	select BR2_PACKAGE_ZLIB
+	help
+	  Build mtd/jffs utilities
+
+if BR2_PACKAGE_MTD
+choice
+	prompt "Source package selection"
+	depends on BR2_PACKAGE_MTD
+	default BR2_PACKAGE_MTD20061007
+
+config BR2_PACKAGE_MTD_UTILS
+	bool "Use MTD-utils"
+	depends on BR2_PACKAGE_MTD
+	select BR2_PACKAGE_LZO
+	help
+	  Build mtd/jffs utilities with Dataflash support
+
+config BR2_PACKAGE_MTD_20061007
+	bool "Use MTD from (20061007)"
+	depends on BR2_PACKAGE_MTD
+	help
+	  Build mtd/jffs utilities with Dataflash support
+
+config BR2_PACKAGE_MTD_20050122
+	bool "Use MTD from (20050122)"
+	help
+	  Use the stable release.
+
+config BR2_PACKAGE_MTD_SNAPSHOT
+	bool "Daily snapshot"
+	help
+	  Use the latest MTD daily snapshot instead of release.
+	  You should probably say NO except for specific purpose.
+
+endchoice
+
+config BR2_PACKAGE_MTD_SNAPSHOT_STRING
+	string	"mtd_YYYYMMDD.orig.tar.gz"
+	depends on BR2_PACKAGE_MTD_SNAPSHOT
+	help
+	  You should not modify the file name, unless you want to
+	  use a specific and private MTD package.
+
+config BR2_PACKAGE_MTD_ORIG_STRING
+	string
+	depends on BR2_PACKAGE_MTD_ORIG
+	default "mtd-utils-1.1.0.tar.bz2" if BR2_PACKAGE_MTD_UTILS
+	default "mtd_20061007.orig.tar.gz" if BR2_PACKAGE_MTD_20050122
+	default "mtd_20050122.orig.tar.gz" if BR2_PACKAGE_MTD_20050122
+	default $(BR2_PACKAGE_MTD_SNAPSHOT_STRING) if BR2_PACKAGE_MTD_SNAPSHOT
+
+menu "MTD tools selection"
+	depends BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FLASH_ERASE
+	bool "flash_erase"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FLASH_ERASEALL
+	bool "flash_eraseall"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FLASH_INFO
+	bool "flash_info"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FLASH_LOCK
+	bool "flash_lock"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FLASH_UNLOCK
+	bool "flash_unlock"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FLASHCP
+	bool "flashcp"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_ERASE
+	bool "erase"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_JFFS2DUMP
+	bool "jffs2dump"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_JFFS3DUMP
+	bool "jffs3dump"
+	default y
+	depends on BR2_PACKAGE_MTD
+	depends on !BR2_PACKAGE_MTD_20061007
+
+config BR2_PACKAGE_MTD_SUMTOOL
+	bool "sumtool"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FTL_CHECK
+	bool "ftl_check"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_FTL_FORMAT
+	bool "ftl_format"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_NFTL_FORMAT
+	bool "nftl_format"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_NFTLDUMP
+	bool "nftldump"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_MKFSJFFS2
+	bool "mkfs.jffs2"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_MKFSJFFS
+	bool "mkfs.jffs"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_NANDDUMP
+	bool "nanddump"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_NANDWRITE
+	bool "nandwrite"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_MTD_DEBUG
+	bool "mtd_debug"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_DOCFDISK
+	bool "docfdisk"
+	default y
+	depends on BR2_PACKAGE_MTD
+
+config BR2_PACKAGE_MTD_DOC_LOADBIOS
+	bool "doc_loadbios"
+	default y
+	depends on BR2_PACKAGE_MTD
+endmenu
+
+endif
+
