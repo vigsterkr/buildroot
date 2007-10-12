@@ -137,9 +137,9 @@ ifneq ($(BR2_ENABLE_LOCALE),y)
 GCC_ENABLE_CLOCALE:=--disable-clocale
 endif
 
-ifeq ($(BR2_KERNEL_HURD),y)
+#ifeq ($(BR2_KERNEL_HURD),y)
 EXTRA_GCC1_CONFIG_OPTIONS+=--without-headers
-endif
+#endif
 
 $(DL_DIR)/$(GCC_SOURCE):
 	mkdir -p $(DL_DIR)
@@ -217,12 +217,12 @@ $(GCC_BUILD_DIR1)/.configured: $(GCC_DIR)/.patched
 	touch $@
 
 $(GCC_BUILD_DIR1)/.compiled: $(GCC_BUILD_DIR1)/.configured
-	$(MAKE) -C $(GCC_BUILD_DIR1) all-gcc
+	$(MAKE) -C $(GCC_BUILD_DIR1) all-gcc all-target-libgcc
 	touch $@
 
 gcc_initial=$(GCC_BUILD_DIR1)/.installed
 $(gcc_initial) $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-gcc: $(GCC_BUILD_DIR1)/.compiled
-	PATH=$(TARGET_PATH) $(MAKE) -C $(GCC_BUILD_DIR1) install-gcc
+	PATH=$(TARGET_PATH) $(MAKE) -C $(GCC_BUILD_DIR1) install-gcc install-target-libgcc
 	touch $(gcc_initial)
 
 gcc_initial: uclibc-configured binutils $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-gcc
@@ -371,6 +371,7 @@ cross_compiler gcc: uclibc-configured binutils gcc_initial \
 	$(GCC_TARGETS)
 
 gcc-source: $(DL_DIR)/$(GCC_SOURCE)
+HOST_SOURCE+=gcc-source
 
 gcc-clean:
 	rm -rf $(GCC_BUILD_DIR2)

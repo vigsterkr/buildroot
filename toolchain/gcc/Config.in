@@ -4,7 +4,7 @@ comment "GCC Options"
 
 choice
 	prompt "GCC compiler Version"
-	default BR2_GCC_VERSION_4_2_1
+	default BR2_GCC_VERSION_4_2_2
 	help
 	  Select the version of gcc you wish to use.
 
@@ -28,12 +28,17 @@ choice
 
 	config BR2_GCC_VERSION_4_2_1
 		depends !BR2_avr32 && !BR2_nios2
+		depends BR2_DEPRECATED
 		bool "gcc 4.2.1"
 
-#	config BR2_GCC_VERSION_4_3
-#		depends !BR2_avr32 && !BR2_nios2
-#		select BR2_GCC_IS_SNAP
-#		bool "gcc 4.3"
+	config BR2_GCC_VERSION_4_2_2
+		depends !BR2_avr32 && !BR2_nios2
+		bool "gcc 4.2.2"
+
+	config BR2_GCC_VERSION_4_3_0
+		depends !BR2_avr32 && !BR2_nios2
+		select BR2_GCC_IS_SNAP
+		bool "gcc 4.3"
 
 endchoice
 
@@ -49,8 +54,8 @@ config BR2_GCC_SUPPORTS_SYSROOT
 
 config BR2_GCC_SUPPORTS_FINEGRAINEDMTUNE
 	bool
-	default n if BR2_GCC_VERSION_3_4_6 || BR2_GCC_VERSION_4_0_4 || BR2_GCC_VERSION_4_1_2 || BR2_GCC_VERSION_4_2_0 || BR2_GCC_VERSION_4_2_1
-	default y if !BR2_GCC_VERSION_3_4_6 && !BR2_GCC_VERSION_4_0_4 && !BR2_GCC_VERSION_4_1_2 && !BR2_GCC_VERSION_4_2_0 && !BR2_GCC_VERSION_4_2_1
+	default n if BR2_GCC_VERSION_3_4_6 || BR2_GCC_VERSION_4_0_4 || BR2_GCC_VERSION_4_1_2 || BR2_GCC_VERSION_4_2_0 || BR2_GCC_VERSION_4_2_1 || BR2_GCC_VERSION_4_2_2
+	default y if !BR2_GCC_VERSION_3_4_6 && !BR2_GCC_VERSION_4_0_4 && !BR2_GCC_VERSION_4_1_2 && !BR2_GCC_VERSION_4_2_0 && !BR2_GCC_VERSION_4_2_1 && !BR2_GCC_VERSION_4_2_2
 
 config BR2_GCC_SNAP_DATE
 	string "GCC snapshot date"
@@ -67,6 +72,8 @@ config BR2_GCC_VERSION
 	default "4.1.2"     if BR2_GCC_VERSION_4_1_2
 	default "4.2.0"     if BR2_GCC_VERSION_4_2_0
 	default "4.2.1"     if BR2_GCC_VERSION_4_2_1
+	default "4.2.2"     if BR2_GCC_VERSION_4_2_2
+	default "4.3.0"     if BR2_GCC_VERSION_4_3_0
 	default "4.3"       if BR2_GCC_VERSION_4_3
 
 config BR2_TOOLCHAIN_SYSROOT
@@ -117,6 +124,8 @@ config BR2_INSTALL_LIBSTDCPP
 	# >= 4.2.0 work fine without LARGEFILE
 	select BR2_LARGEFILE if !BR2_GCC_SUPPORTS_SYSROOT
 	select BR2_GCC_CROSS_CXX
+	depends on !BR2_GCC_VERSION_4_3_0 && !BR2_GCC_VERSION_4_3
+	# simply not yet implemented.
 	help
 	  Build/install c++ compiler and libstdc++?
 

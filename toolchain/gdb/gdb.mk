@@ -248,3 +248,6 @@ endif
 ifeq ($(strip $(BR2_PACKAGE_GDB_HOST)),y)
 TARGETS+=gdbhost
 endif
+ifeq ($(findstring y,$(BR2_PACKAGE_GDB_SERVER)$(BR2_PACKAGE_GDB_HOST)),y)
+HOST_SOURCE+=gdb-source
+endif

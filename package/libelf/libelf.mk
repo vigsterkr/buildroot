@@ -28,16 +28,10 @@ $(LIBELF_DIR)/.unpacked: $(DL_DIR)/$(LIBELF_SOURCE)
 
 $(LIBELF_DIR)/.configured: $(LIBELF_DIR)/.unpacked
 	(cd $(LIBELF_DIR); rm -f config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		CFLAGS="$(TARGET_CFLAGS)" \
 		libelf_cv_working_memmove=yes \
 		mr_cv_target_elf=yes \
 		libelf_64bit=yes \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		--enable-shared \
@@ -56,6 +50,7 @@ $(STAGING_DIR)/usr/lib/libelf.a $(STAGING_DIR)/usr/lib/libelf.so.$(LIBELF_VERSIO
 		instroot=$(STAGING_DIR) -C $(LIBELF_DIR) install
 
 ifeq ($(BR2_PACKAGE_LIBELF_HEADERS),y)
+libelf_headers: $(TARGET_DIR)/usr/lib/libelf.so.$(LIBELF_VERSION)
 $(TARGET_DIR)/usr/lib/libelf.so.$(LIBELF_VERSION): $(STAGING_DIR)/usr/lib/libelf.a
 	mkdir -p $(@D)
 	cp -dpf $(STAGING_DIR)/usr/lib/libelf* $(@D)
