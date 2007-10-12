@@ -1,0 +1,308 @@
+Index: uClibc/ldso/ldso/Makefile.in
+===================================================================
+--- uClibc/ldso/ldso/Makefile.in	(revision 20213)
++++ uClibc/ldso/ldso/Makefile.in	(working copy)
+@@ -20,9 +20,9 @@
+ ifneq ($(SUPPORT_LD_DEBUG),y)
+ LDFLAGS-$(UCLIBC_LDSO_NAME).so := $(LDFLAGS)
+ else
+-LDFLAGS-$(UCLIBC_LDSO_NAME).so := $(LDFLAGS_NOSTRIP) -z defs
++LDFLAGS-$(UCLIBC_LDSO_NAME).so := $(LDFLAGS_NOSTRIP) -Wl,-z,defs
+ endif
+-LDFLAGS-$(UCLIBC_LDSO_NAME).so += -e _start -z now -Bsymbolic --export-dynamic --sort-common --discard-locals --discard-all --no-undefined
++LDFLAGS-$(UCLIBC_LDSO_NAME).so += -Wl,-e,_start -Wl,-z,now -Wl,-Bsymbolic -Wl,--export-dynamic -Wl,--sort-common -Wl,--discard-locals -Wl,--discard-all -Wl,--no-undefined
+ 
+ ldso_FULL_NAME := $(UCLIBC_LDSO_NAME)-$(VERSION).so
+ 
+Index: uClibc/ldso/libdl/Makefile.in
+===================================================================
+--- uClibc/ldso/libdl/Makefile.in	(revision 20213)
++++ uClibc/ldso/libdl/Makefile.in	(working copy)
+@@ -17,7 +17,7 @@
+ 
+ CFLAGS-libdl.c := -DLDSO_ELFINTERP=\"$(TARGET_ARCH)/elfinterp.c\"
+ 
+-LDFLAGS-libdl.so := $(LDFLAGS) -fini dl_cleanup
++LDFLAGS-libdl.so := $(LDFLAGS) -Wl,-fini,dl_cleanup
+ 
+ LIBS-libdl.so := $(LIBS) $(ldso)
+ 
+Index: uClibc/Rules.mak
+===================================================================
+--- uClibc/Rules.mak	(revision 20213)
++++ uClibc/Rules.mak	(working copy)
+@@ -117,6 +117,9 @@
+ ldso :=
+ endif
+ 
++comma:=,
++space:= #
++
+ ifndef CROSS
+ CROSS=$(subst ",, $(strip $(CROSS_COMPILER_PREFIX)))
+ endif
+@@ -192,8 +195,8 @@
+ 
+ ifeq ($(TARGET_ARCH),arm)
+ 	OPTIMIZATION+=-fstrict-aliasing
+-	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN)+=-EL
+-	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN)+=-EB
++	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN)+=-Wl,-EL
++	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN)+=-Wl,-EB
+ 	CPU_CFLAGS-$(ARCH_LITTLE_ENDIAN)+=-mlittle-endian
+ 	CPU_CFLAGS-$(ARCH_BIG_ENDIAN)+=-mbig-endian
+ 	CPU_CFLAGS-$(CONFIG_GENERIC_ARM)+=
+@@ -216,8 +219,8 @@
+ endif
+ 
+ ifeq ($(TARGET_ARCH),mips)
+-	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN)+=-EL
+-	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN)+=-EB
++	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN)+=-Wl,-EL
++	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN)+=-Wl,-EB
+ 	CPU_CFLAGS-$(CONFIG_MIPS_ISA_1)+=-mips1
+ 	CPU_CFLAGS-$(CONFIG_MIPS_ISA_2)+=-mips2 -mtune=mips2
+ 	CPU_CFLAGS-$(CONFIG_MIPS_ISA_3)+=-mips3 -mtune=mips3
+@@ -225,12 +228,12 @@
+ 	CPU_CFLAGS-$(CONFIG_MIPS_ISA_MIPS32)+=-mips32 -mtune=mips32
+ 	CPU_CFLAGS-$(CONFIG_MIPS_ISA_MIPS64)+=-mips64 -mtune=mips32
+ 	ifeq ($(strip $(ARCH_BIG_ENDIAN)),y)
+-		CPU_LDFLAGS-$(CONFIG_MIPS_N64_ABI)+=-melf64btsmip
+-		CPU_LDFLAGS-$(CONFIG_MIPS_O32_ABI)+=-melf32btsmip
++		CPU_LDFLAGS-$(CONFIG_MIPS_N64_ABI)+=-Wl,-melf64btsmip
++		CPU_LDFLAGS-$(CONFIG_MIPS_O32_ABI)+=-Wl,-melf32btsmip
+ 	endif
+ 	ifeq ($(strip $(ARCH_LITTLE_ENDIAN)),y)
+-		CPU_LDFLAGS-$(CONFIG_MIPS_N64_ABI)+=-melf64ltsmip
+-		CPU_LDFLAGS-$(CONFIG_MIPS_O32_ABI)+=-melf32ltsmip
++		CPU_LDFLAGS-$(CONFIG_MIPS_N64_ABI)+=-Wl,-melf64ltsmip
++		CPU_LDFLAGS-$(CONFIG_MIPS_O32_ABI)+=-Wl,-melf32ltsmip
+ 	endif
+ 	CPU_CFLAGS-$(CONFIG_MIPS_N64_ABI)+=-mabi=64
+ 	CPU_CFLAGS-$(CONFIG_MIPS_O32_ABI)+=-mabi=32
+@@ -238,15 +241,15 @@
+ endif
+ 
+ ifeq ($(TARGET_ARCH),nios)
+-	CPU_LDFLAGS-y+=-m32
+-	CPU_CFLAGS-y+=-m32
++	CPU_LDFLAGS-y+=-Wl,-m32
++	CPU_CFLAGS-y+=-Wl,-m32
+ endif
+ 
+ ifeq ($(TARGET_ARCH),sh)
+ 	OPTIMIZATION+=-fstrict-aliasing
+ 	OPTIMIZATION+= $(call check_gcc,-mprefergot,)
+-	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN)+=-EL
+-	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN)+=-EB
++	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN)+=-Wl,-EL
++	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN)+=-Wl,-EB
+ 	CPU_CFLAGS-$(ARCH_LITTLE_ENDIAN)+=-ml
+ 	CPU_CFLAGS-$(ARCH_BIG_ENDIAN)+=-mb
+ 	CPU_CFLAGS-$(CONFIG_SH2)+=-m2
+@@ -262,23 +265,23 @@
+ 
+ ifeq ($(TARGET_ARCH),sh64)
+ 	OPTIMIZATION+=-fstrict-aliasing
+-	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN):=-EL
+-	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN):=-EB
++	CPU_LDFLAGS-$(ARCH_LITTLE_ENDIAN):=-Wl,-EL
++	CPU_LDFLAGS-$(ARCH_BIG_ENDIAN):=-Wl,-EB
+ 	CPU_CFLAGS-$(ARCH_LITTLE_ENDIAN):=-ml
+ 	CPU_CFLAGS-$(ARCH_BIG_ENDIAN):=-mb
+ 	CPU_CFLAGS-$(CONFIG_SH5)+=-m5-32media
+ endif
+ 
+ ifeq ($(TARGET_ARCH),h8300)
+-	CPU_LDFLAGS-$(CONFIG_H8300H)+= -ms8300h
+-	CPU_LDFLAGS-$(CONFIG_H8S)   += -ms8300s
++	CPU_LDFLAGS-$(CONFIG_H8300H)+= -Wl,-ms8300h
++	CPU_LDFLAGS-$(CONFIG_H8S)   += -Wl,-ms8300s
+ 	CPU_CFLAGS-$(CONFIG_H8300H) += -mh -mint32
+ 	CPU_CFLAGS-$(CONFIG_H8S)    += -ms -mint32
+ endif
+ 
+ ifeq ($(TARGET_ARCH),cris)
+-	CPU_LDFLAGS-$(CONFIG_CRIS)+=-mcrislinux
+-	CPU_LDFLAGS-$(CONFIG_CRISV32)+=-mcrislinux
++	CPU_LDFLAGS-$(CONFIG_CRIS)+=-Wl,-mcrislinux
++	CPU_LDFLAGS-$(CONFIG_CRISV32)+=-Wl,-mcrislinux
+ 	CPU_CFLAGS-$(CONFIG_CRIS)+=-mlinux
+ 	PICFLAG:=-fpic
+ 	PIEFLAG_NAME:=-fpie
+@@ -304,13 +307,13 @@
+ endif
+ 
+ ifeq ($(TARGET_ARCH),frv)
+-	CPU_LDFLAGS-$(CONFIG_FRV)+=-melf32frvfd
++	CPU_LDFLAGS-$(CONFIG_FRV)+=-Wl,-melf32frvfd
+ 	# Using -pie causes the program to have an interpreter, which is
+ 	# forbidden, so we must make do with -shared.  Unfortunately,
+ 	# -shared by itself would get us global function descriptors
+ 	# and calls through PLTs, dynamic resolution of symbols, etc,
+ 	# which would break as well, but -Bsymbolic comes to the rescue.
+-	export LDPIEFLAG:=-shared -Bsymbolic
++	export LDPIEFLAG:=-Wl,-shared -Wl,-Bsymbolic
+ 	UCLIBC_LDSO=ld.so.1
+ endif
+ 
+@@ -392,19 +404,20 @@
+ 
+ CFLAGS += $(call check_gcc,-std=gnu99,)
+ 
+-LDFLAGS_NOSTRIP:=$(CPU_LDFLAGS-y) -shared --warn-common --warn-once -z combreloc
++LDFLAGS_NOSTRIP:=$(CPU_LDFLAGS-y) -Wl,-shared \
++	-Wl,--warn-common -Wl,--warn-once -Wl,-z,combreloc
+ # binutils-2.16.1 warns about ignored sections, 2.16.91.0.3 and newer are ok
+ #LDFLAGS_NOSTRIP+=$(call check_ld,--gc-sections)
+ 
+ ifeq ($(UCLIBC_BUILD_RELRO),y)
+-LDFLAGS_NOSTRIP+=-z relro
++LDFLAGS_NOSTRIP+=-Wl,-z,relro
+ endif
+ 
+ ifeq ($(UCLIBC_BUILD_NOW),y)
+-LDFLAGS_NOSTRIP+=-z now
++LDFLAGS_NOSTRIP+=-Wl,-z,now
+ endif
+ 
+-LDFLAGS:=$(LDFLAGS_NOSTRIP) -z defs
++LDFLAGS:=$(LDFLAGS_NOSTRIP) -Wl,-z,defs
+ ifeq ($(DODEBUG),y)
+ #CFLAGS += -g3
+ CFLAGS += -O0 -g3
+@@ -412,7 +425,7 @@
+ CFLAGS += $(OPTIMIZATION) $(XARCH_CFLAGS)
+ endif
+ ifeq ($(DOSTRIP),y)
+-LDFLAGS += -s
++LDFLAGS += -Wl,-s
+ else
+ STRIPTOOL := true -Stripping_disabled
+ endif
+Index: uClibc/libc/Makefile.in
+===================================================================
+--- uClibc/libc/Makefile.in	(revision 20213)
++++ uClibc/libc/Makefile.in	(working copy)
+@@ -12,10 +12,10 @@
+ # libc, and if so, include it when linking.
+ VERSION_SCRIPT := $(wildcard $(libc_DIR)/sysdeps/linux/$(TARGET_ARCH)/libc.map)
+ ifneq ($(VERSION_SCRIPT),)
+-VERSION_SCRIPT := --version-script $(VERSION_SCRIPT)
++VERSION_SCRIPT := -Wl,--version-script,$(VERSION_SCRIPT)
+ endif
+ 
+-LDFLAGS-libc.so := $(LDFLAGS) $(VERSION_SCRIPT) -init __uClibc_init
++LDFLAGS-libc.so := $(LDFLAGS) $(VERSION_SCRIPT) -Wl,-init,__uClibc_init
+ 
+ LIBS-libc.so := $(interp) $(ldso) $(top_builddir)lib/$(NONSHARED_LIBNAME)
+ 
+Index: uClibc/libpthread/linuxthreads_db/Makefile.in
+===================================================================
+--- uClibc/libpthread/linuxthreads_db/Makefile.in	(revision 20213)
++++ uClibc/libpthread/linuxthreads_db/Makefile.in	(working copy)
+@@ -8,9 +8,9 @@
+ # Get the thread include dependencies and shared object name
+ CFLAGS-linuxthreads_db := -DNOT_IN_libc -DLIBPTHREAD_SO="\"libpthread.so.$(MAJOR_VERSION)\""
+ 
+-LDFLAGS-libthread_db.so := $(LDFLAGS_NOSTRIP) $(call check_ld,--warn-unresolved-symbols)
++LDFLAGS-libthread_db.so := $(LDFLAGS_NOSTRIP) $(if $(call check_ld,--warn-unresolved-symbols),-Wl$(comma)--warn-unresolved-symbols)
+ ifeq ($(DOSTRIP),y)
+-LDFLAGS-libthread_db.so += -s
++LDFLAGS-libthread_db.so += -Wl,-s
+ endif
+ 
+ LIBS-libthread_db.so := $(LIBS)
+Index: uClibc/libpthread/linuxthreads.old/Makefile.in
+===================================================================
+--- uClibc/libpthread/linuxthreads.old/Makefile.in	(revision 20213)
++++ uClibc/libpthread/linuxthreads.old/Makefile.in	(working copy)
+@@ -12,7 +12,7 @@
+ CFLAGS-libpthread/linuxthreads.old/sysdeps/$(TARGET_ARCH)/ := $(CFLAGS-linuxthreads.old)
+ 
+ ifeq ($(PTHREADS_DEBUG_SUPPORT),y)
+-LDFLAGS-libpthread.so := $(LDFLAGS_NOSTRIP) -z defs
++LDFLAGS-libpthread.so := $(LDFLAGS_NOSTRIP) -Wl,-z,defs
+ else
+ LDFLAGS-libpthread.so := $(LDFLAGS)
+ endif
+Index: uClibc/libpthread/linuxthreads/Makefile.in
+===================================================================
+--- uClibc/libpthread/linuxthreads/Makefile.in	(revision 20213)
++++ uClibc/libpthread/linuxthreads/Makefile.in	(working copy)
+@@ -19,7 +19,7 @@
+ #CFLAGS:=$(CFLAGS:-O0=-O1)
+ 
+ ifeq ($(PTHREADS_DEBUG_SUPPORT),y)
+-LDFLAGS-libpthread.so := $(LDFLAGS_NOSTRIP) -z defs
++LDFLAGS-libpthread.so := $(LDFLAGS_NOSTRIP) -Wl,-z,defs
+ else
+ LDFLAGS-libpthread.so := $(LDFLAGS)
+ endif
+Index: uClibc/libpthread/linuxthreads.old_db/Makefile.in
+===================================================================
+--- uClibc/libpthread/linuxthreads.old_db/Makefile.in	(revision 20213)
++++ uClibc/libpthread/linuxthreads.old_db/Makefile.in	(working copy)
+@@ -8,9 +8,9 @@
+ # Get the thread include dependencies and shared object name
+ CFLAGS-linuxthreads.old_db := -DNOT_IN_libc -DLIBPTHREAD_SO="\"libpthread.so.$(MAJOR_VERSION)\""
+ 
+-LDFLAGS-libthread_db.so := $(LDFLAGS_NOSTRIP) $(call check_ld,--warn-unresolved-symbols)
++LDFLAGS-libthread_db.so := $(LDFLAGS_NOSTRIP) $(if $(call check_ld,--warn-unresolved-symbols),-Wl$(comma)--warn-unresolved-symbols)
+ ifeq ($(DOSTRIP),y)
+-LDFLAGS-libthread_db.so += -s
++LDFLAGS-libthread_db.so += -Wl,-s
+ endif
+ 
+ LIBS-libthread_db.so := $(LIBS)
+Index: uClibc/Makerules
+===================================================================
+--- uClibc/Makerules	(revision 20213)
++++ uClibc/Makerules	(working copy)
+@@ -122,13 +122,17 @@
+ hcompile.u = $(HOSTCC) $^ $(DEPS-$(notdir $@)) -o $@ $(BUILD_LDFLAGS) $(BUILD_LDFLAGS-$(notdir $(^D))) $(BUILD_LDFLAGS-$(notdir $@)) $(BUILD_CFLAGS) $(BUILD_CFLAGS-$(notdir $(^D))) $(BUILD_CFLAGS-$(notdir $@))
+ hcompile.o = $(HOSTCC) $^ $(DEPS-$(notdir $@)) -c -o $@ $(BUILD_CFLAGS) $(BUILD_CFLAGS-$(notdir $(^D))) $(BUILD_CFLAGS-$(notdir $@))
+ 
++#foo=$(foreach f,$(LDFLAGS),$(if $(findstring -,$(f)),$(addprefix -Wl$(comma),$(f)),$(addprefix CONCAT,$(f))))
++#CC_LDFLAGS=$(foo:$(space)CONCAT=$(comma))
++#CC_LDFLAGS=$(shell echo $(foo) | sed 's/ CONCAT/,/g')
++
+ define link.so
+ 	$(Q)$(INSTALL) -d $(dir $@)
+ 	$(Q)$(RM) $@ $@.$(2) $(dir $@)$(1)
+ 	@$(disp_ld)
+-	$(Q)$(LD) $(LDFLAGS-$(notdir $@)) -soname=$(notdir $@).$(2) \
+-		-o $(dir $@)$(1) $(START_FILE-$(notdir $@)) \
+-		--whole-archive $(firstword $^) --no-whole-archive \
++	$(Q)$(CC) $(LDFLAGS-$(notdir $@)) -Wl,-soname=$(notdir $@).$(2) \
++		-nostdlib -o $(dir $@)$(1) $(START_FILE-$(notdir $@)) \
++		-Wl,--whole-archive $(firstword $^) -Wl,--no-whole-archive \
+ 		$(LIBS-$(notdir $@)) $(LIBGCC) $(END_FILE-$(notdir $@))
+ 	$(Q)$(LN) -sf $(1) $@.$(2)
+ 	$(Q)$(LN) -sf $(1) $@
+@@ -150,10 +154,10 @@
+ 	$(Q)$(INSTALL) -d $(dir $@)
+ 	$(Q)$(RM) $(1) $@
+ 	@$(disp_ld)
+-	$(Q)$(LD) $(LDFLAGS-$(notdir $@)) -o $(1) \
+-		-elf2flt -shared-lib-id $(2) $(top_builddir)lib/Scrt1.o \
+-		$(top_builddir)/lib/crti.o --whole-archive $(firstword $^) \
+-		--no-whole-archive $(LIBS-$(notdir $@)) $(LIBGCC) \
++	$(Q)$(CC) $(LDFLAGS-$(notdir $@)) -nostdlib -o $(1) \
++		-Wl,-elf2flt -Wl,-shared-lib-id $(2) $(top_builddir)lib/Scrt1.o \
++		$(top_builddir)/lib/crti.o -Wl,--whole-archive $(firstword $^) \
++		-Wl,--no-whole-archive $(LIBS-$(notdir $@)) $(LIBGCC) \
+ 		$(top_builddir)/lib/crtn.o
+ endef
+ 
+@@ -161,8 +165,8 @@
+ 	$(Q)$(INSTALL) -d $(dir $@)
+ 	$(Q)$(RM) $@ $@.$(2) $(dir $@)$(1)
+ 	@$(disp_ld)
+-	$(Q)$(LD) $(LDFLAGS-$(notdir $@)) -soname=$(notdir $@).$(2) \
+-		-o $(dir $@)$(1) $(START_FILE-$(notdir $@)) $^ \
++	$(Q)$(CC) $(LDFLAGS-$(notdir $@)) -Wl,-soname=$(notdir $@).$(2) \
++		-nostdlib -o $(dir $@)$(1) $(START_FILE-$(notdir $@)) $^ \
+ 		$(LIBS-$(notdir $@)) $(LIBGCC) $(END_FILE-$(notdir $@))
+ 	$(Q)$(LN) -sf $(1) $@.$(2)
+ 	$(Q)$(LN) -sf $(1) $@

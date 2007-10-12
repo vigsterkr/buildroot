@@ -1,0 +1,14 @@
+--- gcc-4.2.1.orig/gcc/config/arm/linux-eabi.h	2007-09-25 14:51:50.000000000 +0200
++++ gcc-4.2.1/gcc/config/arm/linux-eabi.h	2007-09-25 17:42:22.000000000 +0200
+@@ -53,7 +53,11 @@
+ /* Use ld-linux.so.3 so that it will be possible to run "classic"
+    GNU/Linux binaries on an EABI system.  */
+ #undef GLIBC_DYNAMIC_LINKER
++#ifdef USE_UCLIBC
++#define GLIBC_DYNAMIC_LINKER "/lib/ld-uClibc.so.0"
++#else
+ #define GLIBC_DYNAMIC_LINKER "/lib/ld-linux.so.3"
++#endif
+ 
+ /* At this point, bpabi.h will have clobbered LINK_SPEC.  We want to
+    use the GNU/Linux version, not the generic BPABI version.  */
