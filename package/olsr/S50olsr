@@ -6,7 +6,7 @@
 case "$1" in
   start)
   	echo "Starting OLSRd daemon: "
-	/usr/sbin/olsrd -d 0 -nofork & 
+	/usr/bin/olsrd -d 0 -nofork & 
 	;;
   stop)
   	echo "Stopping OLSRd daemon: "
