@@ -3,7 +3,7 @@
 # liblockfile
 #
 #############################################################
-LIBLOCKFILE_VERSION=1.06.1
+LIBLOCKFILE_VERSION=1.06.2
 LIBLOCKFILE_SOURCE:=liblockfile_$(LIBLOCKFILE_VERSION).tar.gz
 LIBLOCKFILE_SITE:=http://ftp.debian.org/debian/pool/main/libl/liblockfile/
 LIBLOCKFILE_CAT:=$(ZCAT)
