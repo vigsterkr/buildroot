@@ -326,6 +326,16 @@ else
 	$(SED) 's,^.*UCLIBC_HAS_PROGRAM_INVOCATION_NAME.*,UCLIBC_HAS_PROGRAM_INVOCATION_NAME=n,g' $(UCLIBC_DIR)/.oldconfig
 endif
 ifeq ("$(KERNEL_ARCH)","i386")
+	$(SED) '/CONFIG_GENERIC_386/d' \
+		-e '/CONFIG_[0-9]86/d' \
+		-e '/CONFIG_[0-9]86MMX/d' \
+		-e '/CONFIG_PENTIUM.*/d' \
+		-e '/CONFIG_K[0-9]/d' \
+		-e '/CONFIG_ELAN/d' \
+		-e '/CONFIG_CRUSOE/d' \
+		-e '/CONFIG_WINCHIP*/d' \
+		-e '/CONFIG_CYRIX*/d' \
+		-e '/CONFIG_NEHEMIAH/d' $(UCLIBC_DIR)/.oldconfig
 	/bin/echo "# CONFIG_GENERIC_386 is not set" >> $(UCLIBC_DIR)/.oldconfig
 	/bin/echo "# CONFIG_386 is not set" >> $(UCLIBC_DIR)/.oldconfig
 	/bin/echo "# CONFIG_486 is not set" >> $(UCLIBC_DIR)/.oldconfig
