@@ -289,20 +289,6 @@ TARGET_CONFIGURE_ARGS= \
 
 #######################################################################
 
-ifeq ($(BR2_ENABLE_LOCALE),y)
-DISABLE_NLS:=
-else
-DISABLE_NLS:=--disable-nls
-endif
-
-ifneq ($(BR2_LARGEFILE),y)
-DISABLE_LARGEFILE= --disable-largefile
-endif
-
-ifneq ($(BR2_INET_IPV6),y)
-DISABLE_IPV6= --disable-ipv6
-endif
-
 ifneq ($(BR2_GCC_CROSS_CXX),y)
 TARGET_CONFIGURE_OPTS+=CXX=""
 endif
