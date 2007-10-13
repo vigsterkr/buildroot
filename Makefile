@@ -308,6 +308,7 @@ $(PROJECT_BUILD_DIR)/.root:
 	fi
 	-find $(TARGET_DIR) -type d -name CVS | xargs rm -rf
 	-find $(TARGET_DIR) -type d -name .svn | xargs rm -rf
+	-find $(TARGET_DIR) -type d -name .gitignore | xargs rm -rf
 	touch $@
 
 $(TARGET_DIR): $(PROJECT_BUILD_DIR)/.root
