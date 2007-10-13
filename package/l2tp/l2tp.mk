@@ -44,7 +44,7 @@ ifeq ($(BR2_HAVE_MANPAGES),y)
 	$(INSTALL) -D -m 0644 $(L2TP_DIR)/l2tpd.8 $(TARGET_DIR)/usr/share/man/man8/l2tpd.8
 	$(INSTALL) -D -m 0644 $(L2TP_DIR)/l2tpd.conf.5 $(TARGET_DIR)/usr/share/man/man5/l2tpd.conf.5
 endif
-	$(STRIPCMD) $@
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 l2tp: uclibc $(TARGET_DIR)/$(L2TP_TARGET_BINARY)
 
