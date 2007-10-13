@@ -8,6 +8,7 @@ lex.*.c
 zconf.hash.c
 *.moc
 lkc_defs.h
+*.o
 
 #
 # configuration programs
@@ -17,3 +18,6 @@ mconf
 qconf
 gconf
 kxgettext
+
+# generated prerequisites
+buildroot-config

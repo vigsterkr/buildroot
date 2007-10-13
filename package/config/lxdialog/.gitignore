@@ -2,3 +2,4 @@
 # Generated files
 #
 lxdialog
+*.o
