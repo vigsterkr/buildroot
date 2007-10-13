@@ -1,0 +1,84 @@
+diff -rduNp vtun-3.0.1.orig4/configure vtun-3.0.1/configure
+--- vtun-3.0.1.orig4/configure	2007-10-13 19:30:40.000000000 +0200
++++ vtun-3.0.1/configure	2007-10-13 19:38:56.000000000 +0200
+@@ -1770,6 +1770,8 @@ fi
+ if test "${with_ssl_headers+set}" = set; then
+   withval=$with_ssl_headers; SSL_HDR_DIR="$withval"
+    CPPFLAGS="$CPPFLAGS -I$withval"
++else
++  SSL_HDR_DIR="/usr/include/openssl /usr/include /usr/include/ssl /usr/local/include /usr/local/ssl/include /usr/include/sys                    /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto"
+ 
+ fi
+ 
+@@ -1785,6 +1787,8 @@ fi
+ # Check whether --with-lzo-headers was given.
+ if test "${with_lzo_headers+set}" = set; then
+   withval=$with_lzo_headers; LZO_HDR_DIR="$withval"
++else
++  LZO_HDR_DIR="  /usr/include/lzo \"\" /usr/local/include"
+ 
+ fi
+ 
+@@ -1800,6 +1804,8 @@ fi
+ # Check whether --with-blowfish-headers was given.
+ if test "${with_blowfish_headers+set}" = set; then
+   withval=$with_blowfish_headers; BLOWFISH_HDR_DIR="$withval"
++else
++  BLOWFISH_HDR_DIR="/usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto"
+ 
+ fi
+ 
+@@ -5659,7 +5665,7 @@ echo "$as_me: checking for LZO Library a
+     { echo "$as_me:$LINENO: checking \"for lzo_asm.h\"" >&5
+ echo $ECHO_N "checking \"for lzo_asm.h\"... $ECHO_C" >&6; }
+     ac_hdr_found=no
+-    for p in $LZO_HDR_DIR /usr/include/lzo "" /usr/local/include; do
++    for p in $LZO_HDR_DIR; do
+ 	if test -n "$p"; then
+ 	  dir="$p"
+ 	else
+@@ -5699,7 +5705,7 @@ echo "${ECHO_T}\"no\"" >&6; }
+     { echo "$as_me:$LINENO: checking \"for lzo1x.h\"" >&5
+ echo $ECHO_N "checking \"for lzo1x.h\"... $ECHO_C" >&6; }
+     ac_hdr_found=no
+-    for p in $LZO_HDR_DIR /usr/include/lzo "" /usr/local/include; do
++    for p in $LZO_HDR_DIR; do
+ 	if test -n "$p"; then
+ 	  dir="$p"
+ 	else
+@@ -5848,7 +5854,7 @@ echo "$as_me: checking for md5 Library a
+     { echo "$as_me:$LINENO: checking \"for md5.h\"" >&5
+ echo $ECHO_N "checking \"for md5.h\"... $ECHO_C" >&6; }
+     ac_hdr_found=no
+-    for p in $SSL_HDR_DIR /usr/include/openssl "" /usr/include /usr/include/ssl /usr/local/include /usr/local/ssl/include /usr/include/sys; do
++    for p in $SSL_HDR_DIR; do
+ 	if test -n "$p"; then
+ 	  dir="$p"
+ 	else
+@@ -5901,7 +5907,7 @@ echo "$as_me: checking for blowfish Libr
+     { echo "$as_me:$LINENO: checking \"for blowfish.h\"" >&5
+ echo $ECHO_N "checking \"for blowfish.h\"... $ECHO_C" >&6; }
+     ac_hdr_found=no
+-    for p in $BLOWFISH_HDR_DIR /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto; do
++    for p in $BLOWFISH_HDR_DIR; do
+ 	if test -n "$p"; then
+ 	  dir="$p"
+ 	else
+@@ -6035,7 +6041,7 @@ echo "$as_me: checking for AES Library a
+     { echo "$as_me:$LINENO: checking \"for aes.h\"" >&5
+ echo $ECHO_N "checking \"for aes.h\"... $ECHO_C" >&6; }
+     ac_hdr_found=no
+-    for p in $SSL_HDR_DIR /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto; do
++    for p in $SSL_HDR_DIR; do
+ 	if test -n "$p"; then
+ 	  dir="$p"
+ 	else
+@@ -6163,7 +6169,7 @@ echo "$as_me: checking for EVP Library a
+     { echo "$as_me:$LINENO: checking \"for evp.h\"" >&5
+ echo $ECHO_N "checking \"for evp.h\"... $ECHO_C" >&6; }
+     ac_hdr_found=no
+-    for p in $SSL_HDR_DIR /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto; do
++    for p in $SSL_HDR_DIR; do
+ 	if test -n "$p"; then
+ 	  dir="$p"
+ 	else

@@ -1,0 +1,82 @@
+diff -rduNp vtun-3.0.1.orig3/configure.in vtun-3.0.1/configure.in
+--- vtun-3.0.1.orig3/configure.in	2007-10-13 19:30:40.000000000 +0200
++++ vtun-3.0.1/configure.in	2007-10-13 19:37:23.000000000 +0200
+@@ -45,7 +45,8 @@ AC_ARG_ENABLE(socks,
+ AC_ARG_WITH(ssl-headers,
+    --with-ssl-headers=DIR  Crypto Include files location,
+    SSL_HDR_DIR="$withval"
+-   CPPFLAGS="$CPPFLAGS -I$withval" 
++   CPPFLAGS="$CPPFLAGS -I$withval",
++   SSL_HDR_DIR="/usr/include/openssl /usr/include /usr/include/ssl /usr/local/include /usr/local/ssl/include /usr/include/sys                    /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto"
+ )
+ AC_ARG_WITH(ssl-lib,
+    --with-ssl-lib=DIR      Crypto Library location,
+@@ -54,7 +55,8 @@ AC_ARG_WITH(ssl-lib,
+ 
+ AC_ARG_WITH(lzo-headers,
+    --with-lzo-headers=DIR     LZO Include files location,
+-   LZO_HDR_DIR="$withval"
++   LZO_HDR_DIR="$withval",
++   LZO_HDR_DIR="  /usr/include/lzo \"\" /usr/local/include"
+ )
+ AC_ARG_WITH(lzo-lib,
+    --with-lzo-lib=DIR         LZO Library location,
+@@ -63,7 +65,8 @@ AC_ARG_WITH(lzo-lib,
+ 
+ AC_ARG_WITH(blowfish-headers,
+    --with-blowfish-headers=DIR     Blowfish Include files location,
+-   BLOWFISH_HDR_DIR="$withval"
++   BLOWFISH_HDR_DIR="$withval",
++   BLOWFISH_HDR_DIR="/usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto"
+ )
+ 
+ AC_ARG_WITH(socks-lib,
+@@ -126,10 +129,10 @@ if test "$LZO" = "yes"; then
+    AC_MSG_RESULT()
+    AS_MESSAGE([checking for LZO Library and Header files ... ...])
+    AC_SEARCH_HEADERS(lzo_asm.h,
+-	$LZO_HDR_DIR /usr/include/lzo "" /usr/local/include,
++	$LZO_HDR_DIR,
+ 	LZOCHK="lzo2 lzo",
+    AC_SEARCH_HEADERS(lzo1x.h, 
+-	$LZO_HDR_DIR /usr/include/lzo "" /usr/local/include,
++	$LZO_HDR_DIR,
+ 		LZOCHK="lzo",
+ 		AC_MSG_ERROR( LZO library not found. )
+ 		)
+@@ -160,7 +163,7 @@ if test "$SSL" = "yes"; then
+    AC_MSG_RESULT()
+    AS_MESSAGE([checking for md5 Library and Header files ... ...])
+ AC_SEARCH_HEADERS(md5.h,
+-    $SSL_HDR_DIR /usr/include/openssl "" /usr/include /usr/include/ssl /usr/local/include /usr/local/ssl/include /usr/include/sys, 
++    $SSL_HDR_DIR, 
+     ,
+     AC_MSG_ERROR( SSL headers not found. )
+    )
+@@ -170,7 +173,7 @@ if test "$SSL" = "yes"; then
+    AC_MSG_RESULT()
+    AS_MESSAGE([checking for blowfish Library and Header files ... ...])
+    AC_SEARCH_HEADERS(blowfish.h,
+-    $BLOWFISH_HDR_DIR /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto,
++    $BLOWFISH_HDR_DIR,
+ 	AC_CHECK_LIB(crypto, BF_set_key,
+ 	    [
+ 	       LIBS="$LIBS -lcrypto"
+@@ -187,7 +190,7 @@ if test "$SSL" = "yes"; then
+    AC_MSG_RESULT()
+    AC_CHECKING( for AES Library and Header files ... )
+    AC_SEARCH_HEADERS(aes.h,
+-    $SSL_HDR_DIR /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto,
++    $SSL_HDR_DIR,
+ 	AC_CHECK_LIB(crypto, AES_set_encrypt_key,
+ 	    [
+ 	       AC_DEFINE(HAVE_SSL_AES, 1, "AES encryption support")
+@@ -202,7 +205,7 @@ if test "$SSL" = "yes"; then
+    AC_MSG_RESULT()
+    AC_CHECKING( for EVP Library and Header files ... )
+    AC_SEARCH_HEADERS(evp.h,
+-    $SSL_HDR_DIR /usr/include/ssl /usr/include/openssl /usr/include /usr/local/include /usr/local/ssl/include  /usr/include/crypto,
++    $SSL_HDR_DIR,
+ 	AC_CHECK_LIB(crypto, EVP_EncryptInit,
+ 	    [
+ 	       AC_DEFINE(HAVE_SSL_EVP, 1, "EVP encryption support")

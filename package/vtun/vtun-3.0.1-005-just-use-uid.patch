@@ -1,0 +1,11 @@
+--- vtun-3.0.1.orig6/Makefile.in	2007-10-13 19:41:00.000000000 +0200
++++ vtun-3.0.1/Makefile.in	2007-10-13 19:42:51.000000000 +0200
+@@ -28,7 +28,7 @@
+ LEXFLAGS = -t 
+ 
+ INSTALL = @INSTALL@
+-INSTALL_OWNER = -o root -g 0
++INSTALL_OWNER = -o 0 -g 0
+ 
+ prefix = @prefix@
+ exec_prefix = @exec_prefix@

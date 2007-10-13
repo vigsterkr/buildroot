@@ -1,0 +1,18 @@
+diff -rduNp vtun-3.0.1.orig2/configure vtun-3.0.1/configure
+--- vtun-3.0.1.orig2/configure	2007-10-13 19:13:09.000000000 +0200
++++ vtun-3.0.1/configure	2007-10-13 19:18:15.000000000 +0200
+@@ -1267,10 +1267,10 @@ if test -n "$ac_init_help"; then
+ Optional Features:
+   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
+   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+---disable-shaper    	   Don not compile shaper module
+---disable-ssl     	   Don not compile encryption module
+---disable-zlib     	   Don not compile ZLIB compression module
+---disable-lzo     	   Don not compile LZO compression module
++--disable-shaper    	   Do not compile shaper module
++--disable-ssl     	   Do not compile encryption module
++--disable-zlib     	   Do not compile ZLIB compression module
++--disable-lzo     	   Do not compile LZO compression module
+ --enable-socks     	   Compile with SOCKS support
+ 
+ Optional Packages:
