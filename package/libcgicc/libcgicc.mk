@@ -4,29 +4,25 @@
 #
 #############################################################
 
-LIBCGICC_VERSION=3.2.3
+LIBCGICC_VERSION=3.2.4
 LIBCGICC_DIR=$(BUILD_DIR)/cgicc-$(LIBCGICC_VERSION)
-LIBCGICC_SITE=http://www.cgicc.org/files
-LIBCGICC_SOURCE=cgicc-$(LIBCGICC_VERSION).tar.bz2
-LIBCGICC_CAT:=$(BZCAT)
+LIBCGICC_SITE=http://ftp.gnu.org/gnu/cgicc/
+LIBCGICC_SOURCE=cgicc-$(LIBCGICC_VERSION).tar.gz
+LIBCGICC_CAT:=$(ZCAT)
 
 $(DL_DIR)/$(LIBCGICC_SOURCE):
 	$(WGET) -P $(DL_DIR) $(LIBCGICC_SITE)/$(LIBCGICC_SOURCE)
 
-libcgicc-source: $(DL_DIR)/$(LIBCGICC_SOURCE)
-
 $(LIBCGICC_DIR)/.unpacked: $(DL_DIR)/$(LIBCGICC_SOURCE)
 	$(LIBCGICC_CAT) $(DL_DIR)/$(LIBCGICC_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	touch $(LIBCGICC_DIR)/.unpacked
+	$(CONFIG_UPDATE) $(@D)
+	# building the docs didn't work, disable them
+	$(SED) 's/^SUBDIRS.*/SUBDIRS=cgicc/' $(LIBCGICC_DIR)/Makefile.in
+	touch $@
 
 $(LIBCGICC_DIR)/.configured: $(LIBCGICC_DIR)/.unpacked
 	(cd $(LIBCGICC_DIR); rm -f config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -36,27 +32,32 @@ $(LIBCGICC_DIR)/.configured: $(LIBCGICC_DIR)/.unpacked
 		--sysconfdir=/etc \
 		--datadir=/usr/share \
 		--localstatedir=/var \
-		--includedir=/include \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
+		--includedir=/usr/include \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 	)
-	touch $(LIBCGICC_DIR)/.configured
+	touch $@
 
 $(LIBCGICC_DIR)/.compiled: $(LIBCGICC_DIR)/.configured
 	$(MAKE) -C $(LIBCGICC_DIR)
-	touch $(LIBCGICC_DIR)/.compiled
+	touch $@
 
 $(STAGING_DIR)/lib/libcgicc.so: $(LIBCGICC_DIR)/.compiled
 	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(LIBCGICC_DIR) install
-	touch -c $(STAGING_DIR)/lib/libcgicc.so
+	touch -c $@
 
 $(TARGET_DIR)/usr/lib/libcgicc.so: $(STAGING_DIR)/lib/libcgicc.so
+	mkdir -p $(@D)
 	cp -dpf $(STAGING_DIR)/lib/libcgicc.so* $(TARGET_DIR)/usr/lib/
+	$(STRIPCMD) $(STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libcgicc.so*
 
 libcgicc: uclibc $(TARGET_DIR)/usr/lib/libcgicc.so
 
+libcgicc-source: $(DL_DIR)/$(LIBCGICC_SOURCE)
+
 libcgicc-clean:
-		-$(MAKE) -C $(LIBCGICC_DIR) clean
+	-$(MAKE) -C $(LIBCGICC_DIR) clean
+	rm -f $(TARGET_DIR)/usr/lib/libcgicc.*
 
 libcgicc-dirclean:
 	rm -rf $(LIBCGICC_DIR)
