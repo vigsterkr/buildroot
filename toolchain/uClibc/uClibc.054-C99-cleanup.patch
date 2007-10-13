@@ -34,3 +34,22 @@ Index: uClibc/libpthread/linuxthreads/internals.h
  check_thread_self (void)
  {
    pthread_descr self = thread_self ();
+Index: libpthread/linuxthreads.old/sysdeps/i386/pt-machine.h
+===================================================================
+--- libpthread/linuxthreads.old/sysdeps/i386/pt-machine.h	(revision 20188)
++++ libpthread/linuxthreads.old/sysdeps/i386/pt-machine.h	(working copy)
+@@ -24,11 +24,13 @@
+ 
+ #ifndef __ASSEMBLER__
+ #ifndef PT_EI
+-# define PT_EI extern inline __attribute__ ((always_inline))
++# define PT_EI static inline
+ #endif
+ 
++/*
+ extern long int testandset (int *spinlock);
+ extern int __compare_and_swap (long int *p, long int oldval, long int newval);
++*/
+ 
+ /* Get some notion of the current stack.  Need not be exactly the top
+    of the stack, just something somewhere in the current frame.  */
