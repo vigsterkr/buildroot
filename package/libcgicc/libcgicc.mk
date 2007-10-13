@@ -49,7 +49,7 @@ $(STAGING_DIR)/lib/libcgicc.so: $(LIBCGICC_DIR)/.compiled
 $(TARGET_DIR)/usr/lib/libcgicc.so: $(STAGING_DIR)/lib/libcgicc.so
 	mkdir -p $(@D)
 	cp -dpf $(STAGING_DIR)/lib/libcgicc.so* $(TARGET_DIR)/usr/lib/
-	$(STRIPCMD) $(STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libcgicc.so*
+	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libcgicc.so*
 
 libcgicc: uclibc $(TARGET_DIR)/usr/lib/libcgicc.so
 
