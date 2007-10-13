@@ -1,0 +1,16 @@
+# generated files
+.auto.deps
+.config
+.config.cmd
+.config.old
+
+# obj dirs
+build_*
+toolchain_build_*
+binaries
+project_build_*
+
+# misc
+x
+dl
+down

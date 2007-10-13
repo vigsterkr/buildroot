@@ -21,3 +21,4 @@ kxgettext
 
 # generated prerequisites
 buildroot-config
+.depend
