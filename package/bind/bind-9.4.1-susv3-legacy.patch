@@ -1,0 +1,13 @@
+--- bind-9.4.1.oorig/lib/isc/unix/ifiter_ioctl.c	2006-02-04 00:51:38.000000000 +0100
++++ bind-9.4.1/lib/isc/unix/ifiter_ioctl.c	2007-10-13 17:30:47.000000000 +0200
+@@ -479,8 +479,8 @@
+ 	for (i = 0; i < 16; i++) {
+ 		unsigned char byte;
+ 		static const char hex[] = "0123456789abcdef";
+-		byte = ((index(hex, address[i * 2]) - hex) << 4) |
+-		       (index(hex, address[i * 2 + 1]) - hex);
++		byte = ((strchr(hex, address[i * 2]) - hex) << 4) |
++		       (strchr(hex, address[i * 2 + 1]) - hex);
+ 		addr6.s6_addr[i] = byte;
+ 	}
+ 	iter->current.af = AF_INET6;
