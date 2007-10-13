@@ -2900,3 +2900,14 @@ diff -rdup l2tpd-0.70-pre20031121.oorig/scheduler.c l2tpd-0.70-pre20031121/sched
                   __FUNCTION__);
          }
          else
+--- l2tpd-0.70-pre20031121.orig2/l2tpd.c	2007-10-13 17:49:02.000000000 +0200
++++ l2tpd-0.70-pre20031121/l2tpd.c	2007-10-13 17:54:49.000000000 +0200
+@@ -354,7 +354,7 @@
+ 
+ 		if (openpty(&pty_fd, &tty_fd, NULL, NULL, NULL) != 0)
+ 		{
+-			log (LOG_WARN, "%s: unable to allocate pty/tty, abandoning!\n",
++			do_log (LOG_WARN, "%s: unable to allocate pty/tty, abandoning!\n",
+ 				__FUNCTION__);
+ 			return -EINVAL;
+ 		}

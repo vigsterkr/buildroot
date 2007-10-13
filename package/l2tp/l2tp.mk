@@ -5,8 +5,8 @@
 #############################################################
 L2TP_VERSION:=0.70-pre20031121
 L2TP_SOURCE:=l2tpd_$(L2TP_VERSION).orig.tar.gz
-L2TP_PATCH:=l2tpd_$(L2TP_VERSION)-2.1.diff.gz
-L2TP_SITE:=ftp://ftp.debian.org/debian/pool/main/l/l2tpd/
+L2TP_PATCH:=l2tpd_$(L2TP_VERSION)-2.2.diff.gz
+L2TP_SITE:=http://ftp.debian.org/debian/pool/main/l/l2tpd/
 L2TP_DIR:=$(BUILD_DIR)/l2tpd-$(L2TP_VERSION)
 L2TP_CAT:=$(ZCAT)
 L2TP_BINARY:=l2tpd
@@ -38,14 +38,20 @@ $(L2TP_DIR)/$(L2TP_BINARY): $(L2TP_DIR)/.unpacked
 		OSFLAGS="-DLINUX -UUSE_KERNEL $(TARGET_CFLAGS) -USANITY"
 
 $(TARGET_DIR)/$(L2TP_TARGET_BINARY): $(L2TP_DIR)/$(L2TP_BINARY)
-	cp -dpf $(L2TP_DIR)/$(L2TP_BINARY) $@
-	cp -dpf package/l2tp/l2tpd $(TARGET_DIR)/etc/init.d/
+	$(INSTALL) -D $(L2TP_DIR)/$(L2TP_BINARY) $@
+	$(INSTALL) -D package/l2tp/l2tpd $(TARGET_DIR)/etc/init.d/l2tpd
+ifeq ($(BR2_HAVE_MANPAGES),y)
+	$(INSTALL) -D -m 0644 $(L2TP_DIR)/l2tpd.8 $(TARGET_DIR)/usr/share/man/man8/l2tpd.8
+	$(INSTALL) -D -m 0644 $(L2TP_DIR)/l2tpd.conf.5 $(TARGET_DIR)/usr/share/man/man5/l2tpd.conf.5
+endif
 	$(STRIPCMD) $@
 
 l2tp: uclibc $(TARGET_DIR)/$(L2TP_TARGET_BINARY)
 
 l2tp-clean:
 	-$(MAKE) -C $(L2TP_DIR) clean
+	-rm -f $(TARGET_DIR)/usr/share/man/man8/l2tpd.8 \
+		$(TARGET_DIR)/usr/share/man/man5/l2tpd.conf.5
 	rm -f $(TARGET_DIR)/$(L2TP_TARGET_BINARY)
 
 l2tp-dirclean:
