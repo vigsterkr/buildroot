@@ -90,7 +90,7 @@ endchoice
 config BR2_KERNEL_HEADERS_IPMI
 	bool "use ipmi kernel patches"
 	default n
-	depends BR2_KERNEL_HEADERS_2_6_20_4 || BR2_KERNEL_HEADERS_2_6_21_5 || BR2_KERNEL_HEADERS_2_6_22_1 || BR2_KERNEL_HEADERS_2_6_22 || BR2_KERNEL_HEADERS_2_6_23
+	depends BR2_KERNEL_HEADERS_2_6_20_4 || BR2_KERNEL_HEADERS_2_6_21_5 || BR2_KERNEL_HEADERS_2_6_22_1 || BR2_KERNEL_HEADERS_2_6_22
 	help
 	  Apply patches which add IPMI sensor support.
 
