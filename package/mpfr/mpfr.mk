@@ -40,7 +40,7 @@ $(MPFR_DIR)/.unpacked: $(DL_DIR)/$(MPFR_SOURCE) $(DL_DIR)/$(MPFR_PATCH_FILE)
 endif
 	$(MPFR_CAT) $(DL_DIR)/$(MPFR_SOURCE) | tar -C $(TOOL_BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(MPFR_DIR) package/mpfr/ \*.patch
-	$(CONFIG_UPDATE) $(MPFR_DIR)
+	$(CONFIG_UPDATE) $(@D)
 ifneq ($(MPFR_PATCH),)
 	( cd $(MPFR_DIR); patch -p1 < $(DL_DIR)/$(MPFR_PATCH_FILE); )
 endif
