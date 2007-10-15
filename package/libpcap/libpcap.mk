@@ -21,7 +21,7 @@
 # Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307
 # USA
 
-LIBPCAP_VERSION:=0.9.5
+LIBPCAP_VERSION:=0.9.8
 LIBPCAP_DIR:=$(BUILD_DIR)/libpcap-$(LIBPCAP_VERSION)
 LIBPCAP_SITE:=http://www.tcpdump.org/release
 LIBPCAP_SOURCE:=libpcap-$(LIBPCAP_VERSION).tar.gz
@@ -30,23 +30,21 @@ LIBPCAP_CAT:=$(ZCAT)
 $(DL_DIR)/$(LIBPCAP_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LIBPCAP_SITE)/$(LIBPCAP_SOURCE)
 
-libpcap-source: $(DL_DIR)/$(LIBPCAP_SOURCE)
-
 $(LIBPCAP_DIR)/.unpacked: $(DL_DIR)/$(LIBPCAP_SOURCE)
 	$(LIBPCAP_CAT) $(DL_DIR)/$(LIBPCAP_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	# packaging error..
+	rm -f $(LIBPCAP_DIR)/gencode.c.rej
 	toolchain/patch-kernel.sh $(LIBPCAP_DIR) package/libpcap/ \*.patch
+	$(CONFIG_UPDATE) $(@D)
+	# alleged autoconf bug
+	$(SED) 's/-O2//g' $(@D)/configure
 	touch $@
 
 $(LIBPCAP_DIR)/.configured: $(LIBPCAP_DIR)/.unpacked
 	(cd $(LIBPCAP_DIR); rm -rf config.cache; \
-		ac_cv_linux_vers=$(BR2_DEFAULT_KERNEL_HEADERS) \
-		BUILD_CC=$(TARGET_CC) HOSTCC="$(HOSTCC)" \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(if $(KERNEL_MAJORVERSION),ac_cv_linux_vers=$(KERNEL_MAJORVERSION)) \
+		BUILD_CC=$(TARGET_CC) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--localstatedir=/var \
 		--mandir=/usr/share/man \
@@ -58,18 +56,18 @@ $(LIBPCAP_DIR)/.configured: $(LIBPCAP_DIR)/.unpacked
 	touch $@
 
 $(LIBPCAP_DIR)/libpcap.a: $(LIBPCAP_DIR)/.configured
-	$(MAKE) AR=$(TARGET_CROSS)ar -C $(LIBPCAP_DIR)
+	$(MAKE) -C $(LIBPCAP_DIR)
 
 $(STAGING_DIR)/usr/lib/libpcap.a: $(LIBPCAP_DIR)/libpcap.a
 	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(LIBPCAP_DIR) install
 
 libpcap: uclibc zlib $(STAGING_DIR)/usr/lib/libpcap.a
 
+libpcap-source: $(DL_DIR)/$(LIBPCAP_SOURCE)
+
 libpcap-clean:
-	rm -f $(addprefix $(STAGING_DIR)/usr/,include/pcap*.h \
-					      lib/libpcap.a \
-					      share/man/man?/pcap.*)
 	-$(MAKE) -C $(LIBPCAP_DIR) clean
+	rm -f $(wildcard $(addprefix $(STAGING_DIR)/usr/,include/pcap*.h lib/libpcap.a share/man/man?/pcap.*))
 
 libpcap-dirclean:
 	rm -rf $(LIBPCAP_DIR)
