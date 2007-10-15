@@ -24,7 +24,7 @@
 
 # TARGETS
 NCURSES_VERSION:=5.6
-NCURSES_SITE:=http://ftp.gnu.org/pub/gnu/ncurses
+NCURSES_SITE:=ftp://ftp.gnu.org/pub/gnu/ncurses
 NCURSES_DIR:=$(BUILD_DIR)/ncurses-$(NCURSES_VERSION)
 NCURSES_SOURCE:=ncurses-$(NCURSES_VERSION).tar.gz
 NCURSES_CAT:=$(ZCAT)
@@ -42,18 +42,13 @@ $(NCURSES_DIR)/.patched: $(DL_DIR)/$(NCURSES_SOURCE)
 	$(SED) 's~\$$srcdir/shlib tic\$$suffix~/usr/bin/tic~' \
 		$(NCURSES_DIR)/misc/run_tic.in
 	toolchain/patch-kernel.sh $(NCURSES_DIR) package/ncurses/ ncurses\*.patch
-	$(CONFIG_UPDATE) $(NCURSES_DIR)
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(NCURSES_DIR)/.configured: $(NCURSES_DIR)/.patched
 	(cd $(NCURSES_DIR); rm -rf config.cache; \
 		BUILD_CC="$(HOSTCC)" \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(REAL_GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -64,8 +59,8 @@ $(NCURSES_DIR)/.configured: $(NCURSES_DIR)/.patched
 		--datadir=/usr/share \
 		--localstatedir=/var \
 		--includedir=/usr/include \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 		--with-terminfo-dirs=/usr/share/terminfo \
 		--with-default-terminfo-dir=/usr/share/terminfo \
 		--with-shared --without-cxx --without-cxx-binding \
@@ -93,8 +88,8 @@ $(STAGING_DIR)/lib/libncurses.so.$(NCURSES_VERSION): $(NCURSES_DIR)/lib/libncurs
 	    sysconfdir=$(STAGING_DIR)/etc \
 	    localstatedir=$(STAGING_DIR)/var \
 	    libdir=$(STAGING_DIR)/lib \
-	    infodir=$(STAGING_DIR)/usr/info \
-	    mandir=$(STAGING_DIR)/usr/man \
+	    infodir=$(STAGING_DIR)/usr/share/info \
+	    mandir=$(STAGING_DIR)/usr/share/man \
 	    includedir=$(STAGING_DIR)/usr/include \
 	    gxx_include_dir=$(STAGING_DIR)/usr/include/c++ \
 	    ticdir=$(STAGING_DIR)/usr/share/terminfo \
@@ -147,11 +142,11 @@ ncurses-headers: $(TARGET_DIR)/usr/lib/libncurses.a
 ncurses-source: $(DL_DIR)/$(NCURSES_SOURCE)
 
 ncurses-clean:
+	-$(MAKE) -C $(NCURSES_DIR) clean
 	rm -f $(STAGING_DIR)/lib/libncurses.so* $(TARGET_DIR)/lib/libncurses.so*
 	rm -f $(STAGING_DIR)/usr/lib/libncurses.so* $(TARGET_DIR)/usr/lib/libncurses.so*
 	rm -rf $(STAGING_DIR)/usr/share/tabset $(TARGET_DIR)/usr/share/tabset
 	rm -rf $(STAGING_DIR)/usr/share/terminfo $(TARGET_DIR)/usr/share/terminfo
-	-$(MAKE) -C $(NCURSES_DIR) clean
 
 ncurses-dirclean:
 	rm -rf $(NCURSES_DIR)

@@ -26,16 +26,12 @@ $(PPPD_DIR)/.unpacked: $(DL_DIR)/$(PPPD_SOURCE)
 	$(SED) 's,(INSTALL) -s,(INSTALL),' $(PPPD_DIR)/pppd/plugins/*/Makefile.linux
 	$(SED) 's/ -o root//' $(PPPD_DIR)/*/Makefile.linux
 	$(SED) 's/ -g daemon//' $(PPPD_DIR)/*/Makefile.linux
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(PPPD_DIR)/.configured: $(PPPD_DIR)/.unpacked
 	(cd $(PPPD_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -45,8 +41,8 @@ $(PPPD_DIR)/.configured: $(PPPD_DIR)/.unpacked
 		--sysconfdir=/etc \
 		--datadir=/usr/share \
 		--localstatedir=/var \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 		$(DISABLE_NLS) \
 	)
 	touch $@

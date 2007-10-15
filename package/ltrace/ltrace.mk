@@ -40,12 +40,7 @@ endif
 
 $(LTRACE_DIR)/.configured: $(LTRACE_DIR)/.patched
 	(cd $(LTRACE_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		$(DISABLE_LARGEFILE) \

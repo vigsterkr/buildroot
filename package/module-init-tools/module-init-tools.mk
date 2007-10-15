@@ -20,23 +20,19 @@ $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE):
 $(MODULE_INIT_TOOLS_DIR)/.unpacked: $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE)
 	$(MODULE_INIT_TOOLS_CAT) $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE) | tar -C $(BUILD_DIR) -xvf -
 	toolchain/patch-kernel.sh $(MODULE_INIT_TOOLS_DIR) package/module-init-tools \*.patch
-	$(CONFIG_UPDATE) $(MODULE_INIT_TOOLS_DIR)
-	touch $(MODULE_INIT_TOOLS_DIR)/.unpacked
+	$(CONFIG_UPDATE) $(@D)
+	$(SED) 's/-O2//g' $(MODULE_INIT_TOOLS_DIR)/configure
+	touch $@
 
 $(MODULE_INIT_TOOLS_DIR)/.configured: $(MODULE_INIT_TOOLS_DIR)/.unpacked
 	(cd $(MODULE_INIT_TOOLS_DIR); rm -f config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
 		INSTALL=$(MODULE_INIT_TOOLS_DIR)/install-sh \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/ \
 		--sysconfdir=/etc \
 		--program-transform-name='' \
 	)
-	touch $(MODULE_INIT_TOOLS_DIR)/.configured
+	touch $@
 
 $(MODULE_INIT_TOOLS_DIR)/$(MODULE_INIT_TOOLS_BINARY): $(MODULE_INIT_TOOLS_DIR)/.configured
 	$(MAKE) CC=$(TARGET_CC) -C $(MODULE_INIT_TOOLS_DIR)
@@ -88,7 +84,7 @@ $(MODULE_INIT_TOOLS_DIR2)/.configured: $(MODULE_INIT_TOOLS_DIR2)/.source
 		--sysconfdir=/etc \
 		--program-transform-name='' \
 	)
-	touch $(MODULE_INIT_TOOLS_DIR2)/.configured
+	touch $@
 
 $(MODULE_INIT_TOOLS_DIR2)/$(MODULE_INIT_TOOLS_BINARY): $(MODULE_INIT_TOOLS_DIR2)/.configured
 	$(MAKE) -C $(MODULE_INIT_TOOLS_DIR2)

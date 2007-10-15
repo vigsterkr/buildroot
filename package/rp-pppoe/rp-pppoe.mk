@@ -31,17 +31,13 @@ ifneq ($(RP_PPPOE_PATCH),)
 	fi
 endif
 	toolchain/patch-kernel.sh $(RP_PPPOE_TOPDIR) package/rp-pppoe/ rp-pppoe\*.patch
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(RP_PPPOE_TOPDIR)/.configured: $(RP_PPPOE_TOPDIR)/.unpacked
 	(cd $(RP_PPPOE_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
 		rpppoe_cv_pack_bitfields=normal \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		$(DISABLE_LARGEFILE) \
 		--disable-debugging \

@@ -15,29 +15,25 @@ $(DL_DIR)/$(ETHTOOL_SOURCE):
 
 $(ETHTOOL_DIR)/.unpacked: $(DL_DIR)/$(ETHTOOL_SOURCE)
 	$(ETHTOOL_CAT) $(DL_DIR)/$(ETHTOOL_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(ETHTOOL_DIR)/.configured: $(ETHTOOL_DIR)/.unpacked
 	(cd $(ETHTOOL_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--sysconfdir=/etc \
 	)
 	touch $@
 
 $(ETHTOOL_DIR)/ethtool: $(ETHTOOL_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) -C $(ETHTOOL_DIR)
+	$(MAKE) -C $(ETHTOOL_DIR)
 
-$(ETHTOOL_DIR)/.installed: $(ETHTOOL_DIR)/ethtool
-	cp $(ETHTOOL_DIR)/ethtool $(TARGET_DIR)/usr/sbin
-	touch $@
+$(TARGET_DIR)/usr/sbin/ethtool: $(ETHTOOL_DIR)/ethtool
+	$(INSTALL) -D -m 0644 $(ETHTOOL_DIR)/ethtool $@
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
-ethtool: uclibc $(ETHTOOL_DIR)/.installed
+ethtool: uclibc $(TARGET_DIR)/usr/sbin/ethtool
 
 ethtool-source: $(DL_DIR)/$(ETHTOOL_SOURCE)
 

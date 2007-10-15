@@ -26,20 +26,14 @@ endif
 $(DL_DIR)/$(OPENVPN_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(OPENVPN_SITE)/$(OPENVPN_SOURCE)
 
-openvpn-source: $(DL_DIR)/$(OPENVPN_SOURCE)
-
 $(OPENVPN_DIR)/.unpacked: $(DL_DIR)/$(OPENVPN_SOURCE)
 	$(OPENVPN_CAT) $(DL_DIR)/$(OPENVPN_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	touch $(OPENVPN_DIR)/.unpacked
+	$(CONFIG_UPDATE) $(@D)
+	touch $@
 
 $(OPENVPN_DIR)/.configured: $(OPENVPN_DIR)/.unpacked
 	(cd $(OPENVPN_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -49,13 +43,13 @@ $(OPENVPN_DIR)/.configured: $(OPENVPN_DIR)/.unpacked
 		--sysconfdir=/etc \
 		--datadir=/usr/share \
 		--localstatedir=/var \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 		--program-prefix="" \
 		--enable-small \
 		$(THREAD_MODEL) \
 	)
-	touch $(OPENVPN_DIR)/.configured
+	touch $@
 
 $(OPENVPN_DIR)/$(OPENVPN_BINARY): $(OPENVPN_DIR)/.configured
 	$(MAKE) -C $(OPENVPN_DIR)
@@ -63,11 +57,21 @@ $(OPENVPN_DIR)/$(OPENVPN_BINARY): $(OPENVPN_DIR)/.configured
 $(TARGET_DIR)/$(OPENVPN_TARGET_BINARY): $(OPENVPN_DIR)/$(OPENVPN_BINARY)
 	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(OPENVPN_DIR) install
 	mkdir -p $(TARGET_DIR)/etc/openvpn
-	cp package/openvpn/openvpn.init $(TARGET_DIR)/etc/init.d/openvpn
-	rm -rf $(TARGET_DIR)/share/locale $(TARGET_DIR)/usr/info \
-		$(TARGET_DIR)/usr/man $(TARGET_DIR)/usr/share/doc
+	$(INSTALL) -D -m 0755 package/openvpn/openvpn.init $(TARGET_DIR)/etc/init.d/openvpn
+ifneq ($(BR2_ENABLE_LOCALE),y)
+	rm -rf $(TARGET_DIR)/usr/share/locale
+endif
+ifneq ($(BR2_HAVE_MANPAGES),y)
+	rm -rf $(TARGET_DIR)/usr/share/man
+endif
+ifneq ($(BR2_HAVE_INFOPAGES),y)
+	rm -rf $(TARGET_DIR)/usr/info
+endif
+	rm -rf $(TARGET_DIR)/usr/share/doc
 
 openvpn: uclibc lzo openssl $(TARGET_DIR)/$(OPENVPN_TARGET_BINARY)
+
+openvpn-source: $(DL_DIR)/$(OPENVPN_SOURCE)
 
 openvpn-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(OPENVPN_DIR) uninstall
