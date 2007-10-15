@@ -41,6 +41,7 @@ endif
 $(LTRACE_DIR)/.configured: $(LTRACE_DIR)/.patched
 	(cd $(LTRACE_DIR); rm -rf config.cache; \
 		$(AUTO_CONFIGURE_TARGET) \
+		CPPFLAGS="-DUSE_DEMANGLE" \
 		--prefix=/usr \
 		--sysconfdir=/etc \
 		$(DISABLE_LARGEFILE) \
@@ -48,7 +49,7 @@ $(LTRACE_DIR)/.configured: $(LTRACE_DIR)/.patched
 	touch $@
 
 $(LTRACE_DIR)/$(LTRACE_BINARY): $(LTRACE_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) LD=$(TARGET_CROSS)ld ARCH=$(LTRACE_ARCH) \
+	$(MAKE) ARCH=$(LTRACE_ARCH) \
 		-C $(LTRACE_DIR)
 
 $(TARGET_DIR)/$(LTRACE_TARGET_BINARY): $(LTRACE_DIR)/$(LTRACE_BINARY)
