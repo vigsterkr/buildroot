@@ -25,7 +25,7 @@ $(VTUN_PATCH_FILE):
 	 $(WGET) -P $(DL_DIR) $(VTUN_SITE)/$(VTUN_PATCH)
 endif
 
-$(VTUN_DIR)/.patched: $(DL_DIR)/$(VTUN_SOURCE)
+$(VTUN_DIR)/.patched: $(DL_DIR)/$(VTUN_SOURCE) $(VTUN_PATCH_FILE)
 	$(VTUN_CAT) $(DL_DIR)/$(VTUN_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 ifneq ($(VTUN_PATCH_FILE),)
 	(cd $(VTUN_DIR) && $(VTUN_CAT) $(VTUN_PATCH_FILE) | patch -p1)
