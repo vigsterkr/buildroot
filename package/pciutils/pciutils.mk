@@ -43,7 +43,6 @@ $(TARGET_DIR)/sbin/setpci: $(PCIUTILS_DIR)/.compiled
 
 $(TARGET_DIR)/usr/share/misc/pci.ids: $(PCIUTILS_DIR)/.unpacked
 	$(INSTALL) -D $(PCIUTILS_DIR)/pci.ids $(TARGET_DIR)/usr/share/misc/pci.ids
-	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 pciutils: uclibc $(TARGET_DIR)/sbin/setpci $(TARGET_DIR)/sbin/lspci $(TARGET_DIR)/usr/share/misc/pci.ids
 
