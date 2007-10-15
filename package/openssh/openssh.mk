@@ -3,7 +3,7 @@
 # openssh
 #
 #############################################################
-OPENSSH_VERSION=4.6p1
+OPENSSH_VERSION=4.7p1
 OPENSSH_SITE=ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable
 OPENSSH_DIR=$(BUILD_DIR)/openssh-$(OPENSSH_VERSION)
 OPENSSH_SOURCE=openssh-$(OPENSSH_VERSION).tar.gz
@@ -19,13 +19,8 @@ $(OPENSSH_DIR)/.unpacked: $(DL_DIR)/$(OPENSSH_SOURCE)
 
 $(OPENSSH_DIR)/.configured: $(OPENSSH_DIR)/.unpacked
 	(cd $(OPENSSH_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
+		$(AUTO_CONFIGURE_TARGET) \
 		LD=$(TARGET_CROSS)gcc \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -35,8 +30,8 @@ $(OPENSSH_DIR)/.configured: $(OPENSSH_DIR)/.unpacked
 		--sysconfdir=/etc \
 		--datadir=/usr/share \
 		--localstatedir=/var \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 		--includedir=$(STAGING_DIR)/usr/include \
 		--disable-lastlog --disable-utmp \
 		--disable-utmpx --disable-wtmp --disable-wtmpx \
@@ -63,10 +58,14 @@ $(OPENSSH_DIR)/ssh: $(OPENSSH_DIR)/.configured
 
 $(TARGET_DIR)/usr/bin/ssh: $(OPENSSH_DIR)/ssh
 	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(OPENSSH_DIR) install
-	mkdir -p $(TARGET_DIR)/etc/init.d
-	cp package/openssh/S50sshd $(TARGET_DIR)/etc/init.d/
-	chmod a+x $(TARGET_DIR)/etc/init.d/S50sshd
-	rm -rf $(TARGET_DIR)/usr/info $(TARGET_DIR)/usr/man $(TARGET_DIR)/usr/share/doc
+	$(INSTALL) -D -m 0755 package/openssh/S50sshd $(TARGET_DIR)/etc/init.d/S50sshd
+ifneq ($(BR2_HAVE_MANPAGES),y)
+	rm -rf $(TARGET_DIR)/usr/share/man
+endif
+ifneq ($(BR2_HAVE_INFOPAGES),y)
+	rm -rf $(TARGET_DIR)/usr/share/info
+endif
+	rm -rf $(TARGET_DIR)/usr/share/doc
 
 openssh: openssl zlib $(TARGET_DIR)/usr/bin/ssh
 
