@@ -34,17 +34,12 @@ jpeg-source: $(DL_DIR)/$(JPEG_SOURCE)
 $(JPEG_DIR)/.unpacked: $(DL_DIR)/$(JPEG_SOURCE)
 	$(JPEG_CAT) $(DL_DIR)/$(JPEG_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(JPEG_DIR) package/jpeg/ jpeg\*.patch
-	$(CONFIG_UPDATE) $(JPEG_DIR)
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(JPEG_DIR)/.configured: $(JPEG_DIR)/.unpacked
 	(cd $(JPEG_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -73,6 +68,7 @@ $(STAGING_DIR)/lib/libjpeg.a: $(JPEG_DIR)/.libs/libjpeg.a
 	touch -c $@
 
 $(TARGET_DIR)/usr/lib/libjpeg.so: $(STAGING_DIR)/lib/libjpeg.a
+	mkdir -p $(TARGET_DIR)/usr/lib
 	cp -dpf $(STAGING_DIR)/lib/libjpeg.so* $(TARGET_DIR)/usr/lib/
 	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libjpeg.so*
 	touch -c $@
@@ -81,6 +77,9 @@ jpeg: uclibc $(TARGET_DIR)/usr/lib/libjpeg.so
 
 jpeg-clean:
 	-$(MAKE) -C $(JPEG_DIR) clean
+	rm -f $(TARGET_DIR)/usr/lib/libjpeg.so* \
+		$(wildcard $(STAGING_DIR)/lib*/libjpeg.so*) \
+		$(wildcard $(STAGING_DIR)/lib*/libjpeg.a*)
 
 jpeg-dirclean:
 	rm -rf $(JPEG_DIR)
