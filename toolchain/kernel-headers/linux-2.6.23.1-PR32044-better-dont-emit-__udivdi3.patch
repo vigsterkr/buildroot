@@ -6,5 +6,5 @@
  obj-$(CONFIG_TIMER_STATS)			+= timer_stats.o
 +
 +# workaround for gcc.gnu.org/PR32044
-+CFLAGS_timekeeping.o += -fno-tree-scev-cprop
++CFLAGS_timekeeping.o += $(call cc-ifversion, -ge, 0403, -fno-tree-scev-cprop)
 +
