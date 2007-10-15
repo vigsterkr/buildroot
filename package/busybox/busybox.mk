@@ -93,18 +93,21 @@ ifeq ($(BR2_PACKAGE_NETKITTELNET),y)
 	@echo "WARNING!! CONFIG_TELNETD option disabled!"
 endif
 	yes "" | $(MAKE) CC=$(TARGET_CC) CROSS_COMPILE="$(TARGET_CROSS)" \
+		HOSTCC="$(HOSTCC) $(HOST_CFLAGS)" \
 		CROSS="$(TARGET_CROSS)" -C $(BUSYBOX_DIR) oldconfig
 	touch $@
 
 
 $(BUSYBOX_DIR)/busybox: $(BUSYBOX_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) CROSS_COMPILE="$(TARGET_CROSS)" \
+	$(MAKE) HOSTCC="$(HOSTCC) $(HOST_CFLAGS)" \
+		CC=$(TARGET_CC) CROSS_COMPILE="$(TARGET_CROSS)" \
 		CROSS="$(TARGET_CROSS)" PREFIX="$(TARGET_DIR)" \
 		ARCH=$(KERNEL_ARCH) \
 		EXTRA_CFLAGS="$(TARGET_CFLAGS)" -C $(BUSYBOX_DIR)
 ifeq ($(BR2_PREFER_IMA)$(BR2_PACKAGE_BUSYBOX_SNAPSHOT),yy)
 	rm -f $@
-	$(MAKE) CC=$(TARGET_CC) CROSS_COMPILE="$(TARGET_CROSS)" \
+	$(MAKE) HOSTCC="$(HOSTCC) $(HOST_CFLAGS)" \
+		CC=$(TARGET_CC) CROSS_COMPILE="$(TARGET_CROSS)" \
 		CROSS="$(TARGET_CROSS)" PREFIX="$(TARGET_DIR)" \
 		ARCH=$(KERNEL_ARCH) STRIP="$(STRIPCMD)" \
 		EXTRA_CFLAGS="$(TARGET_CFLAGS)" -C $(BUSYBOX_DIR) \
@@ -113,7 +116,8 @@ endif
 
 $(TARGET_DIR)/bin/busybox: $(BUSYBOX_DIR)/busybox
 ifeq ($(BR2_PACKAGE_BUSYBOX_INSTALL_SYMLINKS),y)
-	$(MAKE) CC=$(TARGET_CC) CROSS_COMPILE="$(TARGET_CROSS)" \
+	$(MAKE) HOSTCC="$(HOSTCC) $(HOST_CFLAGS)" \
+		CC=$(TARGET_CC) CROSS_COMPILE="$(TARGET_CROSS)" \
 		CROSS="$(TARGET_CROSS)" PREFIX="$(TARGET_DIR)" \
 		ARCH=$(KERNEL_ARCH) \
 		EXTRA_CFLAGS="$(TARGET_CFLAGS)" -C $(BUSYBOX_DIR) install
@@ -121,7 +125,9 @@ else
 	install -D -m 0755 $(BUSYBOX_DIR)/busybox $(TARGET_DIR)/bin/busybox
 endif
 	# Just in case
-	-chmod a+x $(TARGET_DIR)/usr/share/udhcpc/default.script
+	$(Q)if test -r $(TARGET_DIR)/usr/share/udhcpc/default.script; then \
+		chmod a+x $(TARGET_DIR)/usr/share/udhcpc/default.script; \
+	fi
 
 busybox: uclibc $(TARGET_DIR)/bin/busybox
 
@@ -132,7 +138,8 @@ busybox-unpacked: $(BUSYBOX_DIR)/.unpacked
 busybox-config: $(BUSYBOX_DIR)/.configured
 
 busybox-menuconfig: host-sed $(PROJECT_BUILD_DIR) busybox-source $(BUSYBOX_DIR)/.configured
-	$(MAKE) __TARGET_ARCH=$(ARCH) -C $(BUSYBOX_DIR) menuconfig
+	$(MAKE) __TARGET_ARCH=$(ARCH) HOSTCC="$(HOSTCC) $(HOST_CFLAGS)" \
+		-C $(BUSYBOX_DIR) menuconfig
 
 busybox-update:
 	cp -f $(BUSYBOX_DIR)/.config $(BUSYBOX_CONFIG_FILE)
