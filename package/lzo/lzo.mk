@@ -22,7 +22,7 @@ lzo-source: $(DL_DIR)/$(LZO_SOURCE)
 $(LZO_DIR)/.unpacked: $(DL_DIR)/$(LZO_SOURCE)
 	$(LZO_CAT) $(DL_DIR)/$(LZO_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(LZO_DIR) package/lzo/ lzo\*.patch
-	$(CONFIG_UPDATE) $(LZO_DIR)/acconfig
+	$(CONFIG_UPDATE) $(@D)/acconfig
 	touch $@
 
 LZO_CONFIG_SHARED:=--disable-shared
@@ -30,12 +30,7 @@ LZO_CONFIG_SHARED:=--disable-shared
 
 $(LZO_DIR)/.configured: $(LZO_DIR)/.unpacked
 	(cd $(LZO_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--includedir=/usr/include \
 		--libdir=/usr/lib \
