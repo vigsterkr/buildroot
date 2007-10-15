@@ -153,7 +153,7 @@ AUTO_CONFIGURE_TARGET= \
 	$(TARGET_CONFIGURE_OPTS) \
 	$(TARGET_CONFIGURE_ARGS) \
 	$(TARGET_CONFIGURE_ENV) \
-	$(@D)/configure \
+	$(if $(THIS_SRCDIR),$(THIS_SRCDIR)/,./)configure \
 	--target=$(GNU_TARGET_NAME) \
 	--host=$(GNU_TARGET_NAME) \
 	--build=$(GNU_HOST_NAME)
