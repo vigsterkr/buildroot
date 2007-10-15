@@ -3,8 +3,8 @@
 # build GNU readline
 #
 #############################################################
-READLINE_VERSION:=5.1
-READLINE_SITE:=ftp://ftp.cwru.edu/pub/bash
+READLINE_VERSION:=5.2
+READLINE_SITE:=ftp://ftp.gnu.org/pub/gnu/readline/
 READLINE_SOURCE:=readline-$(READLINE_VERSION).tar.gz
 READLINE_DIR:=$(BUILD_DIR)/readline-$(READLINE_VERSION)
 READLINE_CAT:=$(ZCAT)
@@ -19,20 +19,15 @@ $(DL_DIR)/$(READLINE_SOURCE):
 readline-source: $(DL_DIR)/$(READLINE_SOURCE)
 
 $(READLINE_DIR)/.unpacked: $(DL_DIR)/$(READLINE_SOURCE)
-	mkdir -p $(READLINE_DIR)
-	tar -C $(BUILD_DIR) -zxf $(DL_DIR)/$(READLINE_SOURCE)
-	$(CONFIG_UPDATE) $(READLINE_DIR)
+	$(READLINE_CAT) $(DL_DIR)/$(READLINE_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	$(CONFIG_UPDATE) $(@D)
+	$(CONFIG_UPDATE) $(@D)/support
 	touch $@
 
 $(READLINE_DIR)/.configured: $(READLINE_DIR)/.unpacked
 	(cd $(READLINE_DIR); rm -rf config.cache; \
 		bash_cv_func_sigsetjmp=yes \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -44,8 +39,8 @@ $(READLINE_DIR)/.configured: $(READLINE_DIR)/.unpacked
 		--localstatedir=/var \
 		--with-shared \
 		--includedir=/usr/include \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 	)
 	touch $@
 
