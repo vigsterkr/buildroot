@@ -30,7 +30,7 @@ $(ETHTOOL_DIR)/ethtool: $(ETHTOOL_DIR)/.configured
 	$(MAKE) -C $(ETHTOOL_DIR)
 
 $(TARGET_DIR)/usr/sbin/ethtool: $(ETHTOOL_DIR)/ethtool
-	$(INSTALL) -D -m 0644 $(ETHTOOL_DIR)/ethtool $@
+	$(INSTALL) -D -m 0755 $(ETHTOOL_DIR)/ethtool $@
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 ethtool: uclibc $(TARGET_DIR)/usr/sbin/ethtool
