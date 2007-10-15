@@ -291,10 +291,18 @@ $(STAGING_DIR):
 ifeq ($(BR2_TOOLCHAIN_SYSROOT),y)
 	@mkdir -p $(STAGING_DIR)/usr/lib
 else
-	@ln -snf . $(STAGING_DIR)/usr
+	@if test -d $(STAGING_DIR)/usr; then \
+	  echo "You seem to be coming from a toolchain with sysroot support."; \
+	  echo "Reconfiguring without wiping your rootfs will not work, sorry.";\
+	  echo "Please 'rm -rf $(STAGING_DIR)'"; \
+	  echo "Then run 'make' again."; \
+	  echo ""; \
+	  exit 1; \
+	fi
+	ln -snf . $(STAGING_DIR)/usr
 	@mkdir -p $(STAGING_DIR)/usr/$(REAL_GNU_TARGET_NAME)
-	@ln -snf ../lib $(STAGING_DIR)/usr/lib
-	@ln -snf ../lib $(STAGING_DIR)/usr/$(REAL_GNU_TARGET_NAME)/lib
+	ln -snf ../lib $(STAGING_DIR)/usr/lib
+	ln -snf ../lib $(STAGING_DIR)/usr/$(REAL_GNU_TARGET_NAME)/lib
 endif
 	@mkdir -p $(STAGING_DIR)/usr/include
 
