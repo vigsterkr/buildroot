@@ -14,10 +14,6 @@ BASH_TARGET_BINARY:=bin/bash
 $(DL_DIR)/$(BASH_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(BASH_SITE)/$(BASH_SOURCE)
 
-bash-source: $(DL_DIR)/$(BASH_SOURCE)
-
-bash-unpacked: $(BASH_DIR)/.unpacked
-
 $(BASH_DIR)/.unpacked: $(DL_DIR)/$(BASH_SOURCE)
 	$(BASH_CAT) $(DL_DIR)/$(BASH_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(BASH_DIR) package/bash/ bash??-\*
@@ -81,12 +77,16 @@ else
 bash: ncurses uclibc $(TARGET_DIR)/$(BASH_TARGET_BINARY)
 endif
 
+bash-source: $(DL_DIR)/$(BASH_SOURCE)
+
+bash-unpacked: $(BASH_DIR)/.unpacked
+
 # If both bash and busybox are selected, the /bin/sh symlink
 # may need to be reinstated by the clean targets.
 bash-clean:
 	-$(MAKE1) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(BASH_DIR) uninstall
-	rm -f $(TARGET_DIR)/$(BASH_TARGET_BINARY)
 	-$(MAKE1) -C $(BASH_DIR) clean
+	rm -f $(TARGET_DIR)/$(BASH_TARGET_BINARY)
 
 bash-dirclean:
 	rm -rf $(BASH_DIR)

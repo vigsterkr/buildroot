@@ -1,0 +1,104 @@
+diff -rdup bash-3.2-p25/config.h.in bash-3.2/config.h.in
+--- bash-3.2-p25/config.h.in	2007-10-15 20:08:58.000000000 +0200
++++ bash-3.2/config.h.in	2007-10-15 20:09:30.000000000 +0200
+@@ -501,12 +501,6 @@
+ /* Define if you have the asprintf function.  */
+ #undef HAVE_ASPRINTF
+ 
+-/* Define if you have the bcopy function.  */
+-#undef HAVE_BCOPY
+-
+-/* Define if you have the bzero function.  */
+-#undef HAVE_BZERO
+-
+ /* Define if you have the confstr function.  */
+ #undef HAVE_CONFSTR
+ 
+diff -rdup bash-3.2-p25/configure bash-3.2/configure
+--- bash-3.2-p25/configure	2007-10-15 19:12:58.000000000 +0200
++++ bash-3.2/configure	2007-10-15 20:13:01.000000000 +0200
+@@ -12382,7 +12382,7 @@ done
+ 
+ 
+ 
+-for ac_func in bcopy bzero confstr fnmatch \
++for ac_func in confstr fnmatch \
+ 		getaddrinfo gethostbyname getservbyname getservent inet_aton \
+ 		memmove pathconf putenv raise regcomp regexec \
+ 		setenv setlinebuf setlocale setvbuf siginterrupt strchr \
+diff -rdup bash-3.2-p25/configure.in bash-3.2/configure.in
+--- bash-3.2-p25/configure.in	2007-10-15 20:08:58.000000000 +0200
++++ bash-3.2/configure.in	2007-10-15 20:12:07.000000000 +0200
+@@ -702,7 +702,7 @@ AC_CHECK_FUNCS(dup2 eaccess fcntl getdta
+ AC_REPLACE_FUNCS(rename)
+ 
+ dnl checks for c library functions
+-AC_CHECK_FUNCS(bcopy bzero confstr fnmatch \
++AC_CHECK_FUNCS(confstr fnmatch \
+ 		getaddrinfo gethostbyname getservbyname getservent inet_aton \
+ 		memmove pathconf putenv raise regcomp regexec \
+ 		setenv setlinebuf setlocale setvbuf siginterrupt strchr \
+diff -rdup bash-3.2-p25/CWRU/misc/sigstat.c bash-3.2/CWRU/misc/sigstat.c
+--- bash-3.2-p25/CWRU/misc/sigstat.c	2007-10-15 20:08:58.000000000 +0200
++++ bash-3.2/CWRU/misc/sigstat.c	2007-10-15 19:12:59.000000000 +0200
+@@ -86,7 +86,7 @@ int	sig;
+ init_signames()
+ {
+ 	register int i;
+-	bzero(signames, sizeof(signames));
++	memset(signames, 0, sizeof(signames));
+ 
+ #if defined (SIGHUP)		/* hangup */
+   	signames[SIGHUP] = "SIGHUP";
+diff -rdup bash-3.2-p25/lib/glob/sm_loop.c bash-3.2/lib/glob/sm_loop.c
+--- bash-3.2-p25/lib/glob/sm_loop.c	2006-02-27 23:18:43.000000000 +0100
++++ bash-3.2/lib/glob/sm_loop.c	2007-10-15 20:11:27.000000000 +0200
+@@ -355,7 +355,7 @@ BRACKMATCH (p, test, flags)
+ 		pc = 0;
+ 	      else
+ 		{
+-		  bcopy (p + 1, ccname, (close - p - 1) * sizeof (CHAR));
++		  memmove (ccname, p + 1, (close - p - 1) * sizeof (CHAR));
+ 		  *(ccname + (close - p - 1)) = L('\0');
+ 		  pc = IS_CCLASS (test, (XCHAR *)ccname);
+ 		}
+diff -rdup bash-3.2-p25/lib/sh/oslib.c bash-3.2/lib/sh/oslib.c
+--- bash-3.2-p25/lib/sh/oslib.c	2007-10-15 20:08:58.000000000 +0200
++++ bash-3.2/lib/sh/oslib.c	2007-10-15 20:10:34.000000000 +0200
+@@ -157,36 +157,6 @@ getdtablesize ()
+ }
+ #endif /* !HAVE_GETDTABLESIZE */
+ 
+-#if !defined (HAVE_BCOPY)
+-#  if defined (bcopy)
+-#    undef bcopy
+-#  endif
+-void
+-bcopy (s,d,n)
+-     char *d, *s;
+-     int n;
+-{
+-  FASTCOPY (s, d, n);
+-}
+-#endif /* !HAVE_BCOPY */
+-
+-#if !defined (HAVE_BZERO)
+-#  if defined (bzero)
+-#    undef bzero
+-#  endif
+-void
+-bzero (s, n)
+-     char *s;
+-     int n;
+-{
+-  register int i;
+-  register char *r;
+-
+-  for (i = 0, r = s; i < n; i++)
+-    *r++ = '\0';
+-}
+-#endif
+-
+ #if !defined (HAVE_GETHOSTNAME)
+ #  if defined (HAVE_UNAME)
+ #    include <sys/utsname.h>
