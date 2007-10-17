@@ -5,7 +5,7 @@ diff -rduNp kexec-tools-1.101.orig/configure kexec-tools-1.101/configure
  	i?86 )
  		host_cpu="i386"
  		;;
-+	arm )
++	arm* )
 +		host_cpu="arm"
 +		;;
  	powerpc )
@@ -76,7 +76,7 @@ diff -rduNp kexec-tools-1.101.orig/kexec/arch/arm/kexec-arm.c kexec-tools-1.101/
 +static struct memory_range memory_range[MAX_MEMORY_RANGES];
 +
 +/* Return a sorted list of available memory ranges. */
-+int get_memory_ranges(struct memory_range **range, int *ranges)
++int get_memory_ranges(struct memory_range **range, int *ranges, unsigned long kexec_flags)
 +{
 +	const char iomem[]= "/proc/iomem";
 +	int memory_ranges = 0;
