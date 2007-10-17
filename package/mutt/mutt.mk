@@ -6,7 +6,7 @@
 MUTT_VERSION:=1.5.16
 MUTT_SOURCE:=mutt_$(MUTT_VERSION).orig.tar.gz
 MUTT_PATCH:=mutt_$(MUTT_VERSION)-3.diff.gz
-MUTT_SITE:=ftp://ftp.debian.org/debian/pool/main/m/mutt/
+MUTT_SITE:=http://ftp.debian.org/debian/pool/main/m/mutt/
 MUTT_DIR:=$(BUILD_DIR)/mutt-$(MUTT_VERSION)
 MUTT_CAT:=$(ZCAT)
 MUTT_BINARY:=mutt
@@ -29,6 +29,7 @@ ifneq ($(MUTT_PATCH),)
 		toolchain/patch-kernel.sh $(MUTT_DIR) $(MUTT_DIR)/debian/patches \*.patch; \
 	fi
 endif
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(MUTT_DIR)/.configured: $(MUTT_DIR)/.unpacked
@@ -53,7 +54,7 @@ $(MUTT_DIR)/$(MUTT_BINARY): $(MUTT_DIR)/.configured
 	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(MUTT_DIR)
 
 $(TARGET_DIR)/$(MUTT_TARGET_BINARY): $(MUTT_DIR)/$(MUTT_BINARY)
-	cp -dpf $(MUTT_DIR)/$(MUTT_BINARY) $@
+	$(INSTALL) -D $(MUTT_DIR)/$(MUTT_BINARY) $@
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 mutt: uclibc ncurses $(TARGET_DIR)/$(MUTT_TARGET_BINARY)

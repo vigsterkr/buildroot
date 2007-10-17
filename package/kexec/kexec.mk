@@ -6,7 +6,7 @@
 KEXEC_VERSION:=1.101
 KEXEC_SOURCE:=kexec-tools_$(KEXEC_VERSION)-kdump10.orig.tar.gz
 KEXEC_PATCH:=kexec-tools_$(KEXEC_VERSION)-kdump10-2.diff.gz
-KEXEC_SITE:=ftp://ftp.debian.org/debian/pool/main/k/kexec-tools/
+KEXEC_SITE:=http://ftp.debian.org/debian/pool/main/k/kexec-tools/
 KEXEC_DIR:=$(BUILD_DIR)/kexec-tools-$(KEXEC_VERSION)
 KEXEC_CAT:=$(ZCAT)
 KEXEC_BINARY:=kexec
@@ -40,35 +40,33 @@ ifneq ($(KEXEC_PATCH),)
 	done)
 endif
 	toolchain/patch-kernel.sh $(KEXEC_DIR) package/kexec/ kexec\*.patch
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(KEXEC_DIR)/.configured: $(KEXEC_DIR)/.unpacked
 	(cd $(KEXEC_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/ \
 		$(KEXEC_CONFIG_OPTS) \
 	)
 	touch $@
 
-$(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/sbin/$(KEXEC_BINARY): $(KEXEC_DIR)/.configured
+$(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/$(KEXEC_TARGET_BINARY): $(KEXEC_DIR)/.configured
 	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(KEXEC_DIR)
 	touch -c $@
 
-$(TARGET_DIR)/$(KEXEC_TARGET_BINARY): $(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/sbin/$(KEXEC_BINARY)
-	cp -dpf $(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/sbin/$(KEXEC_BINARY) \
-		$(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/sbin/kdump \
-		$(TARGET_DIR)/sbin/
-	$(STRIPCMD) $(STRIP_STRIP_ALL) $(TARGET_DIR)/sbin/k{exec,dump}
+$(TARGET_DIR)/$(KEXEC_TARGET_BINARY): $(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/$(KEXEC_TARGET_BINARY)
+	$(INSTALL) -D $(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/sbin/$(KEXEC_BINARY) $@
+	$(INSTALL) -D $(KEXEC_DIR)/objdir-$(GNU_TARGET_NAME)/build/sbin/kdump \
+		$(TARGET_DIR)/sbin/kdump
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $(TARGET_DIR)/sbin/kexec \
+		$(TARGET_DIR)/sbin/kdump
 
 kexec: uclibc $(TARGET_DIR)/$(KEXEC_TARGET_BINARY)
 
 kexec-clean:
 	-$(MAKE) -C $(KEXEC_DIR) clean
-	rm -f $(TARGET_DIR)/sbin/k{exec,dump}
+	rm -f $(TARGET_DIR)/sbin/kexec $(TARGET_DIR)/sbin/kdump
 
 kexec-dirclean:
 	rm -rf $(KEXEC_DIR)

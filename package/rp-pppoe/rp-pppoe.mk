@@ -6,7 +6,7 @@
 RP_PPPOE_VERSION:=3.8
 RP_PPPOE_SOURCE:=rp-pppoe_$(RP_PPPOE_VERSION).orig.tar.gz
 RP_PPPOE_PATCH:=rp-pppoe_$(RP_PPPOE_VERSION)-3.diff.gz
-RP_PPPOE_SITE:=ftp://ftp.debian.org/debian/pool/main/r/rp-pppoe
+RP_PPPOE_SITE:=http://ftp.debian.org/debian/pool/main/r/rp-pppoe
 RP_PPPOE_TOPDIR:=$(BUILD_DIR)/rp-pppoe-$(RP_PPPOE_VERSION)
 RP_PPPOE_DIR:=$(BUILD_DIR)/rp-pppoe-$(RP_PPPOE_VERSION)/src
 RP_PPPOE_CAT:=$(ZCAT)
@@ -48,10 +48,9 @@ $(RP_PPPOE_DIR)/$(RP_PPPOE_BINARY): $(RP_PPPOE_TOPDIR)/.configured
 	$(MAKE) -C $(RP_PPPOE_DIR)
 
 $(TARGET_DIR)/$(RP_PPPOE_TARGET_BINARY): $(RP_PPPOE_DIR)/$(RP_PPPOE_BINARY)
-	cp -dpf $(RP_PPPOE_DIR)/$(RP_PPPOE_BINARY) $@
+	$(INSTALL) -D $(RP_PPPOE_DIR)/$(RP_PPPOE_BINARY) $@
 ifeq ($(BR2_HAVE_MANPAGES),y)
-	mkdir -p $(TARGET_DIR)/usr/share/man/man8
-	$(INSTALL) -m 644 $(RP_PPPOE_TOPDIR)/man/pppoe.8 $(TARGET_DIR)/usr/share/man/man8/pppoe.8
+	$(INSTALL) -D -m 644 $(RP_PPPOE_TOPDIR)/man/pppoe.8 $(TARGET_DIR)/usr/share/man/man8/pppoe.8
 endif
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 

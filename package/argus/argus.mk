@@ -6,7 +6,7 @@
 ARGUS_VERSION:=3.0.0.rc.34
 ARGUS_SOURCE:=argus_$(ARGUS_VERSION).orig.tar.gz
 ARGUS_PATCH:=argus_$(ARGUS_VERSION)-1.diff.gz
-ARGUS_SITE:=ftp://ftp.debian.org/debian/pool/main/a/argus/
+ARGUS_SITE:=http://ftp.debian.org/debian/pool/main/a/argus/
 ARGUS_DIR:=$(BUILD_DIR)/argus-$(ARGUS_VERSION)
 ARGUS_CAT:=$(ZCAT)
 ARGUS_BINARY:=bin/argus
@@ -29,6 +29,7 @@ ifneq ($(ARGUS_PATCH),)
 		toolchain/patch-kernel.sh $(ARGUS_DIR) $(ARGUS_DIR)/debian/patches \*.patch; \
 	fi
 endif
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(ARGUS_DIR)/.configured: $(ARGUS_DIR)/.unpacked
@@ -48,7 +49,7 @@ $(ARGUS_DIR)/$(ARGUS_BINARY): $(ARGUS_DIR)/.configured
 	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(ARGUS_DIR)
 
 $(TARGET_DIR)/$(ARGUS_TARGET_BINARY): $(ARGUS_DIR)/$(ARGUS_BINARY)
-	cp -dpf $(ARGUS_DIR)/$(ARGUS_BINARY) $@
+	$(INSTALL) -D $(ARGUS_DIR)/$(ARGUS_BINARY) $@
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 argus: uclibc libpcap $(TARGET_DIR)/$(ARGUS_TARGET_BINARY)
