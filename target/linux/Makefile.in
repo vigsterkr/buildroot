@@ -155,6 +155,14 @@ ifeq ($(BR2_ARM_EABI),y)
 else
 	echo "# CONFIG_AEABI is not set" >> $(LINUX26_DIR)/.config
 endif
+	$(SED) '/CONFIG_CPU_BIG_ENDIAN/d' \
+		-e '/CONFIG_CPU_LITTLE_ENDIAN/d' $(LINUX26_DIR)/.config
+ifeq ($(BR2_mips),y)
+	echo "CONFIG_CPU_BIG_ENDIAN=y" >> $(LINUX26_DIR)/.config
+endif
+ifeq ($(BR2_mipsel),y)
+	echo "CONFIG_CPU_LITTLE_ENDIAN=y" >> $(LINUX26_DIR)/.config
+endif
 	$(SED) '/CONFIG_IPV6=y/d' $(LINUX26_DIR)/.config
 ifeq ($(BR2_INET_IPV6),y)
 	echo "CONFIG_IPV6=y" >> $(LINUX26_DIR)/.config
