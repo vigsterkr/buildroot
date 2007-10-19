@@ -18,11 +18,11 @@ AVAHI_CAT:=$(ZCAT)
 
 AVAHI_TARGETS:=
 
-ifeq ($(strip $(BR2_PACKAGE_AVAHI_AUTOIPD)),y)
+ifeq ($(BR2_PACKAGE_AVAHI_AUTOIPD),y)
 AVAHI_TARGETS+=$(TARGET_DIR)/usr/sbin/avahi-autoipd
 endif
 
-ifeq ($(strip $(BR2_PACKAGE_AVAHI_DAEMON)),y)
+ifeq ($(BR2_PACKAGE_AVAHI_DAEMON),y)
 AVAHI_TARGETS+=$(TARGET_DIR)/usr/sbin/avahi-daemon
 AVAHI_DISABLE_EXPAT:=
 # depend on the exact library file instead of expat so avahi isn't always
@@ -198,6 +198,6 @@ avahi-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_AVAHI)),y)
+ifeq ($(BR2_PACKAGE_AVAHI),y)
 TARGETS+=avahi
 endif

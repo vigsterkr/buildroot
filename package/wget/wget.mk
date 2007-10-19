@@ -54,6 +54,6 @@ wget-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_WGET)),y)
+ifeq ($(BR2_PACKAGE_WGET),y)
 TARGETS+=wget
 endif

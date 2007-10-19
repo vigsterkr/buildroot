@@ -60,6 +60,6 @@ lzo-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LZO)),y)
+ifeq ($(BR2_PACKAGE_LZO),y)
 TARGETS+=lzo
 endif

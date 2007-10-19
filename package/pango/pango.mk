@@ -164,6 +164,6 @@ pango-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_PANGO)),y)
+ifeq ($(BR2_PACKAGE_PANGO),y)
 TARGETS+=pango
 endif

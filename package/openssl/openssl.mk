@@ -107,9 +107,9 @@ openssl-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_OPENSSL)),y)
+ifeq ($(BR2_PACKAGE_OPENSSL),y)
 TARGETS+=openssl
 endif
-ifeq ($(strip $(BR2_PACKAGE_OPENSSL_TARGET_HEADERS)),y)
+ifeq ($(BR2_PACKAGE_OPENSSL_TARGET_HEADERS),y)
 TARGETS+=openssl-headers
 endif

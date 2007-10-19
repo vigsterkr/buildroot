@@ -63,6 +63,6 @@ tcl-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_TCL)),y)
+ifeq ($(BR2_PACKAGE_TCL),y)
 TARGETS+=tcl
 endif

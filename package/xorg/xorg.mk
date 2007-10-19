@@ -5,7 +5,7 @@
 #############################################################
 
 ifneq ($(strip $(BR2_PACKAGE_TINYX)),y)
-ifeq ($(strip $(BR2_PACKAGE_XORG)),y)
+ifeq ($(BR2_PACKAGE_XORG),y)
 
 XORG_APPS:=xlsfonts/xlsfonts xmodmap/xmodmap xinit/startx \
 	xauth/xauth xinit/xinit xsetroot/xsetroot xset/xset \

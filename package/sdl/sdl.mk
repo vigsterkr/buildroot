@@ -81,6 +81,6 @@ sdl-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_SDL)),y)
+ifeq ($(BR2_PACKAGE_SDL),y)
 TARGETS+=sdl
 endif

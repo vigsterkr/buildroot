@@ -96,6 +96,6 @@ bash-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_BASH)),y)
+ifeq ($(BR2_PACKAGE_BASH),y)
 TARGETS+=bash
 endif

@@ -23,8 +23,8 @@
 
 
 ifneq ($(strip $(BR2_PACKAGE_XORG)),y)
-ifeq ($(strip $(BR2_PACKAGE_TINYX)),y)
-ifeq ($(strip $(BR2_PACKAGE_TINYX_OLD)),y)
+ifeq ($(BR2_PACKAGE_TINYX),y)
+ifeq ($(BR2_PACKAGE_TINYX_OLD),y)
 #############################################################
 # You may want to change these.
 #############################################################

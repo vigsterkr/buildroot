@@ -79,6 +79,6 @@ newt-dirclean: slang-dirclean
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_NEWT)),y)
+ifeq ($(BR2_PACKAGE_NEWT),y)
 TARGETS+=newt
 endif

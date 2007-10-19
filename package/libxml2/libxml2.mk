@@ -102,9 +102,9 @@ libxml2-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIBXML2)),y)
+ifeq ($(BR2_PACKAGE_LIBXML2),y)
 TARGETS+=libxml2
 endif
-ifeq ($(strip $(BR2_PACKAGE_LIBXML2_TARGET_HEADERS)),y)
+ifeq ($(BR2_PACKAGE_LIBXML2_TARGET_HEADERS),y)
 TARGETS+=libxml2-target-headers
 endif

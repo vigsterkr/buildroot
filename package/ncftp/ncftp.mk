@@ -10,7 +10,7 @@ NCFTP_DIR:=$(BUILD_DIR)/ncftp-$(NCFTP_VERSION)
 
 NCFTP_TARGET_BINS:=ncftp
 
-ifeq ($(strip $(BR2_PACKAGE_NCFTP_UTILS)),y)
+ifeq ($(BR2_PACKAGE_NCFTP_UTILS),y)
 NCFTP_TARGET_BINS+=ncftpbatch ncftpbookmarks ncftpget ncftpls ncftpput
 endif
 
@@ -57,6 +57,6 @@ ncftp-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_NCFTP)),y)
+ifeq ($(BR2_PACKAGE_NCFTP),y)
 TARGETS+=ncftp
 endif

@@ -91,6 +91,6 @@ libdaemon-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIBDAEMON)),y)
+ifeq ($(BR2_PACKAGE_LIBDAEMON),y)
 TARGETS+=libdaemon
 endif

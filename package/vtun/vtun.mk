@@ -90,6 +90,6 @@ vtun-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_VTUN)),y)
+ifeq ($(BR2_PACKAGE_VTUN),y)
 TARGETS+=vtun
 endif

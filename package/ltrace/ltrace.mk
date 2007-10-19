@@ -78,6 +78,6 @@ ltrace-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LTRACE)),y)
+ifeq ($(BR2_PACKAGE_LTRACE),y)
 TARGETS+=ltrace
 endif

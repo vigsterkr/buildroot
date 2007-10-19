@@ -78,6 +78,6 @@ sqlite-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_SQLITE)),y)
+ifeq ($(BR2_PACKAGE_SQLITE),y)
 TARGETS+=sqlite
 endif

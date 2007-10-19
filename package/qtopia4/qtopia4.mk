@@ -342,6 +342,6 @@ qtopia4-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_QTOPIA4)),y)
+ifeq ($(BR2_PACKAGE_QTOPIA4),y)
 TARGETS+=qtopia4
 endif

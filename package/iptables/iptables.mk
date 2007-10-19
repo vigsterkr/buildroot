@@ -61,6 +61,6 @@ iptables-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_IPTABLES)),y)
+ifeq ($(BR2_PACKAGE_IPTABLES),y)
 TARGETS+=iptables
 endif

@@ -140,6 +140,6 @@ atk-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_ATK)),y)
+ifeq ($(BR2_PACKAGE_ATK),y)
 TARGETS+=atk
 endif

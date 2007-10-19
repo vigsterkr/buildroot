@@ -78,6 +78,6 @@ grep-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_GREP)),y)
+ifeq ($(BR2_PACKAGE_GREP),y)
 TARGETS+=grep
 endif

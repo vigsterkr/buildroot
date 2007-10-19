@@ -82,6 +82,6 @@ openssh-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_OPENSSH)),y)
+ifeq ($(BR2_PACKAGE_OPENSSH),y)
 TARGETS+=openssh
 endif

@@ -59,6 +59,6 @@ aumix-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_AUMIX)),y)
+ifeq ($(BR2_PACKAGE_AUMIX),y)
 TARGETS+=aumix
 endif

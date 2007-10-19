@@ -89,6 +89,6 @@ jpeg-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_JPEG)),y)
+ifeq ($(BR2_PACKAGE_JPEG),y)
 TARGETS+=jpeg
 endif

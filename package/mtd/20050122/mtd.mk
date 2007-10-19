@@ -3,7 +3,7 @@
 # mtd provides jffs2 utilities
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_MTD_SNAPSHOT)),y)
+ifeq ($(BR2_PACKAGE_MTD_SNAPSHOT),y)
 # Be aware that this changes daily....
 
 MTD_DL_SOURCE:=mtd-snapshot-$(DATE).tar.bz2
@@ -31,7 +31,7 @@ endif
 #############################################################
 MKFS_JFFS2 := $(MTD_HOST_DIR)/util/mkfs.jffs2
 
-ifeq ($(strip $(BR2_PACKAGE_MTD_SNAPSHOT)),y)
+ifeq ($(BR2_PACKAGE_MTD_SNAPSHOT),y)
 $(DL_DIR)/$(MTD_SOURCE):
 	$(WGET) -P $(DL_DIR) $(MTD_SITE)/$(MTD_DL_SOURCE)
 	mv $(DL_DIR)/$(MTD_DL_SOURCE) $(DL_DIR)/$(MTD_SOURCE)
@@ -76,7 +76,7 @@ mtd-host-dirclean:
 #############################################################
 $(MTD_DIR)/.unpacked: $(DL_DIR)/$(MTD_SOURCE)
 	$(MTD_CAT) $(DL_DIR)/$(MTD_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-ifeq ($(strip $(BR2_PACKAGE_MTD_SNAPSHOT)),y)
+ifeq ($(BR2_PACKAGE_MTD_SNAPSHOT),y)
 	mv $(BUILD_DIR)/$(shell tar tjf $(DL_DIR)/$(MTD_SOURCE) \
 		| head -n 1 | xargs basename) $(MTD_DIR)
 	touch $@
@@ -158,6 +158,6 @@ mtd-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_MTD)),y)
+ifeq ($(BR2_PACKAGE_MTD),y)
 TARGETS+=mtd
 endif

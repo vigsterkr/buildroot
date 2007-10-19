@@ -42,6 +42,6 @@ fbset-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_FBSET)),y)
+ifeq ($(BR2_PACKAGE_FBSET),y)
 TARGETS+=fbset
 endif

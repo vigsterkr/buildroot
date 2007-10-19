@@ -80,6 +80,6 @@ gzip-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_GZIP)),y)
+ifeq ($(BR2_PACKAGE_GZIP),y)
 TARGETS+=gzip
 endif

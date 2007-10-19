@@ -84,6 +84,6 @@ ntp-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_NTP)),y)
+ifeq ($(BR2_PACKAGE_NTP),y)
 TARGETS+=ntp
 endif

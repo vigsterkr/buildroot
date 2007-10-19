@@ -150,6 +150,6 @@ libglib2-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIBGLIB2)),y)
+ifeq ($(BR2_PACKAGE_LIBGLIB2),y)
 TARGETS+=libglib2
 endif

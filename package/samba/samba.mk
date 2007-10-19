@@ -125,6 +125,6 @@ samba-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_SAMBA)),y)
+ifeq ($(BR2_PACKAGE_SAMBA),y)
 TARGETS+=samba
 endif

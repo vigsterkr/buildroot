@@ -69,6 +69,6 @@ iperf-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_IPERF)),y)
+ifeq ($(BR2_PACKAGE_IPERF),y)
 TARGETS+=iperf
 endif

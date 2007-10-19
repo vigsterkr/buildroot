@@ -168,6 +168,6 @@ libgtk2-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIBGTK2)),y)
+ifeq ($(BR2_PACKAGE_LIBGTK2),y)
 TARGETS+=libgtk2
 endif

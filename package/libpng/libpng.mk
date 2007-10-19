@@ -89,6 +89,6 @@ libpng-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIBPNG)),y)
+ifeq ($(BR2_PACKAGE_LIBPNG),y)
 TARGETS+=libpng
 endif

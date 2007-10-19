@@ -142,6 +142,6 @@ cairo-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_CAIRO)),y)
+ifeq ($(BR2_PACKAGE_CAIRO),y)
 TARGETS+=cairo
 endif

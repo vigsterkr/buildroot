@@ -60,6 +60,6 @@ pciutils-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_PCIUTILS)),y)
+ifeq ($(BR2_PACKAGE_PCIUTILS),y)
 TARGETS+=pciutils
 endif

@@ -90,6 +90,6 @@ libglib12-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIBGLIB12)),y)
+ifeq ($(BR2_PACKAGE_LIBGLIB12),y)
 TARGETS+=libglib12
 endif

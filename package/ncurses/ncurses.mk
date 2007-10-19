@@ -156,9 +156,9 @@ ncurses-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_NCURSES)),y)
+ifeq ($(BR2_PACKAGE_NCURSES),y)
 TARGETS+=ncurses
 endif
-ifeq ($(strip $(BR2_PACKAGE_NCURSES_TARGET_HEADERS)),y)
+ifeq ($(BR2_PACKAGE_NCURSES_TARGET_HEADERS),y)
 TARGETS+=ncurses-headers
 endif

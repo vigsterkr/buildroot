@@ -80,6 +80,6 @@ tiff-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_TIFF)),y)
+ifeq ($(BR2_PACKAGE_TIFF),y)
 TARGETS+=tiff
 endif

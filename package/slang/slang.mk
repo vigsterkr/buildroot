@@ -52,6 +52,6 @@ slang-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_SLANG)),y)
+ifeq ($(BR2_PACKAGE_SLANG),y)
 TARGETS+=slang
 endif

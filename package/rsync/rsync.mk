@@ -53,6 +53,6 @@ rsync-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_RSYNC)),y)
+ifeq ($(BR2_PACKAGE_RSYNC),y)
 TARGETS+=rsync
 endif

@@ -47,6 +47,6 @@ ethtool-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_ETHTOOL)),y)
+ifeq ($(BR2_PACKAGE_ETHTOOL),y)
 TARGETS+=ethtool
 endif

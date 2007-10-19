@@ -115,6 +115,6 @@ host-freetype: $(FREETYPE_HOST_DIR)/lib/libfreetype.so
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_FREETYPE)),y)
+ifeq ($(BR2_PACKAGE_FREETYPE),y)
 TARGETS+=freetype
 endif

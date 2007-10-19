@@ -146,6 +146,6 @@ host-libtool-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIBTOOL)),y)
+ifeq ($(BR2_PACKAGE_LIBTOOL),y)
 TARGETS+=libtool
 endif

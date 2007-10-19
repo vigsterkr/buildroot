@@ -81,9 +81,9 @@ readline-target: $(TARGET_DIR)/$(READLINE_TARGET_SHARED_BINARY)
 readline-target-clean:
 	$(MAKE1) DESTDIR=$(TARGET_DIR) -C $(READLINE_DIR) uninstall
 
-ifeq ($(strip $(BR2_READLINE)),y)
+ifeq ($(BR2_READLINE),y)
 TARGETS+=readline
 endif
-ifeq ($(strip $(BR2_PACKAGE_READLINE_TARGET)),y)
+ifeq ($(BR2_PACKAGE_READLINE_TARGET),y)
 TARGETS+=readline-target
 endif

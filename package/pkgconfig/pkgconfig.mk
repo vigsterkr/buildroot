@@ -66,6 +66,6 @@ pkgconfig-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_PKGCONFIG)),y)
+ifeq ($(BR2_PACKAGE_PKGCONFIG),y)
 TARGETS+=pkgconfig
 endif

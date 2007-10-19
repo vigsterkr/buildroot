@@ -153,6 +153,6 @@ imagemagick-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_IMAGEMAGICK)),y)
+ifeq ($(BR2_PACKAGE_IMAGEMAGICK),y)
 TARGETS+=imagemagick
 endif

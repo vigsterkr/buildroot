@@ -59,6 +59,6 @@ tn5250-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_TN5250)),y)
+ifeq ($(BR2_PACKAGE_TN5250),y)
 TARGETS+=tn5250
 endif

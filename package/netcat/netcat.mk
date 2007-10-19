@@ -53,6 +53,6 @@ netcat-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_NETCAT)),y)
+ifeq ($(BR2_PACKAGE_NETCAT),y)
 TARGETS+=netcat
 endif

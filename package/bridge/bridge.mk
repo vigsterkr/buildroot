@@ -66,6 +66,6 @@ bridge-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_BRIDGE)),y)
+ifeq ($(BR2_PACKAGE_BRIDGE),y)
 TARGETS+=bridge
 endif

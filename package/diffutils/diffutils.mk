@@ -129,6 +129,6 @@ diffutils-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_DIFFUTILS)),y)
+ifeq ($(BR2_PACKAGE_DIFFUTILS),y)
 TARGETS+=diffutils
 endif

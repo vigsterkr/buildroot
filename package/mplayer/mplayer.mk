@@ -75,6 +75,6 @@ mplayer-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_MPLAYER)),y)
+ifeq ($(BR2_PACKAGE_MPLAYER),y)
 TARGETS+=mplayer
 endif

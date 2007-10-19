@@ -51,6 +51,6 @@ which-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_WHICH)),y)
+ifeq ($(BR2_PACKAGE_WHICH),y)
 TARGETS+=which
 endif

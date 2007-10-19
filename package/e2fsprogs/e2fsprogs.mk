@@ -105,6 +105,6 @@ e2fsprogs-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_E2FSPROGS)),y)
+ifeq ($(BR2_PACKAGE_E2FSPROGS),y)
 TARGETS+=e2fsprogs
 endif

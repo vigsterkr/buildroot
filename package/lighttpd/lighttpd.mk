@@ -36,7 +36,7 @@ endif
 	$(SED) 's/-lfs/-largefile/g;s/_lfs/_largefile/g' $(LIGHTTPD_DIR)/configure
 	touch $@
 
-ifeq ($(strip $(BR2_PACKAGE_LIGHTTPD_OPENSSL)),y)
+ifeq ($(BR2_PACKAGE_LIGHTTPD_OPENSSL),y)
 LIGHTTPD_OPENSSL:=--with-openssl
 else
 LIGHTTPD_OPENSSL:=--without-openssl
@@ -81,7 +81,7 @@ endif
 	$(INSTALL) -m 0755 -D package/lighttpd/rc.lighttpd \
 		$(TARGET_DIR)/etc/init.d/S99lighttpd
 
-ifeq ($(strip $(BR2_PACKAGE_LIGHTTPD_OPENSSL)),y)
+ifeq ($(BR2_PACKAGE_LIGHTTPD_OPENSSL),y)
 lighttpd: uclibc openssl $(TARGET_DIR)/$(LIGHTTPD_TARGET_BINARY)
 else
 lighttpd: uclibc $(TARGET_DIR)/$(LIGHTTPD_TARGET_BINARY)
@@ -103,6 +103,6 @@ lighttpd-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_LIGHTTPD)),y)
+ifeq ($(BR2_PACKAGE_LIGHTTPD),y)
 TARGETS+=lighttpd
 endif

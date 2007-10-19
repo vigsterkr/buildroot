@@ -89,6 +89,6 @@ alsa-utils-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_ALSA_UTILS)),y)
+ifeq ($(BR2_PACKAGE_ALSA_UTILS),y)
 TARGETS+=alsa-utils
 endif

@@ -79,6 +79,6 @@ proftpd-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_PROFTPD)),y)
+ifeq ($(BR2_PACKAGE_PROFTPD),y)
 TARGETS+=proftpd
 endif

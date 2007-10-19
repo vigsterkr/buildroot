@@ -105,7 +105,7 @@ bind-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_BIND)),y)
+ifeq ($(BR2_PACKAGE_BIND),y)
 TARGETS+=bind
 endif
 

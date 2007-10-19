@@ -61,6 +61,6 @@ l2tp-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_L2TP)),y)
+ifeq ($(BR2_PACKAGE_L2TP),y)
 TARGETS+=l2tp
 endif

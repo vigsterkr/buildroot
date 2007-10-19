@@ -154,8 +154,8 @@ AUTO_CONFIGURE_TARGET= \
 	$(TARGET_CONFIGURE_ARGS) \
 	$(TARGET_CONFIGURE_ENV) \
 	$(if $(THIS_SRCDIR),$(THIS_SRCDIR)/,./)configure \
-	--target=$(GNU_TARGET_NAME) \
-	--host=$(GNU_TARGET_NAME) \
+	--target=$(REAL_GNU_TARGET_NAME) \
+	--host=$(REAL_GNU_TARGET_NAME) \
 	--build=$(GNU_HOST_NAME)
 
 TARGET_CONFIGURE_OPTS=PATH=$(TARGET_PATH) \
@@ -298,16 +298,16 @@ TARGET_CONFIGURE_ARGS= \
 # X Windowing system
 
 XSERVER:=
-ifeq ($(strip $(BR2_PACKAGE_TINYX)),y)
+ifeq ($(BR2_PACKAGE_TINYX),y)
 XSERVER+=tinyx
 endif
-ifeq ($(strip $(BR2_PACKAGE_XORG)),y)
+ifeq ($(BR2_PACKAGE_XORG),y)
 XSERVER+=xorg
 endif
-ifeq ($(strip $(BR2_PACKAGE_XORG7)),y)
+ifeq ($(BR2_PACKAGE_XORG7),y)
 XSERVER+=xserver_xorg-server
 endif
-ifeq ($(strip $(BR2_PACKAGE_XGGI)),y)
+ifeq ($(BR2_PACKAGE_XGGI),y)
 XSERVER+=xggi
 endif
 

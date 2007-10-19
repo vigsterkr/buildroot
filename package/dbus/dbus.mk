@@ -94,6 +94,6 @@ dbus-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_DBUS)),y)
+ifeq ($(BR2_PACKAGE_DBUS),y)
 TARGETS+=dbus
 endif
