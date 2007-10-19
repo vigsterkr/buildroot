@@ -8,10 +8,11 @@
 # which is available in 28-pre3 and later...
 # Jean II
 # v28.pre3 -> earliest possible
-WIRELESS_TOOLS_VERSION:=28
+WIRELESS_TOOLS_VERSION:=29
 WIRELESS_TOOLS_SUBVER:=
 
-WIRELESS_TOOLS_SOURCE_URL:=http://pcmcia-cs.sourceforge.net/ftp/contrib
+#WIRELESS_TOOLS_SOURCE_URL:=http://pcmcia-cs.sourceforge.net/ftp/contrib
+WIRELESS_TOOLS_SOURCE_URL:=http://www.hpl.hp.com/personal/Jean_Tourrilhes/Linux/
 WIRELESS_TOOLS_SOURCE:=wireless_tools.$(WIRELESS_TOOLS_VERSION)$(WIRELESS_TOOLS_SUBVER).tar.gz
 WIRELESS_TOOLS_BUILD_DIR=$(BUILD_DIR)/wireless_tools.$(WIRELESS_TOOLS_VERSION)
 
@@ -20,11 +21,11 @@ $(DL_DIR)/$(WIRELESS_TOOLS_SOURCE):
 
 $(WIRELESS_TOOLS_BUILD_DIR)/.unpacked: $(DL_DIR)/$(WIRELESS_TOOLS_SOURCE)
 	$(ZCAT) $(DL_DIR)/$(WIRELESS_TOOLS_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	sed -i -e s:'strip':'$(STRIPCMD)':g $(WIRELESS_TOOLS_BUILD_DIR)/Makefile
-	touch $(WIRELESS_TOOLS_BUILD_DIR)/.unpacked
+	$(SED) s:'strip':'$(STRIPCMD)':g $(WIRELESS_TOOLS_BUILD_DIR)/Makefile
+	touch $@
 
 $(WIRELESS_TOOLS_BUILD_DIR)/.configured: $(WIRELESS_TOOLS_BUILD_DIR)/.unpacked
-	touch $(WIRELESS_TOOLS_BUILD_DIR)/.configured
+	touch $@
 
 $(WIRELESS_TOOLS_BUILD_DIR)/iwmulticall: $(WIRELESS_TOOLS_BUILD_DIR)/.configured
 	$(MAKE) -C $(WIRELESS_TOOLS_BUILD_DIR) \
@@ -36,6 +37,7 @@ $(TARGET_DIR)/sbin/iwconfig: $(WIRELESS_TOOLS_BUILD_DIR)/iwmulticall
 		PREFIX="$(TARGET_DIR)" \
 		CC=$(TARGET_CC) CFLAGS="$(TARGET_CFLAGS)" \
 		install-iwmulticall
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 wireless-tools: $(TARGET_DIR)/sbin/iwconfig
 
@@ -44,6 +46,7 @@ wireless-tools-source: $(DL_DIR)/$(WIRELESS_TOOLS_SOURCE)
 wireless-tools-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(WIRELESS_TOOLS_BUILD_DIR) uninstall
 	-$(MAKE) -C $(WIRELESS_TOOLS_BUILD_DIR) clean
+	rm -f $(TARGET_DIR)/sbin/iwconfig
 
 wireless-tools-dirclean:
 	rm -rf $(WIRELESS_TOOLS_BUILD_DIR)
@@ -52,6 +55,6 @@ wireless-tools-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_PACKAGE_WIRELESS_TOOLS)),y)
+ifeq ($(BR2_PACKAGE_WIRELESS_TOOLS),y)
 TARGETS+=wireless-tools
 endif
