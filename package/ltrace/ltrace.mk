@@ -36,6 +36,7 @@ endif
 	toolchain/patch-kernel.sh $(LTRACE_DIR) package/ltrace ltrace\*.patch
 	$(CONFIG_UPDATE) $(@D)
 	chmod +x $(LTRACE_DIR)/configure
+	ln -sf linux-gnu $(LTRACE_DIR)/sysdeps/linux-uclibc
 	touch $@
 
 $(LTRACE_DIR)/.configured: $(LTRACE_DIR)/.patched
