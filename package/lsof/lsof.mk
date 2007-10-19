@@ -23,19 +23,20 @@ endif
 $(DL_DIR)/$(LSOF_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LSOF_SITE)/$(LSOF_SOURCE)
 
-lsof-source: $(DL_DIR)/$(LSOF_SOURCE)
-
-lsof-unpacked: $(LSOF_DIR)/.unpacked
-
 $(LSOF_DIR)/.unpacked: $(DL_DIR)/$(LSOF_SOURCE)
 	$(LSOF_CAT) $(DL_DIR)/$(LSOF_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	(cd $(LSOF_DIR);tar xf lsof_$(LSOF_VERSION)_src.tar;rm -f lsof_$(LSOF_VERSION)_src.tar)
 	toolchain/patch-kernel.sh $(LSOF_DIR) package/lsof/ \*.patch
-	touch $(LSOF_DIR)/.unpacked
+	touch $@
 
 $(LSOF_DIR)/.configured: $(LSOF_DIR)/.unpacked
-	(cd $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src; echo n | $(TARGET_CONFIGURE_OPTS) DEBUG="$(TARGET_CFLAGS) $(BR2_LSOF_CFLAGS)" ./Configure linux)
-	touch $(LSOF_DIR)/.configured
+	(cd $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src; \
+	 echo n | $(TARGET_CONFIGURE_OPTS) \
+	 	DEBUG="$(TARGET_CFLAGS) $(BR2_LSOF_CFLAGS)" \
+		LSOF_CC="$(TARGET_CC)" \
+		./Configure linux \
+	)
+	touch $@
 
 $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src/$(LSOF_BINARY): $(LSOF_DIR)/.configured
 ifeq ($(UCLIBC_HAS_WCHAR),)
@@ -48,14 +49,18 @@ endif
 	$(MAKE) $(TARGET_CONFIGURE_OPTS) DEBUG="$(TARGET_CFLAGS) $(BR2_LSOF_CFLAGS)" -C $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src
 
 $(TARGET_DIR)/$(LSOF_TARGET_BINARY): $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src/$(LSOF_BINARY)
-	cp $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src/$(LSOF_BINARY) $@
-	$(STRIPCMD) $@
+	$(INSTALL) -D -m 0755 $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src/$(LSOF_BINARY) $@
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 lsof: uclibc $(TARGET_DIR)/$(LSOF_TARGET_BINARY)
 
+lsof-source: $(DL_DIR)/$(LSOF_SOURCE)
+
+lsof-unpacked: $(LSOF_DIR)/.unpacked
+
 lsof-clean:
-	-rm -f $(TARGET_DIR)/$(LSOF_TARGET_BINARY)
 	-$(MAKE) -C $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src clean
+	-rm -f $(TARGET_DIR)/$(LSOF_TARGET_BINARY)
 
 lsof-dirclean:
 	rm -rf $(LSOF_DIR)
