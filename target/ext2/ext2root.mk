@@ -42,7 +42,7 @@ genext2fs: $(GENEXT2_DIR)/genext2fs
 
 EXT2_OPTS :=
 
-ifeq ($(strip $(BR2_TARGET_ROOTFS_EXT2_SQUASH)),y)
+ifeq ($(BR2_TARGET_ROOTFS_EXT2_SQUASH),y)
 EXT2_OPTS += -U
 endif
 
@@ -155,6 +155,6 @@ ext2root-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_TARGET_ROOTFS_EXT2)),y)
+ifeq ($(BR2_TARGET_ROOTFS_EXT2),y)
 TARGETS+=ext2root
 endif

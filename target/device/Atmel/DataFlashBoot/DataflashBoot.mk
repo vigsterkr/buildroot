@@ -43,6 +43,6 @@ endif
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_TARGET_DATAFLASHBOOT)),y)
+ifeq ($(BR2_TARGET_DATAFLASHBOOT),y)
 TARGETS+=dataflash
 endif

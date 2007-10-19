@@ -72,6 +72,6 @@ tarroot-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_TARGET_ROOTFS_TAR)),y)
+ifeq ($(BR2_TARGET_ROOTFS_TAR),y)
 TARGETS+=tarroot
 endif

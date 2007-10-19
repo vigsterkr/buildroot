@@ -6,7 +6,7 @@
 
 JFFS2_OPTS := -e $(strip $(BR2_TARGET_ROOTFS_JFFS2_EBSIZE))
 
-ifeq ($(strip $(BR2_TARGET_ROOTFS_JFFS2_PAD)),y)
+ifeq ($(BR2_TARGET_ROOTFS_JFFS2_PAD),y)
 ifneq ($(strip $(BR2_TARGET_ROOTFS_JFFS2_PADSIZE)),0x0)
 JFFS2_OPTS += --pad=$(strip $(BR2_TARGET_ROOTFS_JFFS2_PADSIZE))
 else
@@ -102,6 +102,6 @@ jffs2root-dirclean: mtd-host-dirclean
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(strip $(BR2_TARGET_ROOTFS_JFFS2)),y)
+ifeq ($(BR2_TARGET_ROOTFS_JFFS2),y)
 TARGETS+=jffs2root
 endif
