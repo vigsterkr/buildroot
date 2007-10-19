@@ -304,10 +304,10 @@ source "package/libungif/Config.in"
 source "package/sdl/Config.in"
 source "package/tiff/Config.in"
 
-comment "busybox graphic applications" 
-comment "--> (May be broken in busybox)"
+if !BR2_PACKAGE_BUSYBOX_HIDE_OTHERS
 source "package/fbv/Config.in"
 source "package/fbset/Config.in"
+endif
 
 comment "other GUIs"
 source "package/qte/Config.in"
