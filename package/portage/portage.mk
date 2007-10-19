@@ -76,44 +76,39 @@ $(PORTAGE_DIR)/.compiled: $(PORTAGE_DIR)/.patched
 $(SANDBOX_DIR)/.compiled: $(SANDBOX_DIR)/.unpacked
 	touch $@
 
-newins=install -D
-doins=install
-dodir=install -d
-doexe=install -D -m 755
-dosym=ln -sf
 $(TARGET_DIR)/$(PORTAGE_TARGET_BINARY): $(PORTAGE_DIR)/.compiled
 	(cd $(PORTAGE_DIR)/cnf; \
-		$(newins) make.globals $(TARGET_DIR)/etc/make.globals; \
-		$(newins) make.conf $(TARGET_DIR)/etc/make.conf; \
+		$(INSTALL) -D make.globals $(TARGET_DIR)/etc/make.globals; \
+		$(INSTALL) -D make.conf $(TARGET_DIR)/etc/make.conf; \
 		cp $(TARGET_DIR)/etc/make.conf $(TARGET_DIR)/etc/make.conf.$(PORTAGE_ARCH); \
 		patch $(TARGET_DIR)/etc/make.conf.$(PORTAGE_ARCH) $(PORTAGE_DIR)/cnf/make.conf.$(PORTAGE_ARCH).diff; \
-		$(doins) etc-update.conf dispatch-conf.conf $(TARGET_DIR)/etc; \
+		$(INSTALL) etc-update.conf dispatch-conf.conf $(TARGET_DIR)/etc; \
 	)
-# $(newins) make.globals.$(PORTAGE_ARCH) $(TARGET_DIR)/etc/make.globals; \
-# $(newins) make.conf.$(PORTAGE_ARCH) $(TARGET_DIR)/etc/make.conf; \
+# $(INSTALL) -D make.globals.$(PORTAGE_ARCH) $(TARGET_DIR)/etc/make.globals; \
+# $(INSTALL) -D make.conf.$(PORTAGE_ARCH) $(TARGET_DIR)/etc/make.conf; \
 
-	$(dodir) $(PORTAGE_TARGET_DIR)/pym
-	$(doins) $(PORTAGE_DIR)/pym/*.py $(PORTAGE_TARGET_DIR)/pym/
+	$(INSTALL) -d $(PORTAGE_TARGET_DIR)/pym
+	$(INSTALL) $(PORTAGE_DIR)/pym/*.py $(PORTAGE_TARGET_DIR)/pym/
 	mkdir -p $(PORTAGE_TARGET_DIR)/pym/cache
-	$(doins) $(PORTAGE_DIR)/pym/cache/*.py $(PORTAGE_TARGET_DIR)/pym
+	$(INSTALL) $(PORTAGE_DIR)/pym/cache/*.py $(PORTAGE_TARGET_DIR)/pym
 	mkdir -p $(PORTAGE_TARGET_DIR)/pym/elog_modules
-	$(doins) $(PORTAGE_DIR)/pym/elog_modules/*.py $(PORTAGE_TARGET_DIR)/pym/elog_modules
+	$(INSTALL) $(PORTAGE_DIR)/pym/elog_modules/*.py $(PORTAGE_TARGET_DIR)/pym/elog_modules
 
-	$(dodir) $(PORTAGE_TARGET_DIR)/bin
-	$(doexe) $(PORTAGE_DIR)/bin/* $(PORTAGE_DIR)/src/tbz2tool $(PORTAGE_TARGET_DIR)/bin/
+	$(INSTALL) -d $(PORTAGE_TARGET_DIR)/bin
+	$(INSTALL) -D -m 0755 $(PORTAGE_DIR)/bin/* $(PORTAGE_DIR)/src/tbz2tool $(PORTAGE_TARGET_DIR)/bin/
 
 	mkdir -p $(TARGET_DIR)/usr/portage/distfiles
 	mkdir -p $(TARGET_DIR)/var/lib/portage
 
-	$(dodir) $(PORTAGE_TARGET_DIR)/usr/bin
-	$(dodir) $(PORTAGE_TARGET_DIR)/usr/sbin
-	$(dosym) newins $(PORTAGE_TARGET_DIR)/bin/donewins
+	$(INSTALL) -d $(PORTAGE_TARGET_DIR)/usr/bin
+	$(INSTALL) -d $(PORTAGE_TARGET_DIR)/usr/sbin
+	ln -sf newins $(PORTAGE_TARGET_DIR)/bin/donewins
 	for sbin in pkgmerge ebuild ebuild.sh etc-update dispatch-conf \
 		archive-conf fixpackages env-update regenworld emerge-webrsync; do \
-		$(dosym) ../lib/portage/bin/$${sbin} $(TARGET_DIR)/usr/sbin/$${sbin}; \
+		ln -sf ../lib/portage/bin/$${sbin} $(TARGET_DIR)/usr/sbin/$${sbin}; \
 	done
 	for bin in xpak repoman tbz2tool portageq g-cpan.pl quickpkg emerge; do \
-		$(dosym) ../lib/portage/bin/$${bin} $(TARGET_DIR)/usr/bin/$${bin}; \
+		ln -sf ../lib/portage/bin/$${bin} $(TARGET_DIR)/usr/bin/$${bin}; \
 	done
 $(TARGET_DIR)/$(SANDBOX_TARGET_BINARY): $(SANDBOX_DIR)/.compiled
 	touch $(TARGET_DIR)/$(SANDBOX_TARGET_BINARY)
