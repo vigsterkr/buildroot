@@ -22,8 +22,8 @@ strace-source: $(DL_DIR)/$(STRACE_SOURCE)
 $(STRACE_DIR)/.unpacked: $(DL_DIR)/$(STRACE_SOURCE)
 	$(STRACE_CAT) $(DL_DIR)/$(STRACE_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(STRACE_DIR) package/strace strace\*.patch
-	$(CONFIG_UPDATE) $(STRACE_DIR)
-	touch $(STRACE_DIR)/.unpacked
+	$(CONFIG_UPDATE) $(@D)
+	touch $@
 
 $(STRACE_DIR)/.configured: $(STRACE_DIR)/.unpacked
 	(cd $(STRACE_DIR); rm -rf config.cache; \
@@ -45,30 +45,27 @@ $(STRACE_DIR)/.configured: $(STRACE_DIR)/.unpacked
 		--sysconfdir=/etc \
 		--datadir=/usr/share \
 		--localstatedir=/var \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
 		$(DISABLE_NLS) \
 		$(DISABLE_LARGEFILE) \
 	)
-	touch $(STRACE_DIR)/.configured
+	touch $@
 
 $(STRACE_DIR)/strace: $(STRACE_DIR)/.configured
 	$(MAKE) CC=$(TARGET_CC) -C $(STRACE_DIR)
 
 $(TARGET_DIR)/usr/bin/strace: $(STRACE_DIR)/strace
-	install -c $(STRACE_DIR)/strace $(TARGET_DIR)/usr/bin/strace
-	$(STRIPCMD) $(TARGET_DIR)/usr/bin/strace > /dev/null 2>&1
+	$(INSTALL) -D $(STRACE_DIR)/strace $(TARGET_DIR)/usr/bin/strace
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $(TARGET_DIR)/usr/bin/strace
 ifeq ($(BR2_CROSS_TOOLCHAIN_TARGET_UTILS),y)
-	mkdir -p $(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils
-	install -c $(TARGET_DIR)/usr/bin/strace \
+	$(INSTALL) -D $(TARGET_DIR)/usr/bin/strace \
 		$(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils/strace
 endif
 
 strace: uclibc $(TARGET_DIR)/usr/bin/strace
 
 strace-clean:
-	rm -f $(TARGET_DIR)/usr/bin/strace
 	$(MAKE) -C $(STRACE_DIR) clean
+	rm -f $(TARGET_DIR)/usr/bin/strace
 
 strace-dirclean:
 	rm -rf $(STRACE_DIR)
