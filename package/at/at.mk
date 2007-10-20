@@ -14,11 +14,10 @@ AT_BINARY:=at
 $(DL_DIR)/$(AT_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(AT_SITE)/$(AT_SOURCE)
 
-at-source: $(DL_DIR)/$(AT_SOURCE)
-
 $(AT_DIR)/.unpacked: $(DL_DIR)/$(AT_SOURCE)
 	$(AT_CAT) $(DL_DIR)/$(AT_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(AT_DIR) package/at/ at\*.patch
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(AT_DIR)/.configured: $(AT_DIR)/.unpacked
@@ -29,6 +28,7 @@ $(AT_DIR)/.configured: $(AT_DIR)/.unpacked
 		--libexecdir=/usr/lib \
 		--sysconfdir=/etc \
 		--localstatedir=/var \
+		--mandir=/usr/share/man \
 		--with-jobdir=/var/lib/atjobs \
 		--with-atspool=/var/lib/atspool \
 		--with-daemon_username=at \
@@ -46,22 +46,24 @@ $(TARGET_DIR)/$(AT_TARGET_SCRIPT): $(AT_DIR)/$(AT_BINARY)
 	 '$(TARGET_CONFIGURE_OPTS) DESTDIR=$(TARGET_DIR) -C $(AT_DIR) install' \
 		> $(PROJECT_BUILD_DIR)/.fakeroot.at
 ifneq ($(BR2_HAVE_MANPAGES),y)
-	echo 'rm -rf $(TARGET_DIR)/usr/man' >> $(PROJECT_BUILD_DIR)/.fakeroot.at
+	echo 'rm -rf $(TARGET_DIR)/usr/share/man' >> $(PROJECT_BUILD_DIR)/.fakeroot.at
 endif
 	echo 'rm -rf $(TARGET_DIR)/usr/doc/at' >> $(PROJECT_BUILD_DIR)/.fakeroot.at
+	echo 'rm -rf $(TARGET_DIR)/usr/share/doc/at' >> $(PROJECT_BUILD_DIR)/.fakeroot.at
 	$(INSTALL) -m 0755 -D $(AT_DIR)/debian/rc $(TARGET_DIR)/$(AT_TARGET_SCRIPT)
 
 at: uclibc host-fakeroot $(TARGET_DIR)/$(AT_TARGET_SCRIPT)
 
+at-source: $(DL_DIR)/$(AT_SOURCE)
+
 at-clean:
 	-$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(AT_DIR) uninstall
-	rm -f $(TARGET_DIR)/$(AT_TARGET_SCRIPT) $(TARGET_DIR)/etc/init.d/S99at
 	-$(MAKE) -C $(AT_DIR) clean
+	rm -f $(TARGET_DIR)/$(AT_TARGET_SCRIPT) $(TARGET_DIR)/etc/init.d/S99at
 
 at-dirclean:
 	rm -rf $(AT_DIR)
 
-.PHONY: at
 #############################################################
 #
 # Toplevel Makefile options
