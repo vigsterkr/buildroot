@@ -291,7 +291,7 @@ $(STAGING_DIR):
 ifeq ($(BR2_TOOLCHAIN_SYSROOT),y)
 	@mkdir -p $(STAGING_DIR)/usr/lib
 else
-	@if test -d $(STAGING_DIR)/usr; then \
+	@if test ! -L $(STAGING_DIR)/usr && test -d $(STAGING_DIR)/usr; then \
 	  echo "You seem to be coming from a toolchain with sysroot support."; \
 	  echo "Reconfiguring without wiping your rootfs will not work, sorry.";\
 	  echo "Please 'rm -rf $(STAGING_DIR)'"; \
