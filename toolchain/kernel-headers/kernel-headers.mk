@@ -21,7 +21,7 @@ KERNEL_ARCH:=$(shell $(SHELL) -c "echo \"$(ARCH)\" | sed -e \"s/-.*//\" \
 	-e s/sh[234].*/sh/")
 
 # assume old manually sanitized kernel-headers
-LINUX_HEADERS_IS_KERNEL=n
+LINUX_HEADERS_IS_KERNEL:=n
 
 ifeq ($(LINUX_HEADERS_VERSION),)
 # parse linux version string
@@ -34,8 +34,8 @@ KERNEL_LOCALVERSION:=
 KERNEL_EXTRAVERSION:=$(if $(KERNEL_EXTRAVERSION),.$(KERNEL_EXTRAVERSION),)
 endif
 
-include toolchain/kernel-headers/kernel-headers-new.makefile
 include toolchain/kernel-headers/kernel-headers-old.makefile
+include toolchain/kernel-headers/kernel-headers-new.makefile
 
 $(DL_DIR)/$(LINUX_HEADERS_SOURCE):
 	$(WGET) -P $(DL_DIR) $(LINUX_HEADERS_SITE)/$(LINUX_HEADERS_SOURCE)
