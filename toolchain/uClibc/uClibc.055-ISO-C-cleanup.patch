@@ -1,0 +1,15 @@
+\\ In file included from toolchain_build_i386/gcc-3.4.6/libiberty/hashtab.c:49:
+\\ build_i386/staging_dir/i386-linux-uclibc/sys-include/malloc.h:193: error: ISO C forbids data definition with no type or storage class
+Index: uClibc/include/malloc.h
+===================================================================
+--- uClibc/include/malloc.h	(revision 20307)
++++ uClibc/include/malloc.h	(working copy)
+@@ -190,8 +190,6 @@ extern int mallopt __MALLOC_P ((int __pa
+  * NB: do not use stdio in __uc_malloc_failed handler! */
+ extern void *__uc_malloc(size_t size);
+ extern void (*__uc_malloc_failed)(size_t size);
+-libc_hidden_proto(__uc_malloc);
+-libc_hidden_proto(__uc_malloc_failed);
+ 
+ #ifdef __cplusplus
+ } /* end of extern "C" */
