@@ -23,6 +23,17 @@ KERNEL_ARCH:=$(shell $(SHELL) -c "echo \"$(ARCH)\" | sed -e \"s/-.*//\" \
 # assume old manually sanitized kernel-headers
 LINUX_HEADERS_IS_KERNEL=n
 
+ifeq ($(LINUX_HEADERS_VERSION),)
+# parse linux version string
+LNXVER:=$(subst ., , $(strip $(DEFAULT_KERNEL_HEADERS)))
+KERNEL_MAJORVERSION:=$(word 1, $(LNXVER))
+KERNEL_PATCHLEVEL:=$(word 2, $(LNXVER))
+KERNEL_SUBLEVEL:=$(word 3, $(LNXVER))
+KERNEL_EXTRAVERSION:=$(word 4, $(LNXVER))
+KERNEL_LOCALVERSION:=
+KERNEL_EXTRAVERSION:=$(if $(KERNEL_EXTRAVERSION),.$(KERNEL_EXTRAVERSION),)
+endif
+
 include toolchain/kernel-headers/kernel-headers-new.makefile
 include toolchain/kernel-headers/kernel-headers-old.makefile
 

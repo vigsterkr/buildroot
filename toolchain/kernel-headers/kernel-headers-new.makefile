@@ -4,19 +4,7 @@
 #
 #############################################################
 
-# new-style kernels?
 ifeq ($(LINUX_HEADERS_VERSION),)
-# parse linux version string
-LNXVER:=$(subst ., , $(strip $(DEFAULT_KERNEL_HEADERS)))
-KERNEL_MAJORVERSION:=$(word 1, $(LNXVER))
-KERNEL_PATCHLEVEL:=$(word 2, $(LNXVER))
-KERNEL_SUBLEVEL:=$(word 3, $(LNXVER))
-KERNEL_EXTRAVERSION:=$(word 4, $(LNXVER))
-KERNEL_LOCALVERSION:=
-
-# should contain prepended dot
-KERNEL_EXTRAVERSION:=$(if $(KERNEL_EXTRAVERSION),.$(KERNEL_EXTRAVERSION),)
-
 LINUX_HEADERS_VERSION:=$(KERNEL_MAJORVERSION).$(KERNEL_PATCHLEVEL)$(if $(KERNEL_SUBLEVEL),.$(KERNEL_SUBLEVEL))$(KERNEL_EXTRAVERSION)
 LINUX_HEADERS_SITE:=http://www.kernel.org/pub/linux/kernel/v2.6/
 LINUX_HEADERS_SOURCE:=linux-$(LINUX_HEADERS_VERSION).tar.bz2
