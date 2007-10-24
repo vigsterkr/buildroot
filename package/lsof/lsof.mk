@@ -25,7 +25,10 @@ $(DL_DIR)/$(LSOF_SOURCE):
 
 $(LSOF_DIR)/.unpacked: $(DL_DIR)/$(LSOF_SOURCE)
 	$(LSOF_CAT) $(DL_DIR)/$(LSOF_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	(cd $(LSOF_DIR);tar xf lsof_$(LSOF_VERSION)_src.tar;rm -f lsof_$(LSOF_VERSION)_src.tar)
+	(cd $(LSOF_DIR); \
+	 tar xf lsof_$(LSOF_VERSION)_src.tar; \
+	 rm -f lsof_$(LSOF_VERSION)_src.tar; \
+	)
 	toolchain/patch-kernel.sh $(LSOF_DIR) package/lsof/ \*.patch
 	touch $@
 
@@ -34,6 +37,7 @@ $(LSOF_DIR)/.configured: $(LSOF_DIR)/.unpacked
 	 echo n | $(TARGET_CONFIGURE_OPTS) \
 	 	DEBUG="$(TARGET_CFLAGS) $(BR2_LSOF_CFLAGS)" \
 		LSOF_CC="$(TARGET_CC)" \
+		LSOF_INCLUDE="$(STAGING_DIR)/usr/include" \
 		./Configure linux \
 	)
 	touch $@
@@ -46,7 +50,10 @@ endif
 ifeq ($(UCLIBC_HAS_LOCALE),)
 	$(SED) 's,^#define[[:space:]]*HASSETLOCALE.*,#undef HASSETLOCALE,' $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src/machine.h
 endif
-	$(MAKE) $(TARGET_CONFIGURE_OPTS) DEBUG="$(TARGET_CFLAGS) $(BR2_LSOF_CFLAGS)" -C $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src
+	$(MAKE) $(TARGET_CONFIGURE_OPTS) \
+		DEBUG="$(TARGET_CFLAGS) $(BR2_LSOF_CFLAGS)" \
+		LSOF_INCLUDE="$(STAGING_DIR)/usr/include" \
+		-C $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src
 
 $(TARGET_DIR)/$(LSOF_TARGET_BINARY): $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src/$(LSOF_BINARY)
 	$(INSTALL) -D -m 0755 $(LSOF_DIR)/lsof_$(LSOF_VERSION)_src/$(LSOF_BINARY) $@
