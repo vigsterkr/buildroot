@@ -6,6 +6,8 @@ config BR2_PACKAGE_XORG
 	select BR2_PACKAGE_EXPAT
 	select BR2_PACKAGE_FONTCONFIG
 	select BR2_PACKAGE_PKGCONFIG
+	# see bug #1556
+	select BR2_USE_WCHAR
 	help
 	  The official X Window system and server.
 
