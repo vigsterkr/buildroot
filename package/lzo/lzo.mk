@@ -6,6 +6,8 @@
 # anything to be installed into the target system.
 #
 #############################################################
+ifeq ($(BR2_PACKAGE_LZO_BIG),y)
+
 LZO_VERSION:=1.08
 LZO_SOURCE:=lzo_$(LZO_VERSION).orig.tar.gz
 LZO_SITE:=http://ftp.debian.org/debian/pool/main/l/lzo
@@ -60,6 +62,6 @@ lzo-dirclean:
 # Toplevel Makefile options
 #
 #############################################################
-ifeq ($(BR2_PACKAGE_LZO),y)
+
 TARGETS+=lzo
 endif

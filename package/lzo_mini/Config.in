@@ -1,5 +1,5 @@
-config BR2_PACKAGE_LZO_BIG
-	bool "lzo"
+config BR2_PACKAGE_LZO_MINI
+	bool "lzo_mini"
 	default n
 	help
 	  Portable lossless data compression library written in ANSI C.
