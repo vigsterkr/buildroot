@@ -1,0 +1,63 @@
+diff -rdup openvpn-2.0.9.orig/configure openvpn-2.0.9/configure
+--- openvpn-2.0.9.orig/configure	2006-10-01 14:18:24.000000000 +0200
++++ openvpn-2.0.9/configure	2007-10-29 18:43:18.000000000 +0100
+@@ -9620,9 +9620,9 @@ fi
+      havelzolib=0
+      for i in $lzolibs ; do
+ 	if test $havelzolib = 1 ; then break ; fi
+-	as_ac_Lib=`echo "ac_cv_lib_$i''_lzo1x_1_15_compress" | $as_tr_sh`
+-echo "$as_me:$LINENO: checking for lzo1x_1_15_compress in -l$i" >&5
+-echo $ECHO_N "checking for lzo1x_1_15_compress in -l$i... $ECHO_C" >&6
++	as_ac_Lib=`echo "ac_cv_lib_$i''_lzo1x_1_compress" | $as_tr_sh`
++echo "$as_me:$LINENO: checking for lzo1x_1_compress in -l$i" >&5
++echo $ECHO_N "checking for lzo1x_1_compress in -l$i... $ECHO_C" >&6
+ if eval "test \"\${$as_ac_Lib+set}\" = set"; then
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+@@ -9641,11 +9641,11 @@ extern "C"
+ #endif
+ /* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+-char lzo1x_1_15_compress ();
++char lzo1x_1_compress ();
+ int
+ main ()
+ {
+-lzo1x_1_15_compress ();
++lzo1x_1_compress ();
+   ;
+   return 0;
+ }
+diff -rdup openvpn-2.0.9.orig/configure.ac openvpn-2.0.9/configure.ac
+--- openvpn-2.0.9.orig/configure.ac	2006-10-01 14:18:15.000000000 +0200
++++ openvpn-2.0.9/configure.ac	2007-10-29 18:43:18.000000000 +0100
+@@ -485,7 +485,7 @@ if test "$LZO" = "yes"; then
+      havelzolib=0
+      for i in $lzolibs ; do
+ 	if test $havelzolib = 1 ; then break ; fi
+-	AC_CHECK_LIB($i, lzo1x_1_15_compress,
++	AC_CHECK_LIB($i, lzo1x_1_compress,
+           [
+ 	    OPENVPN_ADD_LIBS(-l$i)
+ 	    AC_DEFINE(USE_LZO, 1, [Use LZO compression library])
+
+--- openvpn-2.0.9.orig/lzo.h	2005-11-01 12:06:10.000000000 +0100
++++ openvpn-2.0.9/lzo.h	2007-10-30 14:39:43.000000000 +0100
+@@ -25,11 +25,15 @@
+ #ifdef USE_LZO
+ 
+ #ifdef LZO_HEADER_DIR
+-#include "lzo/lzoutil.h"
+ #include "lzo/lzo1x.h"
++#ifndef MINILZO_VERSION
++#include "lzo/lzoutil.h"
++#endif
+ #else
+-#include "lzoutil.h"
+ #include "lzo1x.h"
++#ifndef MINILZO_VERSION
++#include "lzoutil.h"
++#endif
+ #endif
+ 
+ #include "buffer.h"
