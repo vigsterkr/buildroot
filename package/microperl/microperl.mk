@@ -54,15 +54,12 @@ endif
 $(TARGET_DIR)/usr/bin/microperl: $(MICROPERL_DIR)/microperl
 ifneq ($(MICROPERL_MODS),)
 	(cd $(MICROPERL_DIR); \
-	 for i in $(patsubst %,$(TARGET_DIR)/$(MICROPERL_MODS_DIR)/%,$(dir $(MICROPERL_MODS))); do \
-		[ -d $$i ] || mkdir -p $$i; \
-	 done; \
 	 for i in $(MICROPERL_MODS); do \
-	 cp -dpf lib/$$i $(TARGET_DIR)/$(MICROPERL_MODS_DIR)/$$i; \
+	 	$(INSTALL) -D lib/$$i $(TARGET_DIR)/$(MICROPERL_MODS_DIR)/$$i; \
 	 done; \
 	)
 endif
-	cp -dpf $(MICROPERL_DIR)/microperl $(TARGET_DIR)/usr/bin/microperl
+	$(INSTALL) -D -m 0755 $(MICROPERL_DIR)/microperl $(TARGET_DIR)/usr/bin/microperl
 	(cd $(TARGET_DIR)/usr/bin; rm -f perl; ln -s microperl perl;)
 
 microperl: uclibc $(TARGET_DIR)/usr/bin/microperl
