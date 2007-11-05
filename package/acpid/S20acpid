@@ -41,8 +41,8 @@ load_modules() {
 	# Get list of available modules
         LOC="/lib/modules/`uname -r`/kernel/drivers/acpi"
         if [ -d $LOC ]; then
-	  MODAVAIL=`( find $LOC -type f -name "*.o" -printf "basename %f .o\n"; \
-		find $LOC -type f -name "*.ko" -printf "basename %f .ko\n" ) | /bin/sh`
+	  MODAVAIL=`( find $LOC -type f -name "*.o"; \
+		find $LOC -type f -name "*.ko") | /bin/sed -e 's,.*/,,g' -e 's,\.ko,,g' -e 's,\.o,,g'`
 	else
 	  MODAVAIL=""
 	fi
