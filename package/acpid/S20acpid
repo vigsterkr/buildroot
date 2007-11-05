@@ -1,0 +1,102 @@
+#! /bin/sh -e
+### BEGIN INIT INFO
+# Provides:          acpid
+# Required-Start:    $syslog
+# Required-Stop:     $syslog
+# Should-Start:      $local_fs
+# Should-Stop:       $local_fs
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Start the Advanced Configuration and Power Interface daemon
+# Description:       Provide a socket for X11, hald and others to multiplex
+#                    kernel ACPI events.
+### END INIT INFO
+
+# Check for daemon presence
+test -x /usr/sbin/acpid || exit 0
+
+# Check for ACPI support on kernel side
+[ -d /proc/acpi ] || exit 0
+
+# Include acpid defaults if available
+OPTIONS=""
+if [ -f /etc/default/acpid ] ; then
+	. /etc/default/acpid
+fi
+
+# Get lsb functions
+[ -r /lib/lsb/init-functions ] && . /lib/lsb/init-functions
+[ -r /etc/default/rcS ] && . /etc/default/rcS
+
+if [ "x$VERBOSE" = "xno" ]; then
+        MODPROBE_OPTIONS="$MODPROBE_OPTIONS -q"
+        export MODPROBE_OPTIONS
+fi
+
+# As the name says. If the kernel supports modules, it'll try to load
+# the ones listed in "MODULES".
+load_modules() {
+        LIST=`/sbin/lsmod|awk '!/Module/ {print $1}'`
+
+	# Get list of available modules
+        LOC="/lib/modules/`uname -r`/kernel/drivers/acpi"
+        if [ -d $LOC ]; then
+	  MODAVAIL=`( find $LOC -type f -name "*.o" -printf "basename %f .o\n"; \
+		find $LOC -type f -name "*.ko" -printf "basename %f .ko\n" ) | /bin/sh`
+	else
+	  MODAVAIL=""
+	fi
+
+        if [ "$MODULES" = "all" ]; then
+		MODULES="$MODAVAIL"
+        fi
+
+        if [ -n "$MODULES" ]; then
+                log_begin_msg "Loading ACPI modules..."
+                STATUS=0
+                for mod in $MODULES; do
+                        echo $MODAVAIL | grep -q -w "$mod" || continue
+                        if echo $LIST | grep -q -w "$mod"; then
+                                [ "$VERBOSE" != no ] && log_success_msg "Module already loaded: $mod"
+                        else
+                                if modprobe $mod 2>/dev/null; then
+                                        [ "$VERBOSE" != no ] && log_success_msg "Loaded module: $mod"
+                                else
+                                        if [ "$VERBOSE" != no ]; then
+                                                log_warning_msg "Unable to load module: $mod"
+                                        fi
+                                fi
+                        fi
+                done
+                log_end_msg $STATUS
+        fi
+}
+
+case "$1" in
+  start)
+    [ -f /proc/modules ] && load_modules
+    log_begin_msg "Starting Advanced Configuration and Power Interface daemon..."
+    start-stop-daemon -S -q -x /usr/sbin/acpid -- -c /etc/acpi/events $OPTIONS
+    log_end_msg $?
+    ;;
+  stop)
+    log_begin_msg "Stopping Advanced Configuration and Power Interface daemon..."
+    #start-stop-daemon -K -q -o -R 2 -x /usr/sbin/acpid
+    start-stop-daemon -K -q -x /usr/sbin/acpid
+    log_end_msg $?
+    ;;
+  restart)
+    $0 stop
+    sleep 1
+    $0 start
+    ;;
+  reload|force-reload) 
+    $0 stop && $0 start
+    log_end_msg $?
+    ;;
+  *)
+    log_success_msg "Usage: /etc/init.d/acpid {start|stop|restart|reload|force-reload}"
+    exit 1
+esac
+
+exit 0
