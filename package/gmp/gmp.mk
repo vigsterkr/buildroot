@@ -13,11 +13,13 @@ GMP_BINARY:=libgmp$(LIBTGTEXT)
 GMP_HOST_BINARY:=libgmp$(HOST_SHREXT)
 GMP_LIBVERSION:=3.4.2
 
-# this is a workaround for a bug in GMP, please see
-# http://gmplib.org/list-archives/gmp-devel/2006-April/000618.html
-ifeq ($(HOST_EXEEXT),.exe)
-GMP_CPP_FLAGS:=CPPFLAGS=-DDLL_EXPORT
-endif
+## this is a workaround for a bug in GMP, please see
+## http://gmplib.org/list-archives/gmp-devel/2006-April/000618.html
+#ifeq ($(HOST_EXEEXT),.exe)
+#GMP_CPP_FLAGS:=CPPFLAGS=-DDLL_EXPORT
+#endif
+
+
 
 $(DL_DIR)/$(GMP_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(GMP_SITE)/$(GMP_SOURCE)
@@ -35,10 +37,10 @@ $(GMP_TARGET_DIR)/.configured: $(GMP_DIR)/.unpacked
 	(cd $(GMP_TARGET_DIR); rm -rf config.cache; \
 		$(TARGET_CONFIGURE_OPTS) \
 		$(TARGET_CONFIGURE_ARGS) \
-		$(GMP_CPP_FLAGS) \
+		$(TARGET_CONFIGURE_ENV) \
 		$(GMP_DIR)/configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
+		--target=$(REAL_GNU_TARGET_NAME) \
+		--host=$(REAL_GNU_TARGET_NAME) \
 		--build=$(GNU_HOST_NAME) \
 		--prefix=/usr \
 		$(PREFERRED_LIB_FLAGS) \
