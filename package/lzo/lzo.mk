@@ -23,6 +23,7 @@ $(LZO_DIR)/.unpacked: $(DL_DIR)/$(LZO_SOURCE)
 	$(LZO_CAT) $(DL_DIR)/$(LZO_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(LZO_DIR) package/lzo/ lzo\*.patch
 	$(CONFIG_UPDATE) $(@D)/acconfig
+	$(SED) 's,CFLAGS="$$CFLAGS -O[0123456789]",CFLAGS="$$CFLAGS",g' $(LZO_DIR)/configure
 	touch $@
 
 LZO_CONFIG_SHARED:=--disable-shared
