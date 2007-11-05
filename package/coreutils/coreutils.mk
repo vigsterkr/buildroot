@@ -17,8 +17,6 @@ BIN_PROGS:=cat chgrp chmod chown cp date dd df dir echo false hostname \
 $(DL_DIR)/$(COREUTILS_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(COREUTILS_SITE)/$(COREUTILS_SOURCE)
 
-coreutils-source: $(DL_DIR)/$(COREUTILS_SOURCE)
-
 $(COREUTILS_DIR)/.unpacked: $(DL_DIR)/$(COREUTILS_SOURCE)
 	$(COREUTILS_CAT) $(DL_DIR)/$(COREUTILS_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(COREUTILS_DIR) package/coreutils/ coreutils\*.patch
@@ -135,6 +133,8 @@ coreutils: uclibc busybox $(TARGET_DIR)/$(COREUTILS_TARGET_BINARY)
 else
 coreutils: uclibc $(TARGET_DIR)/$(COREUTILS_TARGET_BINARY)
 endif
+
+coreutils-source: $(DL_DIR)/$(COREUTILS_SOURCE)
 
 # If both coreutils and busybox are selected, the corresponding applets
 # may need to be reinstated by the clean targets.

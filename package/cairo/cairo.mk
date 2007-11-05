@@ -13,8 +13,6 @@ CAIRO_BINARY:=libcairo.a
 $(DL_DIR)/$(CAIRO_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(CAIRO_SITE)/$(CAIRO_SOURCE)
 
-cairo-source: $(DL_DIR)/$(CAIRO_SOURCE)
-
 $(CAIRO_DIR)/.unpacked: $(DL_DIR)/$(CAIRO_SOURCE)
 	$(CAIRO_CAT) $(DL_DIR)/$(CAIRO_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(CAIRO_DIR) package/cairo/ \*.patch*
@@ -130,9 +128,11 @@ $(TARGET_DIR)/lib/libcairo.so.2.9.3: $(STAGING_DIR)/lib/$(CAIRO_BINARY)
 
 cairo: uclibc gettext libintl pkgconfig libglib2 zlib png fontconfig $(XSERVER) $(TARGET_DIR)/lib/libcairo.so.2.9.3
 
+cairo-source: $(DL_DIR)/$(CAIRO_SOURCE)
+
 cairo-clean:
-	rm -f $(TARGET_DIR)/lib/$(CAIRO_BINARY)
 	-$(MAKE) -C $(CAIRO_DIR) clean
+	rm -f $(TARGET_DIR)/lib/$(CAIRO_BINARY)
 
 cairo-dirclean:
 	rm -rf $(CAIRO_DIR)
