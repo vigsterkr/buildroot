@@ -21,12 +21,6 @@ BVARS=PREDEFINES='-D_PATH_DHCPD_DB=\"/var/lib/dhcp/dhcpd.leases\" \
 $(DL_DIR)/$(DHCP_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(DHCP_SITE)/$(DHCP_SOURCE)
 
-dhcp-source: $(DL_DIR)/$(DHCP_SOURCE)
-
-dhcp_server-source: dhcp-source
-dhcp_relay-source: dhcp-source
-dhcp_client-source: dhcp-source
-
 $(DHCP_DIR)/.unpacked: $(DL_DIR)/$(DHCP_SOURCE)
 	$(DHCP_CAT) $(DL_DIR)/$(DHCP_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(DHCP_DIR) package/dhcp/ dhcp\*.patch
@@ -109,6 +103,12 @@ dhcp_server: uclibc $(TARGET_DIR)/$(DHCP_SERVER_TARGET_BINARY)
 dhcp_relay: uclibc $(TARGET_DIR)/$(DHCP_RELAY_TARGET_BINARY)
 
 dhcp_client: uclibc $(TARGET_DIR)/$(DHCP_CLIENT_TARGET_BINARY)
+
+dhcp-source: $(DL_DIR)/$(DHCP_SOURCE)
+
+dhcp_server-source: dhcp-source
+dhcp_relay-source: dhcp-source
+dhcp_client-source: dhcp-source
 
 dhcp-clean:
 	-$(MAKE) -C $(DHCP_DIR) clean

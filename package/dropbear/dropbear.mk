@@ -14,8 +14,6 @@ DROPBEAR_TARGET_BINARY:=usr/sbin/dropbear
 $(DL_DIR)/$(DROPBEAR_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(DROPBEAR_SITE)/$(DROPBEAR_SOURCE)
 
-dropbear-source: $(DL_DIR)/$(DROPBEAR_SOURCE)
-
 $(DROPBEAR_DIR)/.unpacked: $(DL_DIR)/$(DROPBEAR_SOURCE)
 	$(DROPBEAR_CAT) $(DL_DIR)/$(DROPBEAR_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(DROPBEAR_DIR) package/dropbear/ dropbear\*.patch
@@ -61,6 +59,8 @@ $(TARGET_DIR)/$(DROPBEAR_TARGET_BINARY): $(DROPBEAR_DIR)/$(DROPBEAR_BINARY)
 	chmod a+x $(TARGET_DIR)/etc/init.d/S50dropbear
 
 dropbear: uclibc zlib $(TARGET_DIR)/$(DROPBEAR_TARGET_BINARY)
+
+dropbear-source: $(DL_DIR)/$(DROPBEAR_SOURCE)
 
 dropbear-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) $(TARGET_CONFIGURE_OPTS) \

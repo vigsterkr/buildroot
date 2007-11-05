@@ -14,8 +14,6 @@ DBUS_TARGET_BINARY:=usr/bin/dbus-daemon
 $(DL_DIR)/$(DBUS_SOURCE):
 	$(WGET) -P $(DL_DIR) $(DBUS_SITE)/$(DBUS_SOURCE)
 
-dbus-source: $(DL_DIR)/$(DBUS_SOURCE)
-
 $(DBUS_DIR)/.unpacked: $(DL_DIR)/$(DBUS_SOURCE)
 	$(DBUS_CAT) $(DL_DIR)/$(DBUS_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	touch $@
@@ -72,7 +70,10 @@ $(TARGET_DIR)/$(DBUS_TARGET_BINARY): $(STAGING_DIR)/usr/lib/libdbus-1.so
 
 dbus: uclibc expat libxml2-headers $(TARGET_DIR)/$(DBUS_TARGET_BINARY)
 
+dbus-source: $(DL_DIR)/$(DBUS_SOURCE)
+
 dbus-clean:
+	-$(MAKE) -C $(DBUS_DIR) clean
 	rm -f $(TARGET_DIR)/etc/dbus-1/session.conf
 	rm -f $(TARGET_DIR)/etc/dbus-1/system.conf
 	rmdir -p --ignore-fail-on-non-empty $(TARGET_DIR)/etc/dbus-1/system.d
@@ -84,7 +85,6 @@ dbus-clean:
 	rm -rf $(STAGING_DIR)/usr/lib/dbus-1.0
 	rm -rf $(STAGING_DIR)/usr/include/dbus-1.0
 	rmdir --ignore-fail-on-non-empty $(STAGING_DIR)/usr/include
-	-$(MAKE) -C $(DBUS_DIR) clean
 
 dbus-dirclean:
 	rm -rf $(DBUS_DIR)

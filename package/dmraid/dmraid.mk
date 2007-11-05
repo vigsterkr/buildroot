@@ -16,8 +16,6 @@ DMRAID_TARGET_BINARY:=$(TARGET_DIR)/sbin/$(DMRAID_BINARY)
 $(DL_DIR)/$(DMRAID_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(DMRAID_SITE)/$(DMRAID_SOURCE)
 
-dmraid-source: $(DL_DIR)/$(DMRAID_SOURCE)
-
 $(DMRAID_DIR)/.unpacked: $(DL_DIR)/$(DMRAID_SOURCE)
 	$(DMRAID_CAT) $(DL_DIR)/$(DMRAID_SOURCE) | tar -C $(BUILD_DIR) -xvf -
 	toolchain/patch-kernel.sh $(DMRAID_DIR) package/dmraid \*.patch
@@ -49,6 +47,8 @@ $(DMRAID_TARGET_BINARY): $(DMRAID_DIR)/tools/$(DMRAID_BINARY)
 	$(INSTALL) -m 0755 package/dmraid/dmraid.init $(TARGET_DIR)/etc/init.d/dmraid
 
 dmraid: uclibc dm zlib $(DMRAID_TARGET_BINARY)
+
+dmraid-source: $(DL_DIR)/$(DMRAID_SOURCE)
 
 dmraid-clean:
 	rm -f $(DMRAID_TARGET_BINARY) $(TARGET_DIR)/etc/init.d/dmraid

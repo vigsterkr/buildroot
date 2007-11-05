@@ -14,8 +14,6 @@ DMALLOC_TARGET_BINARY:=usr/bin/dmalloc
 $(DL_DIR)/$(DMALLOC_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(DMALLOC_SITE)/$(DMALLOC_SOURCE)
 
-dmalloc-source: $(DL_DIR)/$(DMALLOC_SOURCE)
-
 $(DMALLOC_DIR)/.unpacked: $(DL_DIR)/$(DMALLOC_SOURCE)
 	$(DMALLOC_CAT) $(DL_DIR)/$(DMALLOC_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(DMALLOC_DIR) package/dmalloc dmalloc\*.patch
@@ -84,12 +82,14 @@ $(TARGET_DIR)/$(DMALLOC_TARGET_BINARY): $(DMALLOC_DIR)/$(DMALLOC_BINARY)
 
 dmalloc: uclibc $(TARGET_DIR)/$(DMALLOC_TARGET_BINARY)
 
+dmalloc-source: $(DL_DIR)/$(DMALLOC_SOURCE)
+
 dmalloc-clean:
+	-$(MAKE) -C $(DMALLOC_DIR) clean
 	rm -f $(TARGET_DIR)/usr/lib/libdmalloc*
 	rm -f $(STAGING_DIR)/usr/lib/libdmalloc*
 	rm -f $(STAGING_DIR)/usr/include/dmalloc.h
 	rm -f $(TARGET_DIR)/$(DMALLOC_TARGET_BINARY)
-	$(MAKE) -C $(DMALLOC_DIR) clean
 
 dmalloc-dirclean:
 	rm -rf $(DMALLOC_DIR)

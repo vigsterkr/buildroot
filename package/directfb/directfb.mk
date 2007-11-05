@@ -27,8 +27,6 @@ endif
 $(DL_DIR)/$(DIRECTFB_SOURCE):
 	$(WGET) -P $(DL_DIR) $(DIRECTFB_SITE)/$(DIRECTFB_SOURCE)
 
-directfb-source: $(DL_DIR)/$(DIRECTFB_SOURCE)
-
 $(DIRECTFB_DIR)/.unpacked: $(DL_DIR)/$(DIRECTFB_SOURCE)
 	$(DIRECTFB_CAT) $(DL_DIR)/$(DIRECTFB_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(DIRECTFB_DIR) package/directfb/ directfb\*.patch
@@ -105,6 +103,8 @@ $(TARGET_DIR)/usr/lib/libdirectfb.so: $(STAGING_DIR)/usr/lib/libdirectfb.so
 
 directfb: uclibc jpeg libpng freetype libsysfs tslib $(DIRECTFB_FUSION) \
 		$(TARGET_DIR)/usr/lib/libdirectfb.so
+
+directfb-source: $(DL_DIR)/$(DIRECTFB_SOURCE)
 
 directfb-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(DIRECTFB_DIR) uninstall

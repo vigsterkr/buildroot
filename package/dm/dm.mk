@@ -41,8 +41,6 @@ $(DL_DIR)/$(DM_SOURCE):
 	$(WGET) -P $(DL_DIR) $(DM_SITE)/$(DM_SOURCE) || \
 		$(WGET) -P $(DL_DIR) $(DM_SITE_OLD)/$(DM_SOURCE)
 
-dm-source: $(DL_DIR)/$(DM_SOURCE)
-
 $(DM_DIR)/.unpacked: $(DL_DIR)/$(DM_SOURCE)
 	$(DM_CAT) $(DL_DIR)/$(DM_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(DM_DIR) package/dm/ \*.patch
@@ -112,6 +110,8 @@ $(DM_TARGET_HEADER): $(DM_TARGET_LIBRARY)
 	$(INSTALL) -m 0644 $(STAGING_DIR)/usr/include/libdevmapper.h $@
 
 dm: uclibc $(DM_TARGET_BINARY) $(DM_TARGET_LIBRARY) #$(DM_TARGET_HEADER)
+
+dm-source: $(DL_DIR)/$(DM_SOURCE)
 
 dm-clean:
 	rm $(DM_TARGET_BINARY) $(DM_TARGET_LIBRARY) \
