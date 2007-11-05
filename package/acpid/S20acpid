@@ -52,38 +52,38 @@ load_modules() {
         fi
 
         if [ -n "$MODULES" ]; then
-                log_begin_msg "Loading ACPI modules..."
+                echo "Loading ACPI modules..."
                 STATUS=0
                 for mod in $MODULES; do
                         echo $MODAVAIL | grep -q -w "$mod" || continue
                         if echo $LIST | grep -q -w "$mod"; then
-                                [ "$VERBOSE" != no ] && log_success_msg "Module already loaded: $mod"
+                                [ "$VERBOSE" != no ] && echo "Module already loaded: $mod"
                         else
                                 if modprobe $mod 2>/dev/null; then
-                                        [ "$VERBOSE" != no ] && log_success_msg "Loaded module: $mod"
+                                        [ "$VERBOSE" != no ] && echo "Loaded module: $mod"
                                 else
                                         if [ "$VERBOSE" != no ]; then
-                                                log_warning_msg "Unable to load module: $mod"
+                                                echo "Unable to load module: $mod"
                                         fi
                                 fi
                         fi
                 done
-                log_end_msg $STATUS
+                echo $STATUS
         fi
 }
 
 case "$1" in
   start)
     [ -f /proc/modules ] && load_modules
-    log_begin_msg "Starting Advanced Configuration and Power Interface daemon..."
+    echo "Starting Advanced Configuration and Power Interface daemon..."
     start-stop-daemon -S -q -x /usr/sbin/acpid -- -c /etc/acpi/events $OPTIONS
-    log_end_msg $?
+    echo $?
     ;;
   stop)
-    log_begin_msg "Stopping Advanced Configuration and Power Interface daemon..."
+    echo "Stopping Advanced Configuration and Power Interface daemon..."
     #start-stop-daemon -K -q -o -R 2 -x /usr/sbin/acpid
     start-stop-daemon -K -q -x /usr/sbin/acpid
-    log_end_msg $?
+    echo $?
     ;;
   restart)
     $0 stop
@@ -92,10 +92,10 @@ case "$1" in
     ;;
   reload|force-reload) 
     $0 stop && $0 start
-    log_end_msg $?
+    echo $?
     ;;
   *)
-    log_success_msg "Usage: /etc/init.d/acpid {start|stop|restart|reload|force-reload}"
+    echo "Usage: /etc/init.d/acpid {start|stop|restart|reload|force-reload}"
     exit 1
 esac
 
