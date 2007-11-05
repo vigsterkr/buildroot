@@ -14,8 +14,6 @@ BZIP2_TARGET_BINARY:=$(TARGET_DIR)/usr/bin/bzmore
 $(DL_DIR)/$(BZIP2_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(BZIP2_SITE)/$(BZIP2_SOURCE)
 
-bzip2-source: $(DL_DIR)/$(BZIP2_SOURCE)
-
 $(BZIP2_DIR)/.unpacked: $(DL_DIR)/$(BZIP2_SOURCE)
 	$(BZIP2_CAT) $(DL_DIR)/$(BZIP2_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	$(SED) "s,ln \$$(,ln -snf \$$(,g" $(BZIP2_DIR)/Makefile
@@ -98,13 +96,15 @@ bzip2-headers: $(TARGET_DIR)/usr/lib/libbz2.a
 
 bzip2: uclibc $(BZIP2_TARGET_BINARY)
 
+bzip2-source: $(DL_DIR)/$(BZIP2_SOURCE)
+
 bzip2-clean:
-	rm -f $(addprefix $(TARGET_DIR),/lib/libbz2.* \
+	rm -f $(wildcard $(addprefix $(TARGET_DIR),/lib/libbz2.* \
 					/usr/lib/libbz2.* \
-					/usr/include/bzlib.h)
-	rm -f $(addprefix $(STAGING_DIR),/lib/libbz2.* \
+					/usr/include/bzlib.h))
+	rm -f $(wildcard $(addprefix $(STAGING_DIR),/lib/libbz2.* \
 					/usr/lib/libbz2.* \
-					/usr/include/bzlib.h)
+					/usr/include/bzlib.h))
 	-$(MAKE) -C $(BZIP2_DIR) clean
 
 bzip2-dirclean:

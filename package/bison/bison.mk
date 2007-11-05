@@ -14,8 +14,6 @@ BISON_TARGET_BINARY:=usr/bin/bison
 $(DL_DIR)/$(BISON_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(BISON_SITE)/$(BISON_SOURCE)
 
-bison-source: $(DL_DIR)/$(BISON_SOURCE)
-
 $(BISON_DIR)/.unpacked: $(DL_DIR)/$(BISON_SOURCE)
 	$(BISON_CAT) $(DL_DIR)/$(BISON_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	$(CONFIG_UPDATE) $(BISON_DIR)/build-aux
@@ -63,6 +61,8 @@ endif
 	cp -a package/bison/yacc $(TARGET_DIR)/usr/bin/yacc
 
 bison: uclibc $(TARGET_DIR)/$(BISON_TARGET_BINARY)
+
+bison-source: $(DL_DIR)/$(BISON_SOURCE)
 
 bison-clean:
 	-$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(BISON_DIR) uninstall
