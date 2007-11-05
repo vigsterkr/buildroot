@@ -36,8 +36,6 @@ endif
 $(DL_DIR)/$(AVAHI_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(AVAHI_SITE)/$(AVAHI_SOURCE)
 
-avahi-source: $(DL_DIR)/$(AVAHI_SOURCE)
-
 $(AVAHI_DIR)/.unpacked: $(DL_DIR)/$(AVAHI_SOURCE)
 	$(AVAHI_CAT) $(DL_DIR)/$(AVAHI_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(AVAHI_DIR) package/avahi/ \*.patch
@@ -182,6 +180,8 @@ $(TARGET_DIR)/usr/sbin/avahi-daemon: $(STAGING_DIR)/usr/sbin/avahi-daemon
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libavahi-*.so*
 
 avahi: uclibc busybox libdaemon $(AVAHI_TARGETS)
+
+avahi-source: $(DL_DIR)/$(AVAHI_SOURCE)
 
 avahi-clean:
 	$(MAKE) -C $(AVAHI_DIR) distclean

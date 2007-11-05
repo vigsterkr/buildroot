@@ -18,8 +18,6 @@ $(DL_DIR)/$(ARGUS_SOURCE):
 $(DL_DIR)/$(ARGUS_PATCH):
 	$(WGET) -P $(DL_DIR) $(ARGUS_SITE)/$(ARGUS_PATCH)
 
-argus-source: $(DL_DIR)/$(ARGUS_SOURCE) $(DL_DIR)/$(ARGUS_PATCH)
-
 $(ARGUS_DIR)/.unpacked: $(DL_DIR)/$(ARGUS_SOURCE) $(DL_DIR)/$(ARGUS_PATCH)
 	$(ARGUS_CAT) $(DL_DIR)/$(ARGUS_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(ARGUS_DIR) package/argus/ argus\*.patch
@@ -53,6 +51,8 @@ $(TARGET_DIR)/$(ARGUS_TARGET_BINARY): $(ARGUS_DIR)/$(ARGUS_BINARY)
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 argus: uclibc libpcap $(TARGET_DIR)/$(ARGUS_TARGET_BINARY)
+
+argus-source: $(DL_DIR)/$(ARGUS_SOURCE) $(DL_DIR)/$(ARGUS_PATCH)
 
 argus-clean:
 	-$(MAKE) -C $(ARGUS_DIR) clean
