@@ -41,15 +41,15 @@ $(LZO_MINI_DIR)/liblzo.so $(LZO_MINI_DIR)/liblzo.a: $(LZO_MINI_DIR)/.configured
 	touch $@
 
 $(STAGING_DIR)/usr/lib/liblzo.a: $(LZO_MINI_DIR)/liblzo.a
-	$(INSTALL) -D $< $@
+	$(INSTALL) -D -m 0644 $< $@
 	$(INSTALL) -d $(STAGING_DIR)/usr/include
-	$(INSTALL) $(LZO_MINI_DIR)/lzoconf.h $(LZO_MINI_DIR)/lzodefs.h \
+	$(INSTALL) -m 0644 $(LZO_MINI_DIR)/lzoconf.h $(LZO_MINI_DIR)/lzodefs.h \
 		$(STAGING_DIR)/usr/include
-	$(INSTALL) $(LZO_MINI_DIR)/minilzo.h $(STAGING_DIR)/usr/include/lzo1x.h
+	$(INSTALL) -m 0644 $(LZO_MINI_DIR)/minilzo.h $(STAGING_DIR)/usr/include/lzo1x.h
 	touch -c $@
 
 $(TARGET_DIR)/usr/lib/liblzo.so: $(LZO_MINI_DIR)/liblzo.so
-	$(INSTALL) -D $< $@
+	$(INSTALL) -D -m 0755 $< $@
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $@
 
 lzo lzo_mini: uclibc $(STAGING_DIR)/usr/lib/liblzo.a

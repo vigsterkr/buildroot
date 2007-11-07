@@ -13,8 +13,6 @@ ATK_BINARY:=libatk-1.0.a
 $(DL_DIR)/$(ATK_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(ATK_SITE)/$(ATK_SOURCE)
 
-atk-source: $(DL_DIR)/$(ATK_SOURCE)
-
 $(ATK_DIR)/.unpacked: $(DL_DIR)/$(ATK_SOURCE)
 	$(ATK_CAT) $(DL_DIR)/$(ATK_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(ATK_DIR) package/atk/ \*.patch*
@@ -127,6 +125,8 @@ $(TARGET_DIR)/lib/libatk-1.0.so.0: $(STAGING_DIR)/lib/$(ATK_BINARY)
 	touch -c $(TARGET_DIR)/lib/libatk-1.0.so.0
 
 atk: libglib2 pkgconfig $(TARGET_DIR)/lib/libatk-1.0.so.0
+
+atk-source: $(DL_DIR)/$(ATK_SOURCE)
 
 atk-clean:
 	rm -f $(TARGET_DIR)/lib/$(ATK_BINARY)

@@ -19,12 +19,11 @@ LZO_CAT:=$(ZCAT)
 $(DL_DIR)/$(LZO_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LZO_SITE)/$(LZO_SOURCE)
 
-lzo-source: $(DL_DIR)/$(LZO_SOURCE)
-
 $(LZO_DIR)/.unpacked: $(DL_DIR)/$(LZO_SOURCE)
 	$(LZO_CAT) $(DL_DIR)/$(LZO_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(LZO_DIR) package/lzo/ lzo\*.patch
 	$(CONFIG_UPDATE) $(@D)/acconfig
+	$(SED) 's,CFLAGS="$$CFLAGS -O[0123456789]",CFLAGS="$$CFLAGS",g' $(LZO_DIR)/configure
 	touch $@
 
 LZO_CONFIG_SHARED:=--disable-shared
@@ -49,6 +48,8 @@ $(STAGING_DIR)/usr/lib/liblzo.a: $(LZO_DIR)/src/liblzo.la
 	touch -c $@
 
 lzo: uclibc $(STAGING_DIR)/usr/lib/liblzo.a
+
+lzo-source: $(DL_DIR)/$(LZO_SOURCE)
 
 lzo-clean:
 	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(LZO_DIR) uninstall

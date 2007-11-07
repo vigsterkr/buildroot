@@ -21,8 +21,6 @@ ACLOCAL = aclocal -I $(ACLOCAL_DIR)
 $(DL_DIR)/$(AUTOMAKE_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(AUTOMAKE_SITE)/$(AUTOMAKE_SOURCE)
 
-automake-source: $(DL_DIR)/$(AUTOMAKE_SOURCE)
-
 $(AUTOMAKE_SRC_DIR)/.unpacked: $(DL_DIR)/$(AUTOMAKE_SOURCE)
 	$(AUTOMAKE_CAT) $(DL_DIR)/$(AUTOMAKE_SOURCE) | tar -C $(TOOL_BUILD_DIR) $(TAR_OPTIONS) -
 	$(CONFIG_UPDATE) $(AUTOMAKE_SRC_DIR)
@@ -89,6 +87,8 @@ endif
 	touch -c $@
 
 automake: uclibc autoconf $(TARGET_DIR)/$(AUTOMAKE_TARGET_BINARY)
+
+automake-source: $(DL_DIR)/$(AUTOMAKE_SOURCE)
 
 automake-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(AUTOMAKE_DIR) uninstall

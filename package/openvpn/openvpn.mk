@@ -23,16 +23,22 @@ else
 THREAD_MODEL=--enable-pthread
 endif
 
+ifeq ($(BR2_PACKAGE_LZO_MINI),y)
+OPENVPN_CPPFLAGS=CPPFLAGS="-Dlzo1x_1_15_compress=lzo1x_1_compress -DLZO1X_1_15_MEM_COMPRESS=LZO1X_1_MEM_COMPRESS -Dlzo_malloc=malloc -Dlzo_free=free"
+endif
+
 $(DL_DIR)/$(OPENVPN_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(OPENVPN_SITE)/$(OPENVPN_SOURCE)
 
 $(OPENVPN_DIR)/.unpacked: $(DL_DIR)/$(OPENVPN_SOURCE)
 	$(OPENVPN_CAT) $(DL_DIR)/$(OPENVPN_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	toolchain/patch-kernel.sh $(OPENVPN_DIR) package/openvpn openvpn\*.patch
 	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(OPENVPN_DIR)/.configured: $(OPENVPN_DIR)/.unpacked
 	(cd $(OPENVPN_DIR); rm -rf config.cache; \
+		$(OPENVPN_CPPFLAGS) \
 		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \

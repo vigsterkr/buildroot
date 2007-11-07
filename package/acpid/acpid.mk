@@ -32,9 +32,10 @@ $(ACPID_DIR)/acpid: $(ACPID_DIR)/.unpacked
 	touch -c $(ACPID_DIR)/acpid $(ACPID_DIR)/acpi_listen
 
 $(TARGET_DIR)/usr/sbin/acpid: $(ACPID_DIR)/acpid
-	$(INSTALL) -D $(ACPID_DIR)/acpid $(TARGET_DIR)/usr/sbin/acpid
+	$(INSTALL) -D -m 0755 $(ACPID_DIR)/acpid $(TARGET_DIR)/usr/sbin/acpid
 	$(INSTALL) -d $(TARGET_DIR)/etc/acpi/events
 	/bin/echo -e "event=button[ /]power\naction=/sbin/poweroff" > $(TARGET_DIR)/etc/acpi/events/powerbtn
+	$(INSTALL) -D -m 0755 package/acpid/S20acpid $(TARGET_DIR)/etc/init.d/S20acpid
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 acpid: $(TARGET_DIR)/usr/sbin/acpid

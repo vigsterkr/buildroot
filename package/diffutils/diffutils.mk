@@ -15,8 +15,6 @@ DIFFUTILS_TARGET_BINARY:=usr/bin/diff
 $(DL_DIR)/$(DIFFUTILS_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(DIFFUTILS_SITE)/$(DIFFUTILS_SOURCE)
 
-diffutils-source: $(DL_DIR)/$(DIFFUTILS_SOURCE)
-
 $(DIFFUTILS_DIR)/.unpacked: $(DL_DIR)/$(DIFFUTILS_SOURCE)
 	$(DIFFUTILS_CAT) $(DL_DIR)/$(DIFFUTILS_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	$(CONFIG_UPDATE) $(DIFFUTILS_DIR)/config
@@ -114,6 +112,8 @@ endif
 	rm -rf $(TARGET_DIR)/usr/share/doc
 
 diffutils: uclibc $(TARGET_DIR)/$(DIFFUTILS_TARGET_BINARY)
+
+diffutils-source: $(DL_DIR)/$(DIFFUTILS_SOURCE)
 
 diff-utils-unpacked: $(DIFFUTILS_DIR)/.unpacked
 

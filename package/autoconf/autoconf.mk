@@ -20,8 +20,6 @@ AUTORECONF=$(HOST_CONFIGURE_OPTS) ACLOCAL="$(ACLOCAL)" autoreconf -v -f -i -I "$
 $(DL_DIR)/$(AUTOCONF_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(AUTOCONF_SITE)/$(AUTOCONF_SOURCE)
 
-autoconf-source: $(DL_DIR)/$(AUTOCONF_SOURCE)
-
 $(AUTOCONF_SRC_DIR)/.unpacked: $(DL_DIR)/$(AUTOCONF_SOURCE)
 	$(AUTOCONF_CAT) $(DL_DIR)/$(AUTOCONF_SOURCE) | tar -C $(TOOL_BUILD_DIR) $(TAR_OPTIONS) -
 	touch $@
@@ -85,6 +83,8 @@ endif
 	touch -c $@
 
 autoconf: uclibc $(TARGET_DIR)/$(AUTOCONF_TARGET_BINARY)
+
+autoconf-source: $(DL_DIR)/$(AUTOCONF_SOURCE)
 
 autoconf-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(AUTOCONF_DIR) uninstall

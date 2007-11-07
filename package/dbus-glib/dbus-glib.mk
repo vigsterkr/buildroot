@@ -14,8 +14,6 @@ DBUS_GLIB_TARGET_BINARY:=usr/bin/dbus-binding-tool
 $(DL_DIR)/$(DBUS_GLIB_SOURCE):
 	$(WGET) -P $(DL_DIR) $(DBUS_GLIB_SITE)/$(DBUS_GLIB_SOURCE)
 
-dbus-glib-source: $(DL_DIR)/$(DBUS_GLIB_SOURCE)
-
 $(DBUS_GLIB_DIR)/.unpacked: $(DL_DIR)/$(DBUS_GLIB_SOURCE)
 	$(DBUS_GLIB_CAT) $(DL_DIR)/$(DBUS_GLIB_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(DBUS_GLIB_DIR) package/dbus-glib/ \*.patch
@@ -61,6 +59,8 @@ $(TARGET_DIR)/$(DBUS_GLIB_TARGET_BINARY): $(STAGING_DIR)/usr/lib/libdbus-glib-1.
 	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libdbus-glib-1.so.2.0.0
 
 dbus-glib: uclibc dbus libglib2 $(TARGET_DIR)/$(DBUS_GLIB_TARGET_BINARY)
+
+dbus-glib-source: $(DL_DIR)/$(DBUS_GLIB_SOURCE)
 
 dbus-glib-clean:
 	rm -f $(TARGET_DIR)/usr/lib/libdbus-glib-1.so.2*

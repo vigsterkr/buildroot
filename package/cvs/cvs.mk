@@ -30,7 +30,6 @@ CVS_PATCH_FILE=$(DL_DIR)/$(CVS_PATCH)
 $(CVS_PATCH_FILE):
 	$(WGET) -P $(DL_DIR) $(CVS_SITE)/$(CVS_PATCH)
 endif
-cvs-source: $(DL_DIR)/$(CVS_SOURCE) $(CVS_PATCH_FILE)
 
 $(CVS_DIR)/.unpacked: $(DL_DIR)/$(CVS_SOURCE) $(CVS_PATCH_FILE)
 	-mkdir $(CVS_DIR)
@@ -75,6 +74,8 @@ $(TARGET_DIR)/$(CVS_TARGET_BINARY): $(CVS_DIR)/$(CVS_BINARY)
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $(TARGET_DIR)/$(CVS_TARGET_BINARY)
 
 cvs: uclibc ncurses $(TARGET_DIR)/$(CVS_TARGET_BINARY)
+
+cvs-source: $(DL_DIR)/$(CVS_SOURCE) $(CVS_PATCH_FILE)
 
 cvs-clean:
 	-$(MAKE) -C $(CVS_DIR) clean

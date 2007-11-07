@@ -18,8 +18,6 @@ $(DL_DIR)/$(DASH_SOURCE):
 $(DL_DIR)/$(DASH_PATCH1):
 	$(WGET) -P $(DL_DIR) $(DASH_SITE)/$(DASH_PATCH1)
 
-dash-source: $(DL_DIR)/$(DASH_SOURCE) $(DL_DIR)/$(DASH_PATCH1)
-
 $(DASH_DIR)/.unpacked: $(DL_DIR)/$(DASH_SOURCE) $(DL_DIR)/$(DASH_PATCH1)
 	$(DASH_CAT) $(DL_DIR)/$(DASH_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	$(ZCAT) $(DL_DIR)/$(DASH_PATCH1) | patch -p1 -d $(DASH_DIR)
@@ -55,6 +53,8 @@ $(TARGET_DIR)/$(DASH_TARGET_BINARY): $(DASH_DIR)/$(DASH_BINARY)
 	touch -c $(TARGET_DIR)/$(DASH_TARGET_BINARY)
 
 dash: uclibc $(TARGET_DIR)/$(DASH_TARGET_BINARY)
+
+dash-source: $(DL_DIR)/$(DASH_SOURCE) $(DL_DIR)/$(DASH_PATCH1)
 
 dash-clean:
 	$(MAKE1) CC=$(TARGET_CC) -C $(DASH_DIR) clean

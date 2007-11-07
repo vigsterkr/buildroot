@@ -13,8 +13,6 @@ CURL_BINARY:=curl
 $(DL_DIR)/$(CURL_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(CURL_SITE)/$(CURL_SOURCE)
 
-curl-source: $(DL_DIR)/$(CURL_SOURCE)
-
 $(CURL_DIR)/.unpacked: $(DL_DIR)/$(CURL_SOURCE)
 	$(CURL_CAT) $(DL_DIR)/$(CURL_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(CURL_DIR) package/curl/ \*.patch*
@@ -55,6 +53,8 @@ $(TARGET_DIR)/usr/bin/$(CURL_BINARY): $(TARGET_DIR)/usr/lib/libcurl.so.3.0.0
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/bin/$(CURL_BINARY)
 
 curl: uclibc $(TARGET_DIR)/usr/bin/$(CURL_BINARY)
+
+curl-source: $(DL_DIR)/$(CURL_SOURCE)
 
 libcurl: $(STAGING_DIR)/bin/$(CURL_BINARY)
 
