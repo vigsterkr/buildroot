@@ -1,0 +1,44 @@
+Index: uClibc/Makerules
+===================================================================
+--- uClibc/Makerules	(revision 20365)
++++ uClibc/Makerules	(working copy)
+@@ -127,7 +127,7 @@
+ 	$(Q)$(RM) $@ $@.$(2) $(dir $@)$(1)
+ 	@$(disp_ld)
+ 	$(Q)$(CC) $(LDFLAGS-$(notdir $@)) -Wl,-soname=$(notdir $@).$(2) \
+-		-nostdlib -o $(dir $@)$(1) $(START_FILE-$(notdir $@)) \
++		$(NOSTDLIB_CFLAGS) -o $(dir $@)$(1) $(START_FILE-$(notdir $@)) \
+ 		-Wl,--whole-archive $(firstword $^) -Wl,--no-whole-archive \
+ 		$(LIBS-$(notdir $@)) $(LIBGCC) $(END_FILE-$(notdir $@))
+ 	$(Q)$(LN) -sf $(1) $@.$(2)
+@@ -150,7 +150,7 @@
+ 	$(Q)$(INSTALL) -d $(dir $@)
+ 	$(Q)$(RM) $(1) $@
+ 	@$(disp_ld)
+-	$(Q)$(CC) $(LDFLAGS-$(notdir $@)) -nostdlib -o $(1) \
++	$(Q)$(CC) $(LDFLAGS-$(notdir $@)) $(NOSTDLIB_CFLAGS) -o $(1) \
+ 		-Wl,-elf2flt -Wl,-shared-lib-id $(2) $(top_builddir)lib/Scrt1.o \
+ 		$(top_builddir)/lib/crti.o -Wl,--whole-archive $(firstword $^) \
+ 		-Wl,--no-whole-archive $(LIBS-$(notdir $@)) $(LIBGCC) \
+@@ -162,7 +162,7 @@
+ 	$(Q)$(RM) $@ $@.$(2) $(dir $@)$(1)
+ 	@$(disp_ld)
+ 	$(Q)$(CC) $(LDFLAGS-$(notdir $@)) -Wl,-soname=$(notdir $@).$(2) \
+-		-nostdlib -o $(dir $@)$(1) $(START_FILE-$(notdir $@)) $^ \
++		$(NOSTDLIB_CFLAGS) -o $(dir $@)$(1) $(START_FILE-$(notdir $@)) $^ \
+ 		$(LIBS-$(notdir $@)) $(LIBGCC) $(END_FILE-$(notdir $@))
+ 	$(Q)$(LN) -sf $(1) $@.$(2)
+ 	$(Q)$(LN) -sf $(1) $@
+Index: uClibc/Rules.mak
+===================================================================
+--- uClibc/Rules.mak	(revision 20365)
++++ uClibc/Rules.mak	(working copy)
+@@ -362,6 +362,8 @@
+ SSP_CFLAGS := $(SSP_DISABLE_FLAGS)
+ endif
+ 
++NOSTDLIB_CFLAGS:=$(if $(call check_gcc,-nostartfiles,),-nostartfiles,$(call check_gcc,-nostdlib,))
++
+ # Some nice CFLAGS to work with
+ CFLAGS := -include $(top_builddir)include/libc-symbols.h \
+ 	$(XWARNINGS) $(CPU_CFLAGS) $(SSP_CFLAGS) \
