@@ -3,8 +3,8 @@
 # OpenNTPD
 #
 #############################################################
-OPENNTPD_VERSION:=3.9p1
-OPENNTPD_SOURCE:=openntpd-$(OPENNTPD_VERSION).tar.gz
+OPENNTPD_VERSION:=4.0
+OPENNTPD_SOURCE:=openntpd-$(OPENNTPD_VERSION).tgz
 OPENNTPD_SITE:=ftp://ftp.openbsd.org/pub/OpenBSD/OpenNTPD
 OPENNTPD_DIR:=$(BUILD_DIR)/openntpd-$(OPENNTPD_VERSION)
 OPENNTPD_CAT:=$(ZCAT)
@@ -14,29 +14,22 @@ OPENNTPD_TARGET_BINARY:=usr/sbin/ntpd
 $(DL_DIR)/$(OPENNTPD_SOURCE):
 	$(WGET) -P $(DL_DIR) $(OPENNTPD_SITE)/$(OPENNTPD_SOURCE)
 
-$(OPENNTPD_DIR)/.source: $(DL_DIR)/$(OPENNTPD_SOURCE)
+$(OPENNTPD_DIR)/.unpacked: $(DL_DIR)/$(OPENNTPD_SOURCE)
 	$(ZCAT) $(DL_DIR)/$(OPENNTPD_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	#mv $(BUILD_DIR)/ntpd $(OPENNTPD_DIR)
 	touch $@
 
-$(OPENNTPD_DIR)/.configured: $(OPENNTPD_DIR)/.source
+$(OPENNTPD_DIR)/.configured: $(OPENNTPD_DIR)/.unpacked
 	(cd $(OPENNTPD_DIR); rm -f config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--sysconfdir=/etc \
-		--datadir=/usr/share \
-		--mandir=/usr/share/man \
 		--with-builtin-arc4random \
 	)
 	touch $@
 
 $(OPENNTPD_DIR)/$(OPENNTPD_BINARY): $(OPENNTPD_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) -C $(OPENNTPD_DIR)
+	$(MAKE) -C $(OPENNTPD_DIR)
 	#(cd $(OPENNTPD_DIR); \
 	# $(YACC) parse.y; \
 	# $(TARGET_CC) $(TARGET_CFLAGS) $(CFLAGS_COMBINE) \
@@ -47,26 +40,26 @@ $(OPENNTPD_DIR)/$(OPENNTPD_BINARY): $(OPENNTPD_DIR)/.configured
 	# ntpd.c buffer.c log.c imsg.c ntp.c ntp_msg.c y.tab.c config.c \
 	# server.c client.c sensors.c util.c; \
 	#)
-	$(STRIPCMD) $@
+	touch -c $@
 
 $(TARGET_DIR)/$(OPENNTPD_TARGET_BINARY): $(OPENNTPD_DIR)/$(OPENNTPD_BINARY)
 	rm -f $(TARGET_DIR)/etc/ntpd.conf
 	$(MAKE) DESTDIR=$(TARGET_DIR) STRIP_OPT="" -C $(OPENNTPD_DIR) install
-	-$(STRIPCMD) $(TARGET_DIR)/$(OPENNTPD_TARGET_BINARY)
-	cp -af $(OPENNTPD_DIR)/ntpd.conf $(TARGET_DIR)/etc/ntpd.conf
+	$(INSTALL) -D -m 0644 $(OPENNTPD_DIR)/ntpd.conf $(TARGET_DIR)/etc/ntpd.conf
 ifneq ($(BR2_HAVE_MANPAGES),y)
-	rm -Rf $(TARGET_DIR)/usr/share/man
+	rm -rf $(TARGET_DIR)/usr/share/man
 endif
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $(TARGET_DIR)/$(OPENNTPD_TARGET_BINARY)
 
 ntpd: uclibc $(TARGET_DIR)/$(OPENNTPD_TARGET_BINARY)
 
 ntpd-source: $(DL_DIR)/$(OPENNTPD_SOURCE)
 
 ntpd-clean:
-	rm -f $(addprefix $(TARGET_DIR)/,etc/ntpd.conf \
-					 usr/share/man/man?/ntpd* \
-					 $(OPENNTPD_TARGET_BINARY))
 	-$(MAKE) -C $(OPENNTPD_DIR) clean
+	rm -f $(TARGET_DIR)/etc/ntpd.conf \
+		$(wildcard $(TARGET_DIR)/usr/share/man*/ntpd*) \
+		$(OPENNTPD_TARGET_BINARY)
 
 ntpd-dirclean:
 	rm -rf $(OPENNTPD_DIR)
