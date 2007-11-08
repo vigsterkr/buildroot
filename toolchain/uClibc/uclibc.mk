@@ -122,8 +122,21 @@ ifneq ($(BR2_ENABLE_LOCALE),)
 endif
 	touch $@
 
+UCLIBC_CONFIGURED_PREREQ:=$(BR2_DEPENDS_DIR)/br2/arch.h \
+$(BR2_DEPENDS_DIR)/br2/endian.h \
+$(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH).h \
+$(BR2_DEPENDS_DIR)/br2/pthreads.h \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH)/*.h) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/pthread*/*.h) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/enable/*locale*.h) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/enable/*locale*.h) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/use/*wchar*.h) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/uclibc/*.h) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/uclibc/*/*.h)
+
+
 # Some targets may wish to provide their own UCLIBC_CONFIG_FILE...
-$(UCLIBC_DIR)/.oldconfig: $(UCLIBC_DIR)/.unpacked $(UCLIBC_CONFIG_FILE)
+$(UCLIBC_DIR)/.oldconfig: $(UCLIBC_DIR)/.unpacked $(UCLIBC_CONFIG_FILE) $(UCLIBC_CONFIGURED_PREREQ)
 	cp -f $(UCLIBC_CONFIG_FILE) $(UCLIBC_DIR)/.oldconfig
 	$(SED) 's,^CROSS_COMPILER_PREFIX=.*,CROSS_COMPILER_PREFIX="$(TARGET_CROSS)",g' \
 		-e 's,# TARGET_$(UCLIBC_TARGET_ARCH) is not set,TARGET_$(UCLIBC_TARGET_ARCH)=y,g' \
@@ -386,20 +399,7 @@ $(UCLIBC_DIR)/.config: $(UCLIBC_DIR)/.oldconfig
 		oldconfig
 	touch $@
 
-UCLIBC_CONFIGURED_PREREQ:=$(BR2_DEPENDS_DIR)/br2/arch.h \
-$(BR2_DEPENDS_DIR)/br2/endian.h \
-$(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH).h \
-$(BR2_DEPENDS_DIR)/br2/pthreads.h \
-$(wildcard $(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH)/*.h) \
-$(wildcard $(BR2_DEPENDS_DIR)/br2/pthread*/*.h) \
-$(wildcard $(BR2_DEPENDS_DIR)/br2/enable/*locale*.h) \
-$(wildcard $(BR2_DEPENDS_DIR)/br2/enable/*locale*.h) \
-$(wildcard $(BR2_DEPENDS_DIR)/br2/use/*wchar*.h) \
-$(wildcard $(BR2_DEPENDS_DIR)/br2/uclibc/*.h) \
-$(wildcard $(BR2_DEPENDS_DIR)/br2/uclibc/*/*.h)
-
-
-$(UCLIBC_DIR)/.configured: $(LINUX_HEADERS_DIR)/.configured $(UCLIBC_DIR)/.config $(UCLIBC_CONFIGURED_PREREQ)
+$(UCLIBC_DIR)/.configured: $(LINUX_HEADERS_DIR)/.configured $(UCLIBC_DIR)/.config
 	set -x && $(MAKE1) -C $(UCLIBC_DIR) \
 		PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
 		DEVEL_PREFIX=/usr/ \
