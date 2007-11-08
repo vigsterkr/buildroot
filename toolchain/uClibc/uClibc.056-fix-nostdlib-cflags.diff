@@ -37,7 +37,7 @@ Index: uClibc/Rules.mak
  SSP_CFLAGS := $(SSP_DISABLE_FLAGS)
  endif
  
-+NOSTDLIB_CFLAGS:=$(if $(call check_gcc,-nostartfiles,),-nostartfiles,$(call check_gcc,-nostdlib,))
++NOSTDLIB_CFLAGS:=$(if $(call check_gcc,-nostartfiles -nostdlib,),-nostartfiles -nostdlib,$(call check_gcc,-nostdlib,))
 +
  # Some nice CFLAGS to work with
  CFLAGS := -include $(top_builddir)include/libc-symbols.h \
