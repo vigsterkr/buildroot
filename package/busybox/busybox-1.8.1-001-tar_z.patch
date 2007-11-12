@@ -1,0 +1,11 @@
+diff -urN busybox-1.8.1/archival/libunarchive/decompress_unzip.c busybox-1.8.1-tar_z/archival/libunarchive/decompress_unzip.c
+--- busybox-1.8.1/archival/libunarchive/decompress_unzip.c	2007-11-09 18:40:48.000000000 -0700
++++ busybox-1.8.1-tar_z/archival/libunarchive/decompress_unzip.c	2007-11-11 18:35:13.000000000 -0700
+@@ -1178,6 +1178,7 @@
+ 	ALLOC_STATE;
+ 	bytebuffer_max = 0x8000;
+ 	bytebuffer = xmalloc(bytebuffer_max);
++	gunzip_src_fd = in;
+ 
+  again:
+ 	if (!check_header_gzip(PASS_STATE_ONLY)) {
