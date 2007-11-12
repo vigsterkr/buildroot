@@ -123,9 +123,9 @@ endif
 	touch $@
 
 UCLIBC_CONFIGURED_PREREQ:=$(BR2_DEPENDS_DIR)/br2/arch.h \
-$(BR2_DEPENDS_DIR)/br2/endian.h \
-$(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH).h \
-$(BR2_DEPENDS_DIR)/br2/pthreads.h \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/endian.h*) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH).h*) \
+$(wildcard $(BR2_DEPENDS_DIR)/br2/pthreads.h*) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH)/*.h) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/pthread*/*.h) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/enable/*locale*.h) \
