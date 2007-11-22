@@ -148,7 +148,7 @@ $(GCC_DIR)/.unpacked: $(DL_DIR)/$(GCC_SOURCE)
 
 gcc-patched: $(GCC_DIR)/.patched
 $(GCC_DIR)/.patched: $(GCC_DIR)/.unpacked
-	# Apply any files named gcc-*.patch from the source directory to gcc
+	# Apply any suitable patches to gcc
 	toolchain/patch-kernel.sh $(GCC_DIR) $(GCC_PATCH_DIR) \*.patch
 	# Note: The soft float situation has improved considerably with gcc 3.4.x.
 	# We can dispense with the custom spec files, as well as libfloat for the arm case.
