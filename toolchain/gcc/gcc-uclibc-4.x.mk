@@ -406,6 +406,8 @@ $(GCC_BUILD_DIR3)/.configured: $(GCC_BUILD_DIR3)/.prepared
 	(cd $(GCC_BUILD_DIR3); rm -rf config.cache; \
 		$(TARGET_CONFIGURE_OPTS) \
 		$(TARGET_CONFIGURE_ARGS) \
+		CFLAGS_FOR_BUILD="$(HOST_CFLAGS) -I$(GMP_HOST_DIR)/include -I$(MPFR_HOST_DIR)/include" \
+		LDFLAGS_FOR_BUILD="$(HOST_LDFLAGS) -L$(GMP_HOST_DIR)/lib -L$(MPFR_HOST_DIR)/lib" \
 		$(TARGET_GCC_FLAGS) \
 		$(GCC_SRC_DIR)/configure \
 		--prefix=/usr \
