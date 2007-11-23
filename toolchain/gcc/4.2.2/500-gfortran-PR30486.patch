@@ -1,0 +1,19 @@
+2007-05-15  Paul Brook  <paul@codesourcery.com>
+
+	* trans-types.c (gfc_type_for_size): Handle signed TImode.
+
+--- gcc-4.2.2.orig/gcc/fortran/trans-types.c	2007-08-31 10:27:50.000000000 +0200
++++ gcc-4.2.2/gcc/fortran/trans-types.c	2007-11-23 14:28:42.000000000 +0100
+@@ -1799,6 +1799,12 @@
+ 	  if (type && bits == TYPE_PRECISION (type))
+ 	    return type;
+ 	}
++	/* Handle TImode as a special case because it is used by some backends
++	   (eg. ARM) even though it is not available for normal use.  */
++#if HOST_BITS_PER_WIDE_INT >= 64
++	if (bits == TYPE_PRECISION (intTI_type_node))
++	  return intTI_type_node;
++#endif
+     }
+   else
+     {
