@@ -195,7 +195,7 @@ BASE_TARGETS:=uclibc
 endif
 TARGETS:=
 
-# setup our pathes
+# setup our paths
 include project/Makefile.in
 
 BR2_DEPENDS_DIR=$(PROJECT_BUILD_DIR)/buildroot-config

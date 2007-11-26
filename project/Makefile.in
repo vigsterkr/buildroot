@@ -37,6 +37,11 @@ endif
 ifeq ($(TOPDIR_SUFFIX),_)
 TOPDIR_SUFFIX:=
 endif
+ifeq ($(BR2_SOFT_FLOAT),y)
+ARCH_FPU_SUFFIX:=_nofpu
+else
+ARCH_FPU_SUFFIX:=
+endif
 
 DL_DIR=$(strip $(subst ",, $(BR2_DL_DIR)))
 #"))

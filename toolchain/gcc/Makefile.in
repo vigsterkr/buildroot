@@ -51,11 +51,9 @@ endif
 else # not gcc-4.x
 TARGET_SOFT_FLOAT:=-msoft-float
 endif
-ARCH_FPU_SUFFIX:=_nofpu
 else # no softfloat support
 SOFT_FLOAT_CONFIG_OPTION:=
 TARGET_SOFT_FLOAT:=
-ARCH_FPU_SUFFIX:=
 # some additional defaults
 ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_ARCH))),)
 # ")))
