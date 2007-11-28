@@ -33,6 +33,9 @@ ifneq ($(CC_TARGET_ARCH_),)
 TARGET_CFLAGS+=-march=$(CC_TARGET_ARCH_)
 endif
 ifneq ($(CC_TARGET_ABI_),)
+ifeq ($(CC_TARGET_ABI_),iwmmxt)
+CC_TARGET_ABI_:=aapcs
+endif
 TARGET_CFLAGS+=-mabi=$(CC_TARGET_ABI_)
 endif
 
