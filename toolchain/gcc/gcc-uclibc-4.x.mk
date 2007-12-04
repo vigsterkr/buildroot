@@ -95,6 +95,7 @@ $(wildcard $(BR2_DEPENDS_DIR)/br2/install/libstdcpp*)\
 $(wildcard $(BR2_DEPENDS_DIR)/br2/prefer/ima*)\
 $(wildcard $(BR2_DEPENDS_DIR)/br2/toolchain/sysroot*)\
 $(wildcard $(BR2_DEPENDS_DIR)/br2/use/sjlj/exceptions*)\
+$(wildcard $(BR2_DEPENDS_DIR)/br2/use/*updates*) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/gcc/shared/libgcc*)
 GCC_TARGET_PREREQ+=$(GCC_COMMON_PREREQ) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/extra/target/gcc/config/options*)
@@ -189,8 +190,11 @@ GCC_BUILD_DIR1:=$(TOOL_BUILD_DIR)/gcc-$(GCC_VERSION)-initial
 # fixed, so we need to actually have working C library header files prior to
 # the step or libgcc will not build...
 
-$(GCC_BUILD_DIR1)/.configured: $(GCC_DIR)/.patched
+$(GCC_BUILD_DIR1)/.configured: $(GCC_DIR)/.patched $(wildcard $(BR2_DEPENDS_DIR)/br2/use/*updates*)
 	mkdir -p $(GCC_BUILD_DIR1)
+ifeq ($(BR2_USE_UPDATES),y)
+	(cd $(GCC_DIR) && $(SVN_UP))
+endif
 	(cd $(GCC_BUILD_DIR1); rm -rf config.cache; \
 		$(HOST_CONFIGURE_OPTS) \
 		$(GCC_DIR)/configure \

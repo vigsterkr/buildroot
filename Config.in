@@ -212,6 +212,16 @@ config BR2_HAVE_INFOPAGES
 	  If you say n here, your target will not contain any
 	  infopage.
 
+config BR2_USE_UPDATES
+	bool "do update checkouts"
+	default n
+	help
+	  Try to update packages that were checked out of a repository.
+	  This will attempt to run your SVN_UP / GIT_PULL commands.
+	  Note that you will most likely need to be online for this to
+	  work.
+	  Say n unless you know what you do.
+
 source package/gnuconfig/Config.in
 
 endmenu
