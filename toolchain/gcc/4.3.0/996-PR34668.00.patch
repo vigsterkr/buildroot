@@ -1,0 +1,22 @@
+\\\\
+\\ Workaround for PR34668
+Index: gcc-4.3.0/gcc/tree.c
+===================================================================
+--- gcc-4.3.0/gcc/tree.c	(revision 131261)
++++ gcc-4.3.0/gcc/tree.c	(working copy)
+@@ -8019,13 +8019,13 @@ find_compatible_field (tree record, tree
+ {
+   tree f;
+ 
+-  for (f = TYPE_FIELDS (record); f ; f = TREE_CHAIN (f))
++  for (f = TYPE_CACHED_VALUES (record); f && AGGREGATE_TYPE_P (record); f = TREE_CHAIN (f))
+     if (TREE_CODE (f) == FIELD_DECL
+ 	&& fields_compatible_p (f, orig_field))
+       return f;
+ 
+   /* ??? Why isn't this on the main fields list?  */
+-  f = TYPE_VFIELD (record);
++  f = record->type.minval;
+   if (f && TREE_CODE (f) == FIELD_DECL
+       && fields_compatible_p (f, orig_field))
+     return f;
