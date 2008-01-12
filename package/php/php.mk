@@ -84,7 +84,7 @@ $(PHP_DIR)/.configured: $(PHP_DIR)/.unpacked
 		--enable-posix \
 		--with-pcre-regex \
 		--without-pear \
-		--disable-ipv6 \
+		$(DISABLE_IPV6) \
 		$(DISABLE_NLS) \
 		$(PHP_OPENSSL) \
 		$(PHP_XML) \
