@@ -82,11 +82,11 @@ libmpfr: uclibc $(TARGET_DIR)/usr/lib/libmpfr$(LIBTGTEXT)
 stage-libmpfr: uclibc $(STAGING_DIR)/usr/lib/$(MPFR_BINARY)
 
 libmpfr-clean:
+	-$(MAKE) -C $(MPFR_TARGET_DIR) clean
 	rm -f $(TARGET_DIR)/usr/lib/libmpfr.* \
 		$(TARGET_DIR)/usr/include/mpfr.h \
 		$(TARGET_DIR)/usr/include/mpf2mpfr.h \
 		$(STAGING_DIR)/usr/lib/libmpfr* $(STAGING_DIR)/usr/include/mpfr*
-	-$(MAKE) -C $(MPFR_TARGET_DIR) clean
 
 libmpfr-dirclean:
 	rm -rf $(MPFR_TARGET_DIR)
@@ -113,8 +113,9 @@ $(MPFR_HOST_DIR)/lib/libmpfr$(HOST_LIBEXT) $(MPFR_HOST_DIR)/lib/libmpfr$(HOST_SH
 
 host-libmpfr: $(MPFR_HOST_DIR)/lib/$(MPFR_HOST_BINARY)
 host-libmpfr-clean:
-	rm -rf $(MPFR_HOST_DIR)
 	-$(MAKE) -C $(MPFR_DIR2) clean
+	rm -rf $(MPFR_HOST_DIR)
+
 host-libmpfr-dirclean:
 	rm -rf $(MPFR_HOST_DIR) $(MPFR_DIR2)
 

@@ -67,9 +67,9 @@ libgmp: uclibc $(TARGET_DIR)/usr/lib/libgmp$(LIBTGTEXT)
 stage-libgmp: uclibc $(STAGING_DIR)/usr/lib/$(GMP_BINARY)
 
 libgmp-clean:
+	-$(MAKE) -C $(GMP_TARGET_DIR) clean
 	rm -f $(TARGET_DIR)/usr/lib/libgmp.* $(TARGET_DIR)/usr/include/gmp.h \
 		$(STAGING_DIR)/usr/lib/libgmp* $(STAGING_DIR)/usr/include/gmp.h
-	-$(MAKE) -C $(GMP_TARGET_DIR) clean
 
 libgmp-dirclean:
 	rm -rf $(GMP_TARGET_DIR) $(GMP_DIR)
@@ -96,8 +96,9 @@ $(GMP_HOST_DIR)/lib/libgmp$(HOST_LIBEXT) $(GMP_HOST_DIR)/lib/libgmp$(HOST_SHREXT
 
 host-libgmp: $(GMP_HOST_DIR)/lib/$(GMP_HOST_BINARY)
 host-libgmp-clean:
-	rm -rf $(GMP_HOST_DIR)
 	-$(MAKE) -C $(GMP_DIR2) clean
+	rm -rf $(GMP_HOST_DIR)
+
 host-libgmp-dirclean:
 	rm -rf $(GMP_HOST_DIR) $(GMP_DIR2)
 
