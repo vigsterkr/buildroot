@@ -7,7 +7,7 @@
 CLOOP_VERSION=2.01
 CLOOP_DIR=$(BUILD_DIR)/cloop-$(CLOOP_VERSION)
 ### CLOOP_SOURCE=cloop_$(CLOOP_VERSION).5.orig.tar.gz
-### CLOOP_SITE=http://ftp.debian.org/debian/pool/main/c/cloop
+### CLOOP_SITE=$(BR2_DEBIAN_MIRROR)/debian/pool/main/c/cloop
 # http://ftp.debian.org/debian/pool/main/c/cloop/cloop_2.01.5-4.diff.gz
 ### CLOOP_PATCH1:=cloop_2.01.5-4.diff.gz
 ### CLOOP_PATCH1_URL:=$(CLOOP_SITE)

@@ -9,7 +9,7 @@
 VTUN_VERSION:=3.0.1
 VTUN_SOURCE:=vtun_$(VTUN_VERSION).orig.tar.gz
 VTUN_PATCH:=vtun_$(VTUN_VERSION)-1.diff.gz
-VTUN_SITE:=http://ftp.debian.org/debian/pool/main/v/vtun
+VTUN_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/v/vtun
 VTUN_DIR:=$(BUILD_DIR)/vtun-$(VTUN_VERSION)
 VTUN_CAT:=$(ZCAT)
 VTUN_BINARY:=vtund
