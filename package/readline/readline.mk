@@ -16,8 +16,6 @@ READLINE_TARGET_SHARED_BINARY:=lib/$(READLINE_SHARED_BINARY)
 $(DL_DIR)/$(READLINE_SOURCE):
 	$(WGET) -P $(DL_DIR) $(READLINE_SITE)/$(READLINE_SOURCE)
 
-readline-source: $(DL_DIR)/$(READLINE_SOURCE)
-
 $(READLINE_DIR)/.unpacked: $(DL_DIR)/$(READLINE_SOURCE)
 	$(READLINE_CAT) $(DL_DIR)/$(READLINE_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	$(CONFIG_UPDATE) $(@D)
@@ -68,6 +66,8 @@ $(TARGET_DIR)/$(READLINE_TARGET_SHARED_BINARY): $(READLINE_DIR)/$(READLINE_BINAR
 		-C $(READLINE_DIR) install-shared uninstall-doc
 
 readline: $(STAGING_DIR)/usr/include/readline/readline.h
+
+readline-source: $(DL_DIR)/$(READLINE_SOURCE)
 
 readline-clean:
 	$(MAKE) -C $(READLINE_DIR) DESTDIR=$(STAGING_DIR) uninstall
