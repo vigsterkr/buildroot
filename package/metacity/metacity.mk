@@ -110,7 +110,7 @@ $(METACITY_DIR)/.configured: $(METACITY_DIR)/.unpacked
 		--disable-gconf \
 		--disable-dependency-tracking \
 		--disable-sm \
-		--disable-nls \
+		$(DISABLE_NLS) \
 		--disable-startup-notification \
 	)
 	touch $(METACITY_DIR)/.configured
