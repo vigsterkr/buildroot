@@ -32,11 +32,11 @@ config BR2_GNU_MIRROR
 	  GNU has multiple software mirrors scattered around the world.
 	  The following allows you to select your preferred mirror.
 
-	Have a look on the gnu.org site for a list of mirrors, then
-	enter the URL to the base directory.  Examples:
+	  Have a look on the gnu.org site for a list of mirrors, then
+	  enter the URL to the base directory.  Examples:
 
-	   http://ftp.gnu.org/pub/gnu
-	   http://mirror.aarnet.edu.au/pub/gnu
+	    http://ftp.gnu.org/pub/gnu
+	    http://mirror.aarnet.edu.au/pub/gnu
 
 config BR2_DEBIAN_MIRROR
 	string "Debian Software mirror"
