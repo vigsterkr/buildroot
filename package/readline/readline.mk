@@ -4,7 +4,7 @@
 #
 #############################################################
 READLINE_VERSION:=5.2
-READLINE_SITE:=ftp://ftp.gnu.org/pub/gnu/readline/
+READLINE_SITE:=$(BR2_GNU_MIRROR)/pub/gnu/readline/
 READLINE_SOURCE:=readline-$(READLINE_VERSION).tar.gz
 READLINE_DIR:=$(BUILD_DIR)/readline-$(READLINE_VERSION)
 READLINE_CAT:=$(ZCAT)
