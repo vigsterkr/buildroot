@@ -29,13 +29,6 @@ else
 DMALLOC_CONFIG_ARGS:=--disable-cxx
 endif
 
-ifeq ($(BR2_PTHREADS_NONE),y)
-DMALLOC_CONFIG_ARGS+=--disable-threads
-else
-DMALLOC_CONFIG_ARGS+=--enable-threads
-endif
-
-
 
 $(DMALLOC_DIR)/.configured: $(DMALLOC_DIR)/.unpacked
 	(cd $(DMALLOC_DIR); rm -rf config.cache; \
@@ -60,6 +53,7 @@ $(DMALLOC_DIR)/.configured: $(DMALLOC_DIR)/.unpacked
 		--mandir=/usr/man \
 		--infodir=/usr/info \
 		--enable-shlib \
+		$(THREADS) \
 		$(DMALLOC_CONFIG_ARGS) \
 	)
 	touch $@
