@@ -4,7 +4,7 @@
 #
 #############################################################
 HOTPLUG_VERSION:=0.5
-HOTPLUG_SOURCE=package/hotplug/diethotplug-$(HOTPLUG_VERSION).tar
+HOTPLUG_SOURCE=package/hotplug/diethotplug-$(HOTPLUG_VERSION).tar.bz2
 HOTPLUG_SITE=$(BR2_KERNEL_MIRROR)/linux/utils/kernel/hotplug/
 HOTPLUG_DIR=$(BUILD_DIR)/diethotplug-$(HOTPLUG_VERSION)
 HOTPLUG_CAT=$(BZCAT)
