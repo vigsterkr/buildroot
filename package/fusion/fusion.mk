@@ -18,17 +18,16 @@ LINUX_FUSION_HEADER=$(STAGING_DIR)/usr/include/linux/fusion.h
 #############################################################
 
 $(LINUX_FUSION_HEADER):
-	cp -dpf package/fusion/fusion.h $(LINUX_FUSION_HEADER)
+	$(INSTALL) -D package/fusion/fusion.h $(LINUX_FUSION_HEADER)/fusion.h
 
 $(LINUX_FUSION_DIR)/$(LINUX_FUSION):
-	mkdir -p $(LINUX_FUSION_DIR)
-	cp -dpf package/fusion/40-fusion.rules $(LINUX_FUSION_DIR)
+	$(INSTALL) -D package/fusion/40-fusion.rules $(LINUX_FUSION_DIR)/40-fusion.rules
 	touch -c $@
 
 linux-fusion: $(LINUX_FUSION_DIR)/$(LINUX_FUSION) $(LINUX_FUSION_HEADER)
 
 linux-fusion-clean:
-	rm -f $(LINUX_FUSION_DIR)/$(LINUX_FUSION))
+	rm -f $(LINUX_FUSION_DIR)/$(LINUX_FUSION)
 
 #############################################################
 #
