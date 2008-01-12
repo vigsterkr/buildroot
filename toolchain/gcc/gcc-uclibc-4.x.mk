@@ -387,10 +387,12 @@ HOST_SOURCE+=gcc-source
 
 gcc-clean:
 	rm -rf $(GCC_BUILD_DIR2)
-	for prog in cpp gcc gcc-[0-9]* protoize unprotoize gcov gccbug cc; do \
-		rm -f $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-$$prog; \
-		rm -f $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-$$prog; \
+	for prog in cpp gcc gcc-[0-9]* cc gfortran \
+		protoize unprotoize gcov gccbug c++filt g++; do \
+		rm -f $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-$$prog \
+			$(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-$$prog; \
 	done
+	rm -f $(STAGING_DIR)/usr/bin/cc
 
 gcc-dirclean: gcc_initial-dirclean
 	rm -rf $(GCC_BUILD_DIR2)
@@ -496,11 +498,13 @@ endif
 	#rm -rf $(TARGET_DIR)/share/locale $(TARGET_DIR)/usr/info \
 	#	$(TARGET_DIR)/usr/man $(TARGET_DIR)/usr/share/doc
 	# Work around problem of missing syslimits.h
-	if [ ! -f $(TARGET_DIR)/usr/$(GCC_LIB_SUBDIR)/include/syslimits.h ]; then \
-		echo "warning: working around missing syslimits.h"; \
-		cp -f $(STAGING_DIR)/$(GCC_LIB_SUBDIR)/include/syslimits.h \
-			$(TARGET_DIR)/usr/$(GCC_LIB_SUBDIR)/include/; \
-	fi
+	#if [ ! -f $(TARGET_DIR)/usr/$(GCC_LIB_SUBDIR)/include/syslimits.h ]; \
+	#then \
+	#	echo "warning: working around missing syslimits.h"; \
+	#	$(INSTALL) -D -m 0644 \
+	#		$(STAGING_DIR)/$(GCC_LIB_SUBDIR)/include/syslimits.h \
+	#		$(TARGET_DIR)/usr/$(GCC_LIB_SUBDIR)/include/; \
+	#fi
 	# Make sure we have 'cc'.
 	if [ ! -e $(TARGET_DIR)/usr/bin/cc ]; then \
 		ln -snf gcc $(TARGET_DIR)/usr/bin/cc; \
