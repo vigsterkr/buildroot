@@ -517,7 +517,13 @@ gcc_target: uclibc_target binutils_target $(TARGET_DIR)/usr/bin/gcc
 
 gcc_target-clean:
 	rm -rf $(GCC_BUILD_DIR3)
-	rm -f $(TARGET_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)*
+	for prog in cpp gcc gcc-[0-9]* cc gfortran \
+		protoize unprotoize gcov gccbug c++filt g++; do \
+		rm -f $(TARGET_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-$$prog \
+			$(TARGET_DIR)/usr/bin/$(GNU_TARGET_NAME)-$$prog \
+			$(TARGET_DIR)/usr/bin/$$prog; \
+	done
+	rm -f $(TARGET_DIR)/usr/bin/cc
 
 gcc_target-dirclean:
 	rm -rf $(GCC_BUILD_DIR3)
