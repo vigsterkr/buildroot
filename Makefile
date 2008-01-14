@@ -256,7 +256,7 @@ TARGETS_ALL:=$(patsubst %,__real_tgt_%,$(TARGETS))
 # all targets depend on the crosscompiler and it's prerequisites
 $(TARGETS_ALL): __real_tgt_%: $(BASE_TARGETS) %
 
-$(BR2_DEPENDS_DIR): .config
+$(BR2_DEPENDS_DIR) $(BR2_DEPENDS_DIR)/br2/arch.h: .config
 	rm -rf $@
 	mkdir -p $(@D)
 	cp -dpRf $(CONFIG)/buildroot-config $@
