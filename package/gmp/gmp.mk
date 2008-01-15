@@ -69,7 +69,9 @@ stage-libgmp: uclibc $(STAGING_DIR)/usr/lib/$(GMP_BINARY)
 libgmp-clean:
 	-$(MAKE) -C $(GMP_TARGET_DIR) clean
 	rm -f $(TARGET_DIR)/usr/lib/libgmp.* $(TARGET_DIR)/usr/include/gmp.h \
-		$(STAGING_DIR)/usr/lib/libgmp* $(STAGING_DIR)/usr/include/gmp.h
+		$(STAGING_DIR)/usr/lib/libgmp* \
+		$(STAGING_DIR)/usr/include/gmp.h \
+		$(GMP_TARGET_DIR)/.configured
 
 libgmp-dirclean:
 	rm -rf $(GMP_TARGET_DIR) $(GMP_DIR)
