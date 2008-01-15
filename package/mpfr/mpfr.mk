@@ -86,7 +86,9 @@ libmpfr-clean:
 	rm -f $(TARGET_DIR)/usr/lib/libmpfr.* \
 		$(TARGET_DIR)/usr/include/mpfr.h \
 		$(TARGET_DIR)/usr/include/mpf2mpfr.h \
-		$(STAGING_DIR)/usr/lib/libmpfr* $(STAGING_DIR)/usr/include/mpfr*
+		$(STAGING_DIR)/usr/lib/libmpfr* \
+		$(STAGING_DIR)/usr/include/mpfr* \
+		$(MPFR_TARGET_DIR)/.configured
 
 libmpfr-dirclean:
 	rm -rf $(MPFR_TARGET_DIR)
