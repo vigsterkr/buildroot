@@ -39,11 +39,13 @@ $(BIND_DIR2)/Makefile: $(BIND_DIR2)/.unpacked
 		--libdir=/lib \
 		--libexecdir=/usr/lib \
 		--libdir=/lib \
-		--includedir=/include \
+		--includedir=/usr/include \
 		--sysconfdir=/etc \
 		--localstatedir=/var \
 		--without-openssl \
 		--with-randomdev=/dev/random \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 		$(DISABLE_IPV6) \
 		$(DISABLE_LARGEFILE) \
 		$(THREADS) \
@@ -64,7 +66,10 @@ $(TARGET_DIR)/$(BIND_TARGET_BINARY): $(BIND_DIR2)/$(BIND_BINARY)
 	$(MAKE1) MAKEDEFS="INSTALL_DATA=true" \
 		DESTDIR=$(TARGET_DIR) -C $(BIND_DIR2)/bin install
 ifneq ($(BR2_HAVE_MANPAGES),y)
-	cd $(TARGET_DIR)/usr/man; rmdir --ignore-fail-on-non-empty man8 man5 `pwd`
+	rm -rf $(TARGET_DIR)/usr/share/man
+endif
+ifneq ($(BR2_HAVE_INFOPAGES),y)
+	rm -rf $(TARGET_DIR)/usr/share/info
 endif
 	$(INSTALL) -m 0755 -D package/bind/bind.sysvinit $(TARGET_DIR)/etc/init.d/S81named
 
@@ -79,7 +84,7 @@ $(STAGING_DIR)/lib/libdns.so: $(BIND_DIR2)/$(BIND_BINARY)
 	$(MAKE1) DESTDIR=$(STAGING_DIR) -C $(BIND_DIR2)/lib install
 
 $(TARGET_DIR)/lib/libdns.so: $(STAGING_DIR)/lib/libdns.so
-	mkdir -p $(TARGET_DIR)/lib
+	$(INSTALL) -d $(TARGET_DIR)/lib
 	cd $(STAGING_DIR)/lib && \
 	    $(INSTALL) libdns*so* libisc*so* libbind9*so* \
 	    liblwres*so* $(TARGET_DIR)/lib/
