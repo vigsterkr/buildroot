@@ -415,6 +415,8 @@ $(UCLIBC_DIR)/.config: $(UCLIBC_DIR)/.oldconfig
 	touch $@
 
 $(UCLIBC_DIR)/.configured: $(LINUX_HEADERS_DIR)/.configured $(UCLIBC_DIR)/.config
+ifeq ($(findstring y,$(BR2_UCLIBC_VERSION_0_9_27)$(BR2_UCLIBC_VERSION_0_9_28_3)$(BR2_UCLIBC_VERSION_0_9_29)),y)
+	# older uClibc without the signum.h generation fix
 	set -x && $(MAKE1) -C $(UCLIBC_DIR) \
 		PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
 		DEVEL_PREFIX=/usr/ \
@@ -425,8 +427,19 @@ $(UCLIBC_DIR)/.configured: $(LINUX_HEADERS_DIR)/.configured $(UCLIBC_DIR)/.confi
 		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
 		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
 		pregen install_dev
+else
+	set -x && $(MAKE1) -C $(UCLIBC_DIR) \
+		PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
+		DEVEL_PREFIX=/usr/ \
+		RUNTIME_PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
+		HOSTCC="$(HOSTCC)" \
+		BUILD_CFLAGS="$(HOST_CFLAGS)" \
+		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
+		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
+		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
+		headers install_dev
+endif
 	# Install the kernel headers to the first stage gcc include dir
-	# if necessary
 ifeq ($(LINUX_HEADERS_IS_KERNEL),y)
 	if [ ! -f $(TOOL_BUILD_DIR)/uClibc_dev/usr/include/linux/version.h ]; then \
 		cp -pLR $(LINUX_HEADERS_DIR)/include/* \
