@@ -41,6 +41,7 @@ else
 -include $(TOPDIR)/local/$(BOARD)/$(BOARD).config
 endif
 endif
+
 ifneq ($(BUILDROOT_DL_DIR),)
 BR2_DL_DIR:=$(BUILDROOT_DL_DIR)
 endif
