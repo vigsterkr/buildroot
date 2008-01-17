@@ -260,7 +260,7 @@ BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
 include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 
 
-$(BR2_DEPENDS_DIR): .config
+$(BR2_DEPENDS_DIR) $(BR2_DEPENDS_DIR)/br2/arch.h: .config
 	rm -rf $@
 	mkdir -p $(@D)
 	cp -dpRf $(CONFIG)/buildroot-config $@
