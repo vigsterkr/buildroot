@@ -101,6 +101,15 @@ $(LINUX26_KCONFIG):
 		sleep 5; \
 	fi
 
+# Sanity check
+ifeq (=$(BR2_KERNEL_LINUX)$(BR2_PACKAGE_LINUX_KCONFIG)=,=y=)
+$(error you do not have a linux kernel configuration)
+endif
+ifeq ($(BR2_KERNEL_LINUX)$(realpath $(LINUX26_KCONFIG)),y)
+$(error you do not have a linux kernel configuration file)
+endif
+
+
 ifneq ($(strip $(LINUX26_VERSION)),$(strip $(LINUX_HEADERS_VERSION)))
 $(DL_DIR)/$(LINUX26_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LINUX26_SITE)/$(LINUX26_SOURCE)
