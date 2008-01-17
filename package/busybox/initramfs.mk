@@ -18,6 +18,9 @@ ifeq ($(BR2_PACKAGE_BUSYBOX_SNAPSHOT),y)
 else
 	mv $(BUILD_DIR)/tmp/busybox-$(BUSYBOX_VERSION) $(BUSYBOX_INITRAMFS_DIR)
 endif
+ifeq ($(BR2_USE_UPDATES),y)
+	(cd $(@D) && $(SVN_UP))
+endif
 	touch $@
 
 $(BUSYBOX_INITRAMFS_DIR)/.config $(BUSYBOX_INITRAMFS_DIR)/.configured: $(BUSYBOX_INITRAMFS_DIR)/.unpacked
