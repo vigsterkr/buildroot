@@ -257,17 +257,24 @@ TARGETS_ALL:=$(patsubst %,__real_tgt_%,$(TARGETS))
 $(TARGETS_ALL): __real_tgt_%: $(BASE_TARGETS) %
 
 BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
-include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+ifneq ($(BR2__UCLIBC_HAVE_DOT_CONFIG),y)
+ifeq ($(findstring uclibc-menuconfig,$(MAKECMDGOALS)),)
+$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT): host-sed $(UCLIBC_DIR)/.config | dependencies
+	# Create BR2__UCLIBC_SYM=val
+	cat $(UCLIBC_DIR)/.config > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
+		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+	touch -c $@
+else
+-include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+endif
+endif
 
-
-$(BR2_DEPENDS_DIR) $(BR2_DEPENDS_DIR)/br2/arch.h: .config
+$(BR2_DEPENDS_DIR): .config
 	rm -rf $(BR2_DEPENDS_DIR)
 	mkdir -p $(BR2_DEPENDS_DIR)
 	cp -dpRf $(CONFIG)/buildroot-config $(BR2_DEPENDS_DIR)
-	# Create BR2__UCLIBC_SYM=val
-	cat $(UCLIBC_CONFIG_FILE) > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
-	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
-		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+	touch $@/.done
 
 dirs: $(DL_DIR) $(TOOL_BUILD_DIR) $(BUILD_DIR) $(STAGING_DIR) $(TARGET_DIR) \
 	$(BR2_DEPENDS_DIR) \
