@@ -122,7 +122,7 @@ ifneq ($(BR2_ENABLE_LOCALE),)
 endif
 	touch $@
 
-UCLIBC_CONFIGURED_PREREQ:=$(BR2_DEPENDS_DIR)/br2/arch.h \
+UCLIBC_CONFIGURED_PREREQ:=$(wildcard $(BR2_DEPENDS_DIR)/br2/arch.h*) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/endian.h*) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/$(UCLIBC_TARGET_ARCH).h*) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/pthreads.h*) \
