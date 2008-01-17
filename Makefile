@@ -261,9 +261,9 @@ include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 
 
 $(BR2_DEPENDS_DIR) $(BR2_DEPENDS_DIR)/br2/arch.h: .config
-	rm -rf $@
-	mkdir -p $(@D)
-	cp -dpRf $(CONFIG)/buildroot-config $@
+	rm -rf $(BR2_DEPENDS_DIR)
+	mkdir -p $(BR2_DEPENDS_DIR)
+	cp -dpRf $(CONFIG)/buildroot-config $(BR2_DEPENDS_DIR)
 	# Create BR2__UCLIBC_SYM=val
 	cat $(UCLIBC_CONFIG_FILE) > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
