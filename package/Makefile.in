@@ -295,6 +295,7 @@ TARGET_CONFIGURE_ARGS= \
 	$(BR2_AC_CV_TRAP_CHECK) \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_func_memcmp_working=yes \
+	$(BR2_AC_CV_FUNC_MALLOC_0_NONNULL) \
 	$(BR2_AC_CV_C_BIGENDIAN)
 
 #######################################################################
