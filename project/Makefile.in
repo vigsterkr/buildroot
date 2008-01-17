@@ -25,7 +25,7 @@ TAR_OPTIONS=$(subst ",, $(BR2_TAR_OPTIONS)) -xf
 #")
 
 
-BASE_DIR:=$(shell pwd)
+BASE_DIR:=$(PWD)
 
 TOPDIR_PREFIX:=$(strip $(subst ",, $(BR2_TOPDIR_PREFIX)))_
 #"))
