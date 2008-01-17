@@ -4,7 +4,7 @@
 #
 #############################################################
 FLEX_VERSION:=2.5.33
-FLEX_PATCH_VERSION:=11
+FLEX_PATCH_VERSION:=12
 FLEX_SOURCE:=flex_$(FLEX_VERSION).orig.tar.gz
 FLEX_PATCH:=flex_$(FLEX_VERSION)-$(FLEX_PATCH_VERSION).diff.gz
 FLEX_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/f/flex
@@ -19,8 +19,6 @@ $(DL_DIR)/$(FLEX_SOURCE):
 $(DL_DIR)/$(FLEX_PATCH):
 	 $(WGET) -P $(DL_DIR) $(FLEX_SITE)/$(FLEX_PATCH)
 
-flex-source: $(DL_DIR)/$(FLEX_SOURCE) $(DL_DIR)/$(FLEX_PATCH)
-
 $(FLEX_DIR)/.unpacked: $(DL_DIR)/$(FLEX_SOURCE) $(DL_DIR)/$(FLEX_PATCH)
 	$(FLEX_CAT) $(DL_DIR)/$(FLEX_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 ifneq ($(FLEX_PATCH),)
@@ -34,84 +32,61 @@ endif
 
 $(FLEX_DIR)/.configured: $(FLEX_DIR)/.unpacked
 	(cd $(FLEX_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
-		--exec-prefix=/usr \
-		--bindir=/usr/bin \
-		--sbindir=/usr/sbin \
-		--libdir=/lib \
-		--libexecdir=/usr/lib \
 		--sysconfdir=/etc \
-		--datadir=/usr/share \
-		--localstatedir=/var \
-		--mandir=/usr/share/man \
-		--infodir=/usr/share/info \
-		--includedir=$(TARGET_DIR)/usr/include \
+		--includedir=$(STAGING_DIR)/usr/include \
 		$(DISABLE_NLS) \
 		$(DISABLE_LARGEFILE) \
 	)
 	touch $@
 
 $(FLEX_DIR)/$(FLEX_BINARY): $(FLEX_DIR)/.configured
-	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(FLEX_DIR)
+	$(MAKE) -C $(FLEX_DIR)
 
 $(TARGET_DIR)/$(FLEX_TARGET_BINARY): $(FLEX_DIR)/$(FLEX_BINARY)
-	$(MAKE1) \
-	    prefix=$(TARGET_DIR)/usr \
-	    exec_prefix=$(TARGET_DIR)/usr \
-	    bindir=$(TARGET_DIR)/usr/bin \
-	    sbindir=$(TARGET_DIR)/usr/sbin \
-	    libexecdir=$(TARGET_DIR)/usr/lib \
-	    datadir=$(TARGET_DIR)/usr/share \
-	    sysconfdir=$(TARGET_DIR)/etc \
-	    sharedstatedir=$(TARGET_DIR)/usr/com \
-	    localstatedir=$(TARGET_DIR)/var \
-	    libdir=$(TARGET_DIR)/usr/lib \
-	    infodir=$(TARGET_DIR)/usr/info \
-	    mandir=$(TARGET_DIR)/usr/man \
-	    includedir=$(TARGET_DIR)/usr/include \
-	    -C $(FLEX_DIR) install
+	$(MAKE1) -C $(FLEX_DIR) \
+		DESTDIR=$(STAGING_DIR) includedir=/usr/include install
+	$(INSTALL) -D -m 0755 $(STAGING_DIR)/$(FLEX_TARGET_BINARY) \
+		$(TARGET_DIR)/$(FLEX_TARGET_BINARY)
 ifeq ($(BR2_PACKAGE_FLEX_LIBFL),y)
-	install -D $(FLEX_DIR)/libfl.a $(STAGING_DIR)/lib/libfl.a
+	$(INSTALL) -D $(STAGING_DIR)/usr/lib/libfl.a \
+		$(TARGET_DIR)/usr/lib/libfl.a
+	$(INSTALL) -D $(STAGING_DIR)/usr/lib/libfl_pic.a \
+		$(TARGET_DIR)/usr/lib/libfl_pic.a
 endif
-ifneq ($(BR2_HAVE_INFOPAGES),y)
+ifeq ($(BR2_HAVE_INFOPAGES),y)
+	$(MAKE1) -C $(FLEX_DIR) \
+		DESTDIR=$(TARGET_DIR) includedir=/usr/include install-info
+else
 	rm -rf $(TARGET_DIR)/usr/share/info
 endif
-ifneq ($(BR2_HAVE_MANPAGES),y)
+ifeq ($(BR2_HAVE_MANPAGES),y)
+	$(MAKE1) -C $(FLEX_DIR) \
+		DESTDIR=$(TARGET_DIR) includedir=/usr/include install-man
+else
 	rm -rf $(TARGET_DIR)/usr/share/man
 endif
 	rm -rf $(TARGET_DIR)/share/locale
 	rm -rf $(TARGET_DIR)/usr/share/doc
-	(cd $(TARGET_DIR)/usr/bin; ln -snf flex lex)
+	ln -snf flex $(TARGET_DIR)/usr/bin/lex
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 flex: uclibc $(TARGET_DIR)/$(FLEX_TARGET_BINARY)
 
+flex-source: $(DL_DIR)/$(FLEX_SOURCE) $(DL_DIR)/$(FLEX_PATCH)
+
 flex-clean:
-	$(MAKE) \
-	    prefix=$(TARGET_DIR)/usr \
-	    exec_prefix=$(TARGET_DIR)/usr \
-	    bindir=$(TARGET_DIR)/usr/bin \
-	    sbindir=$(TARGET_DIR)/usr/sbin \
-	    libexecdir=$(TARGET_DIR)/usr/lib \
-	    datadir=$(TARGET_DIR)/usr/share \
-	    sysconfdir=$(TARGET_DIR)/etc \
-	    sharedstatedir=$(TARGET_DIR)/usr/com \
-	    localstatedir=$(TARGET_DIR)/var \
-	    libdir=$(TARGET_DIR)/usr/lib \
-	    infodir=$(TARGET_DIR)/usr/share/info \
-	    mandir=$(TARGET_DIR)/usr/share/man \
-	    includedir=$(TARGET_DIR)/usr/include \
-		-C $(FLEX_DIR) uninstall
-	rm -f $(TARGET_DIR)/usr/bin/lex
-ifeq ($(BR2_PACKAGE_FLEX_LIBFL),y)
-	-rm $(STAGING_DIR)/lib/libfl.a
-endif
 	-$(MAKE) -C $(FLEX_DIR) clean
+	$(MAKE) -C $(FLEX_DIR) \
+		DESTDIR=$(STAGING_DIR) includedir=/usr/include uninstall
+	$(MAKE) -C $(FLEX_DIR) \
+		DESTDIR=$(TARGET_DIR) includedir=/usr/include uninstall
+	rm -f $(TARGET_DIR)/usr/bin/lex $(TARGET_DIR)/usr/bin/flex
+ifeq ($(BR2_PACKAGE_FLEX_LIBFL),y)
+	-rm $(TARGET_DIR)/usr/lib/libfl.a $(TARGET_DIR)/usr/lib/libfl_pic.a \
+		$(TARGET_DIR)/usr/include/FlexLexer.h
+endif
 
 flex-dirclean:
 	rm -rf $(FLEX_DIR)
