@@ -422,6 +422,8 @@ $(UCLIBC_DIR)/.configured: $(LINUX_HEADERS_DIR)/.configured $(UCLIBC_DIR)/.confi
 		HOSTCC="$(HOSTCC)" \
 		BUILD_CFLAGS="$(HOST_CFLAGS)" \
 		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
+		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
+		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
 		pregen install_dev
 	# Install the kernel headers to the first stage gcc include dir
 	# if necessary
@@ -463,6 +465,8 @@ uclibc-menuconfig: host-sed $(UCLIBC_DIR)/.config
 		DEVEL_PREFIX=/usr/ \
 		RUNTIME_PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
 		HOSTCC="$(HOSTCC)" \
+		BUILD_CFLAGS="$(HOST_CFLAGS)" \
+		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		menuconfig && \
 	touch -c $(UCLIBC_DIR)/.config
 
@@ -479,6 +483,9 @@ else
 		PREFIX=$(STAGING_DIR) \
 		DEVEL_PREFIX=/usr/ \
 		RUNTIME_PREFIX=/ \
+		HOSTCC="$(HOSTCC)" \
+		BUILD_CFLAGS="$(HOST_CFLAGS)" \
+		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
 		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
 		install_runtime install_dev
