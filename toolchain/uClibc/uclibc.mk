@@ -409,6 +409,8 @@ $(UCLIBC_DIR)/.config: $(UCLIBC_DIR)/.oldconfig
 		DEVEL_PREFIX=/usr/ \
 		RUNTIME_PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
 		HOSTCC="$(HOSTCC)" \
+		BUILD_CFLAGS="$(HOST_CFLAGS)" \
+		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		oldconfig
 	touch $@
 
@@ -418,8 +420,8 @@ $(UCLIBC_DIR)/.configured: $(LINUX_HEADERS_DIR)/.configured $(UCLIBC_DIR)/.confi
 		DEVEL_PREFIX=/usr/ \
 		RUNTIME_PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
 		HOSTCC="$(HOSTCC)" \
-		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
-		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
+		BUILD_CFLAGS="$(HOST_CFLAGS)" \
+		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		pregen install_dev
 	# Install the kernel headers to the first stage gcc include dir
 	# if necessary
@@ -448,6 +450,8 @@ $(UCLIBC_DIR)/lib/libc.a: $(UCLIBC_DIR)/.configured $(gcc_initial) $(LIBFLOAT_TA
 		DEVEL_PREFIX=/ \
 		RUNTIME_PREFIX=/ \
 		HOSTCC="$(HOSTCC)" \
+		BUILD_CFLAGS="$(HOST_CFLAGS)" \
+		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
 		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
 		all
