@@ -516,6 +516,7 @@ endif
 gcc_target: uclibc_target binutils_target $(TARGET_DIR)/usr/bin/gcc
 
 gcc_target-clean:
+	-$(MAKE1) DESTDIR=$(TARGET_DIR) -C $(GCC_BUILD_DIR3) uninstall
 	rm -rf $(GCC_BUILD_DIR3)
 	for prog in cpp gcc gcc-[0-9]* cc gfortran \
 		protoize unprotoize gcov gccbug c++filt g++; do \
