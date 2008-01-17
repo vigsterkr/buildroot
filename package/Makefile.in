@@ -278,6 +278,7 @@ else
 BR2_AC_CV_C_BIGENDIAN=ac_cv_c_bigendian=no
 endif
 
+# uClibc's config symbols reside in BR2__UCLIBC_${uclibc_config_sym}=${val}
 # Does malloc return live pointer for malloc(0) ?
 ifeq ($(BR2__UCLIBC_MALLOC_GLIBC_COMPAT),y)
 BR2_AC_CV_FUNC_MALLOC_0_NONNULL=ac_cv_func_malloc_0_nonnull=yes \

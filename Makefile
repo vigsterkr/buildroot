@@ -256,10 +256,18 @@ TARGETS_ALL:=$(patsubst %,__real_tgt_%,$(TARGETS))
 # all targets depend on the crosscompiler and it's prerequisites
 $(TARGETS_ALL): __real_tgt_%: $(BASE_TARGETS) %
 
-$(BR2_DEPENDS_DIR) $(BR2_DEPENDS_DIR)/br2/arch.h: .config
+BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
+include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+
+
+$(BR2_DEPENDS_DIR): .config
 	rm -rf $@
 	mkdir -p $(@D)
 	cp -dpRf $(CONFIG)/buildroot-config $@
+	# Create BR2__UCLIBC_SYM=val
+	cat $(UCLIBC_CONFIG_FILE) > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
+		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 
 dirs: $(DL_DIR) $(TOOL_BUILD_DIR) $(BUILD_DIR) $(STAGING_DIR) $(TARGET_DIR) \
 	$(BR2_DEPENDS_DIR) \
