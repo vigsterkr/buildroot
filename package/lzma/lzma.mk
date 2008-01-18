@@ -62,8 +62,7 @@ use-lzma-host-binary:
 
 build-lzma-host-binary: $(LZMA_HOST_DIR)/src/lzma/lzma
 	-rm -f $(TOOL_BUILD_DIR)/bin/lzma
-	[ -d $(TOOL_BUILD_DIR)/bin ] || mkdir $(TOOL_BUILD_DIR)/bin
-	cp -pf $(LZMA_HOST_DIR)/src/lzma/lzma $(TOOL_BUILD_DIR)/bin/lzma
+	$(INSTALL) -D -m 0755 $(LZMA_HOST_DIR)/src/lzma/lzma $(TOOL_BUILD_DIR)/bin/lzma
 
 host-lzma: $(HOST_LZMA_BINARY)
 
@@ -113,7 +112,7 @@ $(LZMA_TARGET_DIR)/src/lzma/lzma: $(LZMA_TARGET_DIR)/.configured
 	touch -c $@
 
 $(TARGET_DIR)/$(LZMA_TARGET_BINARY): $(LZMA_TARGET_DIR)/src/lzma/lzma
-	cp -dpf $(LZMA_TARGET_DIR)/src/lzma/lzma $@
+	$(INSTALL) -D -m 0755 $(LZMA_TARGET_DIR)/src/lzma/lzma $@
 	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $@
 	touch -c $@
 
@@ -124,8 +123,8 @@ lzma-target: uclibc $(TARGET_DIR)/$(LZMA_TARGET_BINARY)
 lzma-source: $(DL_DIR)/$(LZMA_SOURCE)
 
 lzma-clean:
-	rm -f $(TARGET_DIR)/usr/bin/lzma
 	-$(MAKE) -C $(LZMA_TARGET_DIR) clean
+	rm -f $(TARGET_DIR)/usr/bin/lzma
 
 lzma-dirclean:
 	rm -rf $(LZMA_DIR)
