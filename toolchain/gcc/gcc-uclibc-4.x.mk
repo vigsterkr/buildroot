@@ -388,7 +388,7 @@ HOST_SOURCE+=gcc-source
 gcc-clean:
 	rm -rf $(GCC_BUILD_DIR2)
 	for prog in cpp gcc gcc-[0-9]* cc gfortran \
-		protoize unprotoize gcov gccbug c++filt g++; do \
+		protoize unprotoize gcov gccbug g++; do \
 		rm -f $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-$$prog \
 			$(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-$$prog; \
 	done
@@ -519,7 +519,7 @@ gcc_target-clean:
 	-$(MAKE1) DESTDIR=$(TARGET_DIR) -C $(GCC_BUILD_DIR3) uninstall
 	rm -rf $(GCC_BUILD_DIR3)
 	for prog in cpp gcc gcc-[0-9]* cc gfortran \
-		protoize unprotoize gcov gccbug c++filt g++; do \
+		protoize unprotoize gcov gccbug g++; do \
 		rm -f $(TARGET_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-$$prog \
 			$(TARGET_DIR)/usr/bin/$(GNU_TARGET_NAME)-$$prog \
 			$(TARGET_DIR)/usr/bin/$$prog; \
