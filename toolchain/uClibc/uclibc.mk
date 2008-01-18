@@ -397,7 +397,7 @@ endif
 ifneq ($(BR2_STRIP_none),y)
 	$(SED) 's/.*CONFIG_DOSTRIP.*/CONFIG_DOSTRIP=y/' $(UCLIBC_DIR)/.oldconfig
 endif
-ifeq ($(BR2_GCC_CROSS_CXX),y)
+ifeq ($(findstring y,$(BR2_GCC_CROSS_CXX)$(BR2_GCC_SHARED_LIBGCC)),y)
 	$(SED) 's/.*CONFIG_UCLIBC_CTOR_DTOR.*/CONFIG_UCLIBC_CTOR_DTOR=y/' $(UCLIBC_DIR)/.oldconfig
 endif
 
@@ -440,7 +440,7 @@ else
 		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
 		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS)" \
-		headers install_dev
+		install_dev
 endif
 	# Install the kernel headers to the first stage gcc include dir
 ifeq ($(LINUX_HEADERS_IS_KERNEL),y)
