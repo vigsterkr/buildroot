@@ -3,6 +3,8 @@
 .config
 .config.cmd
 .config.old
+.br.dependencies.host
+.buildroot.uclibc_config
 
 # obj dirs
 build_*
