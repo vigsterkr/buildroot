@@ -4,6 +4,7 @@
 #
 #############################################################
 READLINE_VERSION:=5.2
+READLINE_VERSION_SMALL=$(subst .,,$(READLINE_VERSION))
 READLINE_SITE:=$(BR2_GNU_MIRROR)/readline/
 READLINE_SOURCE:=readline-$(READLINE_VERSION).tar.gz
 READLINE_DIR:=$(BUILD_DIR)/readline-$(READLINE_VERSION)
@@ -18,6 +19,7 @@ $(DL_DIR)/$(READLINE_SOURCE):
 
 $(READLINE_DIR)/.unpacked: $(DL_DIR)/$(READLINE_SOURCE)
 	$(READLINE_CAT) $(DL_DIR)/$(READLINE_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	toolchain/patch-kernel.sh $(READLINE_DIR) package/readline/ readline$(READLINE_VERSION_SMALL)-???
 	$(CONFIG_UPDATE) $(@D)
 	$(CONFIG_UPDATE) $(@D)/support
 	touch $@
@@ -65,7 +67,7 @@ $(TARGET_DIR)/$(READLINE_TARGET_SHARED_BINARY): $(READLINE_DIR)/$(READLINE_BINAR
 	$(MAKE1) DESTDIR=$(TARGET_DIR) \
 		-C $(READLINE_DIR) install-shared uninstall-doc
 
-readline: $(STAGING_DIR)/usr/include/readline/readline.h
+readline: ncurses $(STAGING_DIR)/usr/include/readline/readline.h
 
 readline-source: $(DL_DIR)/$(READLINE_SOURCE)
 
@@ -81,7 +83,7 @@ readline-target: $(TARGET_DIR)/$(READLINE_TARGET_SHARED_BINARY)
 readline-target-clean:
 	$(MAKE1) DESTDIR=$(TARGET_DIR) -C $(READLINE_DIR) uninstall
 
-ifeq ($(BR2_READLINE),y)
+ifeq ($(BR2_PACKAGE_READLINE),y)
 TARGETS+=readline
 endif
 ifeq ($(BR2_PACKAGE_READLINE_TARGET),y)
