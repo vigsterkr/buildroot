@@ -392,10 +392,10 @@ ifeq ($(BR2_x86_i686),y)
 	$(SED) 's,# CONFIG_686 is not set,CONFIG_686=y,g' $(UCLIBC_DIR)/.oldconfig
 endif
 endif
-	$(SED) '/CONFIG_DOSTRIP/d' $(UCLIBC_DIR)/.oldconfig
-	/bin/echo "# CONFIG_DOSTRIP is not set" >> $(UCLIBC_DIR)/.oldconfig
+	$(SED) '/CONFIG_DOSTRIP/d' -e '/DOSTRIP/d' $(UCLIBC_DIR)/.oldconfig
+	/bin/echo "# DOSTRIP is not set" >> $(UCLIBC_DIR)/.oldconfig
 ifneq ($(BR2_STRIP_none),y)
-	$(SED) 's/.*CONFIG_DOSTRIP.*/CONFIG_DOSTRIP=y/' $(UCLIBC_DIR)/.oldconfig
+	$(SED) 's/.*DOSTRIP.*/DOSTRIP=y/' $(UCLIBC_DIR)/.oldconfig
 endif
 ifeq ($(findstring y,$(BR2_GCC_CROSS_CXX)$(BR2_GCC_SHARED_LIBGCC)),y)
 	$(SED) 's/.*CONFIG_UCLIBC_CTOR_DTOR.*/CONFIG_UCLIBC_CTOR_DTOR=y/' $(UCLIBC_DIR)/.oldconfig
