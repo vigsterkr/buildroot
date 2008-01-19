@@ -23,32 +23,28 @@ $(DL_DIR)/$(BIND_SOURCE):
 $(BIND_DIR2)/.unpacked: $(DL_DIR)/$(BIND_SOURCE)
 	$(BIND_CAT) $(DL_DIR)/$(BIND_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(BIND_DIR2) package/bind/ bind\*$(BIND_VERSION)\*.patch
+	$(CONFIG_UPDATE) $(@D)
+	$(CONFIG_UPDATE) $(@D)/lib/bind
 	touch $@
 
 $(BIND_DIR2)/Makefile: $(BIND_DIR2)/.unpacked
 	(cd $(BIND_DIR2); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
 		BUILD_CC="$(HOSTCC)" \
-		BUILD_CFLAGS="$(HOST_CFLAGS)" \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		BUILD_CFLAGS="$(HOST__CFLAGS)" \
+		BUILD_CPPFLAGS="$(HOST_CPPFLAGS)" \
+		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
+		BUILD_LIBS="$(HOST_LIBS)" \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
-		--libdir=/lib \
-		--libexecdir=/usr/lib \
-		--libdir=/lib \
-		--includedir=/usr/include \
 		--sysconfdir=/etc \
-		--localstatedir=/var \
-		--without-openssl \
-		--with-randomdev=/dev/random \
 		--mandir=/usr/share/man \
 		--infodir=/usr/share/info \
 		$(DISABLE_IPV6) \
 		$(DISABLE_LARGEFILE) \
 		$(THREADS) \
+		--with-randomdev=/dev/random \
+		--without-openssl \
+		--disable-atomic \
 		--with-libtool \
 		--with-pic \
 	)
@@ -71,7 +67,20 @@ endif
 ifneq ($(BR2_HAVE_INFOPAGES),y)
 	rm -rf $(TARGET_DIR)/usr/share/info
 endif
+ifneq ($(BR2_HAVE_HEADERS),y)
+	rm -rf $(TARGET_DIR)/usr/include/isc
+	rm -rf $(TARGET_DIR)/usr/include/isccc
+	rm -rf $(TARGET_DIR)/usr/include/dns
+	rm -rf $(TARGET_DIR)/usr/include/dst
+	rm -rf $(TARGET_DIR)/usr/include/isccfg
+	rm -rf $(TARGET_DIR)/usr/include/bind[0-9][0-9]*
+	rm -rf $(TARGET_DIR)/usr/include/lwres
+endif
 	$(INSTALL) -m 0755 -D package/bind/bind.sysvinit $(TARGET_DIR)/etc/init.d/S81named
+	$(STRIPCMD) $(STRIP_STRIP_ALL) \
+		$(addprefix $(TARGET_DIR)/usr/sbin/,named rndc rndc-confgen dnssec-keygen dnssec-signzone named-checkconf named-checkzone) \
+		$(addprefix $(TARGET_DIR)/usr/bin/,dig host nslookup)
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 bind-bin: $(TARGET_DIR)/$(BIND_TARGET_BINARY) bind-lib
 
@@ -80,18 +89,21 @@ bind-bin: $(TARGET_DIR)/$(BIND_TARGET_BINARY) bind-lib
 # install bind libraries
 #
 #############################################################
-$(STAGING_DIR)/lib/libdns.so: $(BIND_DIR2)/$(BIND_BINARY)
+$(STAGING_DIR)/usr/lib/libdns.so: $(BIND_DIR2)/$(BIND_BINARY)
 	$(MAKE1) DESTDIR=$(STAGING_DIR) -C $(BIND_DIR2)/lib install
 
-$(TARGET_DIR)/lib/libdns.so: $(STAGING_DIR)/lib/libdns.so
-	$(INSTALL) -d $(TARGET_DIR)/lib
-	cd $(STAGING_DIR)/lib && \
+$(TARGET_DIR)/usr/lib/libdns.so: $(STAGING_DIR)/usr/lib/libdns.so
+	$(INSTALL) -d $(TARGET_DIR)/usr/lib
+	cd $(STAGING_DIR)/usr/lib && \
 	    $(INSTALL) libdns*so* libisc*so* libbind9*so* \
-	    liblwres*so* $(TARGET_DIR)/lib/
-	$(STRIPCMD) $(TARGET_DIR)/lib/libdns*so* $(TARGET_DIR)/lib/libisc*so* \
-		$(TARGET_DIR)/lib/libbind9*so* $(TARGET_DIR)/lib/liblwres*so*
+	    liblwres*so* $(TARGET_DIR)/usr/lib/
+	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) \
+		$(TARGET_DIR)/usr/lib/libdns*so* \
+		$(TARGET_DIR)/usr/lib/libisc*so* \
+		$(TARGET_DIR)/usr/lib/libbind9*so* \
+		$(TARGET_DIR)/usr/lib/liblwres*so*
 
-bind-lib: $(STAGING_DIR)/lib/libdns.so $(TARGET_DIR)/lib/libdns.so
+bind-lib: $(STAGING_DIR)/usr/lib/libdns.so $(TARGET_DIR)/usr/lib/libdns.so
 
 bind: uclibc bind-bin bind-lib
 
@@ -99,8 +111,12 @@ bind-source: $(DL_DIR)/$(BIND_SOURCE)
 
 bind-clean:
 	-$(MAKE) -C $(BIND_DIR2) clean
-	rm -rf $(TARGET_DIR)/lib/libdns*so* $(TARGET_DIR)/lib/libisc*so* \
-		$(TARGET_DIR)/lib/libbind9*so* $(TARGET_DIR)/lib/liblwres*so*
+	rm -rf $(TARGET_DIR)/usr/lib/libdns*so* \
+		$(TARGET_DIR)/usr/lib/libisc*so* \
+		$(TARGET_DIR)/usr/lib/libbind9*so* \
+		$(TARGET_DIR)/usr/lib/liblwres*so* \
+		$(addprefix $(TARGET_DIR)/usr/sbin/,named rndc rndc-confgen dnssec-keygen dnssec-signzone named-checkconf named-checkzone) \
+		$(addprefix $(TARGET_DIR)/usr/bin/,dig host nslookup)
 
 bind-dirclean:
 	rm -rf $(BIND_DIR2)
