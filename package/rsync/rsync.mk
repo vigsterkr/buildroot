@@ -14,37 +14,35 @@ RSYNC_TARGET_BINARY:=usr/bin/rsync
 $(DL_DIR)/$(RSYNC_SOURCE):
 	$(WGET) -P $(DL_DIR) $(RSYNC_SITE)/$(RSYNC_SOURCE)
 
-rsync-source: $(DL_DIR)/$(RSYNC_SOURCE)
-
 $(RSYNC_DIR)/.unpacked: $(DL_DIR)/$(RSYNC_SOURCE)
 	$(RSYNC_CAT) $(DL_DIR)/$(RSYNC_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(RSYNC_DIR) package/rsync/ rsync\*.patch
-	touch $(RSYNC_DIR)/.unpacked
+	$(CONFIG_UPDATE) $(@D)
+	touch $@
 
 $(RSYNC_DIR)/.configured: $(RSYNC_DIR)/.unpacked
 	(cd $(RSYNC_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--with-included-popt \
 	)
-	touch $(RSYNC_DIR)/.configured
+	touch $@
 
 $(RSYNC_DIR)/$(RSYNC_BINARY): $(RSYNC_DIR)/.configured
-	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(RSYNC_DIR)
+	$(MAKE) -C $(RSYNC_DIR)
 
 $(TARGET_DIR)/$(RSYNC_TARGET_BINARY): $(RSYNC_DIR)/$(RSYNC_BINARY)
-	install -D $(RSYNC_DIR)/$(RSYNC_BINARY) $(TARGET_DIR)/$(RSYNC_TARGET_BINARY)
+	$(INSTALL) -D -m 0755 $(RSYNC_DIR)/$(RSYNC_BINARY) \
+		$(TARGET_DIR)/$(RSYNC_TARGET_BINARY)
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 rsync: uclibc $(TARGET_DIR)/$(RSYNC_TARGET_BINARY)
 
+rsync-source: $(DL_DIR)/$(RSYNC_SOURCE)
+
 rsync-clean:
-	rm -f $(TARGET_DIR)/$(RSYNC_TARGET_BINARY)
 	-$(MAKE) -C $(RSYNC_DIR) clean
+	rm -f $(TARGET_DIR)/$(RSYNC_TARGET_BINARY)
 
 rsync-dirclean:
 	rm -rf $(RSYNC_DIR)
