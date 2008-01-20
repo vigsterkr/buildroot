@@ -33,7 +33,7 @@ $(DL_DIR)/$(LIBPCAP_SOURCE):
 $(LIBPCAP_DIR)/.unpacked: $(DL_DIR)/$(LIBPCAP_SOURCE)
 	$(LIBPCAP_CAT) $(DL_DIR)/$(LIBPCAP_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	# packaging error..
-	rm -f $(LIBPCAP_DIR)/gencode.c.rej
+	rm -f $(LIBPCAP_DIR)/gencode.c.rej $(LIBPCAP_DIR)/libpcap-0.9
 	toolchain/patch-kernel.sh $(LIBPCAP_DIR) package/libpcap/ \*.patch
 	$(CONFIG_UPDATE) $(@D)
 	# alleged autoconf bug
