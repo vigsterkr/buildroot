@@ -1,0 +1,11 @@
+diff -rduNp libpcap-0.9.8.orig1/Makefile.in libpcap-0.9.8/Makefile.in
+--- libpcap-0.9.8.orig1/Makefile.in	2008-01-20 12:12:44.000000000 +0100
++++ libpcap-0.9.8/Makefile.in	2008-01-20 12:28:08.000000000 +0100
+@@ -26,6 +26,7 @@
+ # Top level hierarchy
+ prefix = @prefix@
+ exec_prefix = @exec_prefix@
++datarootdir = @datarootdir@
+ # Pathname of directory to install the include files
+ includedir = @includedir@
+ # Pathname of directory to install the library
