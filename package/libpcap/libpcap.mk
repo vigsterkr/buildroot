@@ -26,6 +26,8 @@ LIBPCAP_DIR:=$(BUILD_DIR)/libpcap-$(LIBPCAP_VERSION)
 LIBPCAP_SITE:=http://www.tcpdump.org/release
 LIBPCAP_SOURCE:=libpcap-$(LIBPCAP_VERSION).tar.gz
 LIBPCAP_CAT:=$(ZCAT)
+#default to dynamic lib for better reuse
+LIBPCAP_LIBEXT:=so
 
 $(DL_DIR)/$(LIBPCAP_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LIBPCAP_SITE)/$(LIBPCAP_SOURCE)
@@ -43,7 +45,6 @@ $(LIBPCAP_DIR)/.unpacked: $(DL_DIR)/$(LIBPCAP_SOURCE)
 $(LIBPCAP_DIR)/.configured: $(LIBPCAP_DIR)/.unpacked
 	(cd $(LIBPCAP_DIR); rm -rf config.cache; \
 		$(if $(KERNEL_MAJORVERSION),ac_cv_linux_vers=$(KERNEL_MAJORVERSION)) \
-		BUILD_CC=$(TARGET_CC) \
 		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--localstatedir=/var \
@@ -55,19 +56,36 @@ $(LIBPCAP_DIR)/.configured: $(LIBPCAP_DIR)/.unpacked
 	)
 	touch $@
 
-$(LIBPCAP_DIR)/libpcap.a: $(LIBPCAP_DIR)/.configured
-	$(MAKE) -C $(LIBPCAP_DIR)
+$(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT): $(LIBPCAP_DIR)/.configured
+	$(MAKE) -C $(LIBPCAP_DIR) shared
 
-$(STAGING_DIR)/usr/lib/libpcap.a: $(LIBPCAP_DIR)/libpcap.a
-	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(LIBPCAP_DIR) install
+$(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT): $(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT)
+	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(LIBPCAP_DIR) install install-shared
 
-libpcap: uclibc zlib $(STAGING_DIR)/usr/lib/libpcap.a
+$(TARGET_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT): $(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT)
+	$(INSTALL) -d $(@D)
+	$(INSTALL) $(wildcard $(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT)*) \
+		$(TARGET_DIR)/usr/lib/
+	if test "x$(LIBPCAP_LIBEXT)" != "xso"; then \
+	  $(INSTALL) $(STAGING_DIR)/usr/lib/libpcap.a $(TARGET_DIR)/usr/lib/; \
+	else \
+	for i in $(notdir $(wildcard $(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT).*.*.*)); \
+	do \
+		ln -sf $$i \
+			$(TARGET_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT) && \
+		break; \
+	done; \
+	fi
+	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $@
+
+libpcap: uclibc zlib $(TARGET_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT)
 
 libpcap-source: $(DL_DIR)/$(LIBPCAP_SOURCE)
 
 libpcap-clean:
 	-$(MAKE) -C $(LIBPCAP_DIR) clean
-	rm -f $(wildcard $(addprefix $(STAGING_DIR)/usr/,include/pcap*.h lib/libpcap.a share/man/man?/pcap.*))
+	rm -f $(wildcard $(addprefix $(STAGING_DIR)/usr/,include/pcap*.h lib/libpcap.a lib/libpcap.so share/man/man?/pcap.*)) \
+		$(wildcard $(addprefix $(TARGET_DIR)/usr/,include/pcap*.h lib/libpcap.a lib/libpcap.so* share/man/man?/pcap.*)) \
 
 libpcap-dirclean:
 	rm -rf $(LIBPCAP_DIR)
