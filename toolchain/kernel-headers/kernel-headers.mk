@@ -12,11 +12,11 @@ LINUX_HEADERS_SITE:=127.0.0.1
 LINUX_HEADERS_SOURCE:=unspecified-kernel-headers
 LINUX_HEADERS_UNPACK_DIR:=$(TOOL_BUILD_DIR)/linux-libc-headers-null
 
-KERNEL_ARCH:=$(shell $(SHELL) -c "echo \"$(ARCH)\" | sed -e \"s/-.*//\" \
+KERNEL_ARCH:=$(shell $(CONFIG_SHELL) -c "echo \"$(ARCH)\" | sed -e \"s/-.*//\" \
 	-e s/i.86/i386/ -e s/sun4u/sparc64/ \
 	-e s/arm.*/arm/ -e s/sa110/arm/ \
 	-e s/s390x/s390/ -e s/parisc64/parisc/ \
-	-e s/powerpc64/powerpc/ \
+	-e s/powerpc64/powerpc/ -e s/bfin/blackfin/ \
 	-e s/ppc.*/powerpc/ -e s/mips.*/mips/ \
 	-e s/sh[234].*/sh/")
 

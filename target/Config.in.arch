@@ -12,6 +12,8 @@ config BR2_armeb
 	bool "armeb"
 config BR2_avr32
 	bool "avr32"
+config BR2_bfin
+	bool "bfin"
 config BR2_cris
 	bool "cris"
 config BR2_ia64
@@ -501,12 +503,67 @@ config BR2_powerpc_8540
 	bool "8540"
 endchoice
 
+choice
+	prompt "Target Architecture Variant"
+	depends BR2_bfin
+	default BR2_bf532
+	help
+	  Specific CPU variant to use
+config BR2_bf522
+	bool "bf522"
+config BR2_bf525
+	bool "bf525"
+config BR2_bf527
+	bool "bf527"
+config BR2_bf531
+	bool "bf531"
+config BR2_bf532
+	bool "bf532"
+config BR2_bf533
+	bool "bf533"
+config BR2_bf534
+	bool "bf534"
+config BR2_bf536
+	bool "bf536"
+config BR2_bf537
+	bool "bf537"
+config BR2_bf538
+	bool "bf538"
+config BR2_bf539
+	bool "bf539"
+config BR2_bf542
+	bool "bf542"
+config BR2_bf544
+	bool "bf544"
+config BR2_bf548
+	bool "bf548"
+config BR2_bf549
+	bool "bf549"
+config BR2_bf561
+	bool "bf561"
+endchoice
+
+config BR2_bfin_sirevision
+	string "sirevision"
+	depends on BR2_bfin
+	default any
+	help
+	  If sirevision is none, no workarounds are enabled.
+	  If sirevision is any, all workarounds for the targeted
+	  processor will be enabled.
+	  See man gcc for details.
+	  
+	  Default: any
+
+
+
 config BR2_ARCH
 	string
 	default "alpha"		if BR2_alpha
 	default "arm"		if BR2_arm
 	default "armeb"		if BR2_armeb
 	default "avr32"		if BR2_avr32
+	default "bfin"		if BR2_bfin
 	default "cris"		if BR2_cris
 	default "i386"		if BR2_x86_i386
 	default "i486"		if BR2_x86_i486
@@ -544,7 +601,7 @@ config BR2_ENDIAN
 	string
 	default "LITTLE" if BR2_arm || BR2_cris || BR2_i386 || BR2_mipsel || \
 			    BR2_sh3 || BR2_sh4 || BR2_x86_64 || BR2_nios2 || \
-			    BR2_sh64
+			    BR2_sh64 || BR2_bfin
 	default "BIG"    if BR2_alpha || BR2_armeb || BR2_avr32 || BR2_m68k || BR2_mips || \
 			    BR2_powerpc || BR2_sh2a_nofpueb || BR2_sh2eb || \
 			    BR2_sh3eb || BR2_sh4eb || BR2_sparc || BR2_sparc64
@@ -673,6 +730,25 @@ config BR2_GCC_TARGET_TUNE
 	default z900		if BR2_s390_z900
 	default z990		if BR2_s390_z990
 	default z9-109		if BR2_s390_z9_109
+
+config BR2_GCC_TARGET_CPU
+	string
+	default bf522		if BR2_bf522
+	default bf525		if BR2_bf525
+	default bf527		if BR2_bf527
+	default bf531		if BR2_bf531
+	default bf532		if BR2_bf532
+	default bf533		if BR2_bf533
+	default bf534		if BR2_bf534
+	default bf536		if BR2_bf536
+	default bf537		if BR2_bf537
+	default bf538		if BR2_bf538
+	default bf539		if BR2_bf539
+	default bf542		if BR2_bf542
+	default bf544		if BR2_bf544
+	default bf548		if BR2_bf548
+	default bf549		if BR2_bf549
+	default bf561		if BR2_bf561
 
 config BR2_GCC_TARGET_ARCH
 	string
