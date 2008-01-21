@@ -29,7 +29,7 @@ Index: gcc-4.3.0/gcc/configure
 +	elif $EGREP '^[ 	]*#[ 	]*define[ 	]+__UCLIBC__[ 	]+1' \
 +	     $glibc_header_dir/features.h > /dev/null && \
 +	     test -f $glibc_header_dir/bits/uClibc_config.h && \
-+	     $EGREP '^[ 	]:>@*#[ 	]*define[ 	]+__UCLIBC_HAS_SSP__[ 	]+1' \
++	     $EGREP '^[ 	]*#[ 	]*define[ 	]+__UCLIBC_HAS_SSP__[ 	]+1' \
 +	     $glibc_header_dir/bits/uClibc_config.h > /dev/null; then
 +	  gcc_cv_libc_provides_ssp=yes
  	fi
