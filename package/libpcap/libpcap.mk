@@ -61,6 +61,8 @@ $(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT): $(LIBPCAP_DIR)/.configured
 
 $(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT): $(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT)
 	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(LIBPCAP_DIR) install install-shared
+	test "x$(LIBPCAP_LIBEXT)" = "xso" && \
+		rm -f $(STAGING_DIR)/usr/lib/libpcap.a
 
 $(TARGET_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT): $(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT)
 	$(INSTALL) -d $(@D)
@@ -71,8 +73,12 @@ $(TARGET_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT): $(STAGING_DIR)/usr/lib/libpcap.
 	else \
 	for i in $(notdir $(wildcard $(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT).*.*.*)); \
 	do \
+		rm -f $(TARGET_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT) \
+			$(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT); \
 		ln -sf $$i \
 			$(TARGET_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT) && \
+		ln -sf $$i \
+			$(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT) && \
 		break; \
 	done; \
 	fi
