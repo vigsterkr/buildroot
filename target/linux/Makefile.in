@@ -83,7 +83,11 @@ LINUX26_PATCH_DIR:=$(BOARD_PATH)/kernel-patches/
 #"))
 endif
 endif
-__LINUX26_NO_PIC=-fPIC -fpic -DPIC -fwrapv -ftrapv
+# XXX FIXME: using -fstack-protector-all -mcmodel=kernel
+# should be perfectly fine but perhaps needs a config symbol set in
+# the kernel.config
+__LINUX26_NO_PIC=-fPIC -fpic -DPIC -fwrapv -ftrapv \
+	-fstack-protector -fstack-protector-all
 LINUX26_MAKE_FLAGS = HOSTCC="$(HOSTCC)" HOSTCFLAGS="$(HOSTCFLAGS)" \
 	ARCH=$(KERNEL_ARCH) \
 	CFLAGS_KERNEL="$(filter-out $(__LINUX26_NO_PIC),$(TARGET_CFLAGS))" \
