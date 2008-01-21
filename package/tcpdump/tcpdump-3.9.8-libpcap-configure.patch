@@ -1,0 +1,1223 @@
+diff -rdup tcpdump-3.9.8.orig/config.h.in tcpdump-3.9.8/config.h.in
+--- tcpdump-3.9.8.orig/config.h.in	2007-09-26 03:59:52.000000000 +0200
++++ tcpdump-3.9.8/config.h.in	2008-01-21 13:02:09.000000000 +0100
+@@ -163,6 +163,9 @@
+ /* Define to 1 if you have the `crypto' library (-lcrypto). */
+ #undef HAVE_LIBCRYPTO
+ 
++/* Define to 1 if you have the `pcap' library (-lpcap). */
++#undef HAVE_LIBPCAP
++
+ /* Define to 1 if you have the `rpc' library (-lrpc). */
+ #undef HAVE_LIBRPC
+ 
+@@ -187,9 +190,6 @@
+ /* Define to 1 if you have the <openssl/evp.h> header file. */
+ #undef HAVE_OPENSSL_EVP_H
+ 
+-/* Define to 1 if you have the `pcap_breakloop' function. */
+-#undef HAVE_PCAP_BREAKLOOP
+-
+ /* Define to 1 if you have the `pcap_dump_flush' function. */
+ #undef HAVE_PCAP_DUMP_FLUSH
+ 
+@@ -202,9 +202,6 @@
+ /* Define to 1 if you have the `pcap_lib_version' function. */
+ #undef HAVE_PCAP_LIB_VERSION
+ 
+-/* Define to 1 if you have the `pfopen' function. */
+-#undef HAVE_PFOPEN
+-
+ /* Define to 1 if you have the <rpc/rpcent.h> header file. */
+ #undef HAVE_RPC_RPCENT_H
+ 
+diff -rdup tcpdump-3.9.8.orig/configure tcpdump-3.9.8/configure
+--- tcpdump-3.9.8.orig/configure	2008-01-21 12:54:17.000000000 +0100
++++ tcpdump-3.9.8/configure	2008-01-21 13:02:08.000000000 +0100
+@@ -8783,522 +8783,7 @@ fi
+ 
+ 
+ 
+-    # Most operating systems have gethostbyname() in the default searched
+-    # libraries (i.e. libc):
+-    # Some OSes (eg. Solaris) place it in libnsl
+-    # Some strange OSes (SINIX) have it in libsocket:
+-    { echo "$as_me:$LINENO: checking for library containing gethostbyname" >&5
+-echo $ECHO_N "checking for library containing gethostbyname... $ECHO_C" >&6; }
+-if test "${ac_cv_search_gethostbyname+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  ac_func_search_save_LIBS=$LIBS
+-cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char gethostbyname ();
+-int
+-main ()
+-{
+-return gethostbyname ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-for ac_lib in '' nsl socket resolv; do
+-  if test -z "$ac_lib"; then
+-    ac_res="none required"
+-  else
+-    ac_res=-l$ac_lib
+-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+-  fi
+-  rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_search_gethostbyname=$ac_res
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext
+-  if test "${ac_cv_search_gethostbyname+set}" = set; then
+-  break
+-fi
+-done
+-if test "${ac_cv_search_gethostbyname+set}" = set; then
+-  :
+-else
+-  ac_cv_search_gethostbyname=no
+-fi
+-rm conftest.$ac_ext
+-LIBS=$ac_func_search_save_LIBS
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_search_gethostbyname" >&5
+-echo "${ECHO_T}$ac_cv_search_gethostbyname" >&6; }
+-ac_res=$ac_cv_search_gethostbyname
+-if test "$ac_res" != no; then
+-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+-
+-fi
+-
+-    # Unfortunately libsocket sometimes depends on libnsl and
+-    # AC_SEARCH_LIBS isn't up to the task of handling dependencies like this.
+-    if test "$ac_cv_search_gethostbyname" = "no"
+-    then
+-	{ echo "$as_me:$LINENO: checking for gethostbyname in -lsocket" >&5
+-echo $ECHO_N "checking for gethostbyname in -lsocket... $ECHO_C" >&6; }
+-if test "${ac_cv_lib_socket_gethostbyname+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  ac_check_lib_save_LIBS=$LIBS
+-LIBS="-lsocket -lnsl $LIBS"
+-cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char gethostbyname ();
+-int
+-main ()
+-{
+-return gethostbyname ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_lib_socket_gethostbyname=yes
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	ac_cv_lib_socket_gethostbyname=no
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-LIBS=$ac_check_lib_save_LIBS
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_lib_socket_gethostbyname" >&5
+-echo "${ECHO_T}$ac_cv_lib_socket_gethostbyname" >&6; }
+-if test $ac_cv_lib_socket_gethostbyname = yes; then
+-  LIBS="-lsocket -lnsl $LIBS"
+-fi
+-
+-    fi
+-    { echo "$as_me:$LINENO: checking for library containing socket" >&5
+-echo $ECHO_N "checking for library containing socket... $ECHO_C" >&6; }
+-if test "${ac_cv_search_socket+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  ac_func_search_save_LIBS=$LIBS
+-cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char socket ();
+-int
+-main ()
+-{
+-return socket ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-for ac_lib in '' socket; do
+-  if test -z "$ac_lib"; then
+-    ac_res="none required"
+-  else
+-    ac_res=-l$ac_lib
+-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+-  fi
+-  rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_search_socket=$ac_res
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext
+-  if test "${ac_cv_search_socket+set}" = set; then
+-  break
+-fi
+-done
+-if test "${ac_cv_search_socket+set}" = set; then
+-  :
+-else
+-  ac_cv_search_socket=no
+-fi
+-rm conftest.$ac_ext
+-LIBS=$ac_func_search_save_LIBS
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_search_socket" >&5
+-echo "${ECHO_T}$ac_cv_search_socket" >&6; }
+-ac_res=$ac_cv_search_socket
+-if test "$ac_res" != no; then
+-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+-
+-else
+-  { echo "$as_me:$LINENO: checking for socket in -lsocket" >&5
+-echo $ECHO_N "checking for socket in -lsocket... $ECHO_C" >&6; }
+-if test "${ac_cv_lib_socket_socket+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  ac_check_lib_save_LIBS=$LIBS
+-LIBS="-lsocket -lnsl $LIBS"
+-cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char socket ();
+-int
+-main ()
+-{
+-return socket ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_lib_socket_socket=yes
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	ac_cv_lib_socket_socket=no
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-LIBS=$ac_check_lib_save_LIBS
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_lib_socket_socket" >&5
+-echo "${ECHO_T}$ac_cv_lib_socket_socket" >&6; }
+-if test $ac_cv_lib_socket_socket = yes; then
+-  LIBS="-lsocket -lnsl $LIBS"
+-fi
+-
+-fi
+-
+-    # DLPI needs putmsg under HPUX so test for -lstr while we're at it
+-    { echo "$as_me:$LINENO: checking for library containing putmsg" >&5
+-echo $ECHO_N "checking for library containing putmsg... $ECHO_C" >&6; }
+-if test "${ac_cv_search_putmsg+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  ac_func_search_save_LIBS=$LIBS
+-cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char putmsg ();
+-int
+-main ()
+-{
+-return putmsg ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-for ac_lib in '' str; do
+-  if test -z "$ac_lib"; then
+-    ac_res="none required"
+-  else
+-    ac_res=-l$ac_lib
+-    LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
+-  fi
+-  rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_search_putmsg=$ac_res
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext
+-  if test "${ac_cv_search_putmsg+set}" = set; then
+-  break
+-fi
+-done
+-if test "${ac_cv_search_putmsg+set}" = set; then
+-  :
+-else
+-  ac_cv_search_putmsg=no
+-fi
+-rm conftest.$ac_ext
+-LIBS=$ac_func_search_save_LIBS
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_search_putmsg" >&5
+-echo "${ECHO_T}$ac_cv_search_putmsg" >&6; }
+-ac_res=$ac_cv_search_putmsg
+-if test "$ac_res" != no; then
+-  test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
+-
+-fi
+-
+-
+-
+-                LBL_LIBS="$LIBS"
+-    pfopen=/usr/examples/packetfilter/pfopen.c
+-    if test -f $pfopen ; then
+-
+-for ac_func in pfopen
+-do
+-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+-{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+-if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define $ac_func innocuous_$ac_func
+-
+-/* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char $ac_func (); below.
+-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+-    <limits.h> exists even on freestanding compilers.  */
+-
+-#ifdef __STDC__
+-# include <limits.h>
+-#else
+-# include <assert.h>
+-#endif
+-
+-#undef $ac_func
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char $ac_func ();
+-/* The GNU C library defines this for functions which it implements
+-    to always fail with ENOSYS.  Some functions are actually named
+-    something starting with __ and the normal name is an alias.  */
+-#if defined __stub_$ac_func || defined __stub___$ac_func
+-choke me
+-#endif
+-
+-int
+-main ()
+-{
+-return $ac_func ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  eval "$as_ac_var=yes"
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	eval "$as_ac_var=no"
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-fi
+-ac_res=`eval echo '${'$as_ac_var'}'`
+-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+-echo "${ECHO_T}$ac_res" >&6; }
+-if test `eval echo '${'$as_ac_var'}'` = yes; then
+-  cat >>confdefs.h <<_ACEOF
+-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+-_ACEOF
+-
+-fi
+-done
+-
+-	    if test $ac_cv_func_pfopen = "no" ; then
+-		    { echo "$as_me:$LINENO: result: Using $pfopen" >&5
+-echo "${ECHO_T}Using $pfopen" >&6; }
+-		    LIBS="$LIBS $pfopen"
+-	    fi
+-    fi
+-    { echo "$as_me:$LINENO: checking for local pcap library" >&5
+-echo $ECHO_N "checking for local pcap library... $ECHO_C" >&6; }
+-    libpcap=FAIL
+-    lastdir=FAIL
+-    places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
+-	egrep '/libpcap-[0-9]*.[0-9]*(.[0-9]*)?([ab][0-9]*)?$'`
+-    for dir in $places $srcdir/../libpcap $srcdir/libpcap ; do
+-	    basedir=`echo $dir | sed -e 's/[ab][0-9]*$//'`
+-	    if test $lastdir = $basedir ; then
+-		    		    continue;
+-	    fi
+-	    lastdir=$dir
+-	    if test -r $dir/libpcap.a ; then
+-		    libpcap=$dir/libpcap.a
+-		    d=$dir
+-		    	    fi
+-    done
+-    if test $libpcap = FAIL ; then
+-	    { echo "$as_me:$LINENO: result: not found" >&5
+-echo "${ECHO_T}not found" >&6; }
+-	    { echo "$as_me:$LINENO: checking for main in -lpcap" >&5
++{ echo "$as_me:$LINENO: checking for main in -lpcap" >&5
+ echo $ECHO_N "checking for main in -lpcap... $ECHO_C" >&6; }
+ if test "${ac_cv_lib_pcap_main+set}" = set; then
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+@@ -9354,646 +8839,14 @@ fi
+ { echo "$as_me:$LINENO: result: $ac_cv_lib_pcap_main" >&5
+ echo "${ECHO_T}$ac_cv_lib_pcap_main" >&6; }
+ if test $ac_cv_lib_pcap_main = yes; then
+-  libpcap="-lpcap"
+-fi
+-
+-	    if test $libpcap = FAIL ; then
+-		    { { echo "$as_me:$LINENO: error: see the INSTALL doc for more info" >&5
+-echo "$as_me: error: see the INSTALL doc for more info" >&2;}
+-   { (exit 1); exit 1; }; }
+-	    fi
+-	    	    	    	    	    	    	    	    	    	    	    	    	    	    	    	    { echo "$as_me:$LINENO: checking for extraneous pcap header directories" >&5
+-echo $ECHO_N "checking for extraneous pcap header directories... $ECHO_C" >&6; }
+-	    if test \( ! -r /usr/local/include/pcap.h \) -a \
+-			\( ! -r /usr/include/pcap.h \); then
+-		if test -r /usr/local/include/pcap/pcap.h; then
+-		    d="/usr/local/include/pcap"
+-		elif test -r /usr/include/pcap/pcap.h; then
+-		    d="/usr/include/pcap"
+-		fi
+-	    fi
+-	    if test -z "$d" ; then
+-		{ echo "$as_me:$LINENO: result: not found" >&5
+-echo "${ECHO_T}not found" >&6; }
+-	    else
+-		V_INCLS="-I$d $V_INCLS"
+-		{ echo "$as_me:$LINENO: result: found -- -I$d added" >&5
+-echo "${ECHO_T}found -- -I$d added" >&6; }
+-	    fi
+-    else
+-	    V_PCAPDEP=$libpcap
+-	    places=`ls $srcdir/.. | sed -e 's,/$,,' -e "s,^,$srcdir/../," | \
+-    	 		egrep '/libpcap-[0-9]*.[0-9]*(.[0-9]*)?([ab][0-9]*)?$'`
+-	    if test -r $d/pcap.h; then
+-		    V_INCLS="-I$d $V_INCLS"
+-	    elif test -r $places/pcap.h; then
+-		    V_INCLS="-I$places $V_INCLS"
+-	    else
+-                    { { echo "$as_me:$LINENO: error: cannot find pcap.h" >&5
+-echo "$as_me: error: cannot find pcap.h" >&2;}
+-   { (exit see INSTALL); exit see INSTALL; }; }
+- 	    fi
+-	    { echo "$as_me:$LINENO: result: $libpcap" >&5
+-echo "${ECHO_T}$libpcap" >&6; }
+-    fi
+-    LIBS="$libpcap $LIBS"
+-    case "$host_os" in
+-
+-    aix*)
+-	    pseexe="/lib/pse.exp"
+-	    { echo "$as_me:$LINENO: checking for $pseexe" >&5
+-echo $ECHO_N "checking for $pseexe... $ECHO_C" >&6; }
+-	    if test -f $pseexe ; then
+-		    { echo "$as_me:$LINENO: result: yes" >&5
+-echo "${ECHO_T}yes" >&6; }
+-		    LIBS="$LIBS -I:$pseexe"
+-	    fi
+-	    #
+-	    # We need "-lodm" and "-lcfg", as libpcap requires them on
+-	    # AIX, and we just build a static libpcap.a and thus can't
+-	    # arrange that when you link with libpcap you automatically
+-	    # link with those libraries.
+-	    #
+-	    LIBS="$LIBS -lodm -lcfg"
+-	    ;;
+-    esac
+-
+-                        { echo "$as_me:$LINENO: checking for pcap_list_datalinks" >&5
+-echo $ECHO_N "checking for pcap_list_datalinks... $ECHO_C" >&6; }
+-if test "${ac_cv_func_pcap_list_datalinks+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-/* Define pcap_list_datalinks to an innocuous variant, in case <limits.h> declares pcap_list_datalinks.
+-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define pcap_list_datalinks innocuous_pcap_list_datalinks
+-
+-/* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char pcap_list_datalinks (); below.
+-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+-    <limits.h> exists even on freestanding compilers.  */
+-
+-#ifdef __STDC__
+-# include <limits.h>
+-#else
+-# include <assert.h>
+-#endif
+-
+-#undef pcap_list_datalinks
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char pcap_list_datalinks ();
+-/* The GNU C library defines this for functions which it implements
+-    to always fail with ENOSYS.  Some functions are actually named
+-    something starting with __ and the normal name is an alias.  */
+-#if defined __stub_pcap_list_datalinks || defined __stub___pcap_list_datalinks
+-choke me
+-#endif
+-
+-int
+-main ()
+-{
+-return pcap_list_datalinks ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_func_pcap_list_datalinks=yes
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	ac_cv_func_pcap_list_datalinks=no
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_func_pcap_list_datalinks" >&5
+-echo "${ECHO_T}$ac_cv_func_pcap_list_datalinks" >&6; }
+-if test $ac_cv_func_pcap_list_datalinks = yes; then
+-  cat >>confdefs.h <<\_ACEOF
+-#define HAVE_PCAP_LIST_DATALINKS 1
+-_ACEOF
+-
+-else
+-
+-	    case " $LIBOBJS " in
+-  *" datalinks.$ac_objext "* ) ;;
+-  *) LIBOBJS="$LIBOBJS datalinks.$ac_objext"
+- ;;
+-esac
+-
+-
+-fi
+-
+-    { echo "$as_me:$LINENO: checking for pcap_set_datalink" >&5
+-echo $ECHO_N "checking for pcap_set_datalink... $ECHO_C" >&6; }
+-if test "${ac_cv_func_pcap_set_datalink+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-/* Define pcap_set_datalink to an innocuous variant, in case <limits.h> declares pcap_set_datalink.
+-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define pcap_set_datalink innocuous_pcap_set_datalink
+-
+-/* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char pcap_set_datalink (); below.
+-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+-    <limits.h> exists even on freestanding compilers.  */
+-
+-#ifdef __STDC__
+-# include <limits.h>
+-#else
+-# include <assert.h>
+-#endif
+-
+-#undef pcap_set_datalink
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char pcap_set_datalink ();
+-/* The GNU C library defines this for functions which it implements
+-    to always fail with ENOSYS.  Some functions are actually named
+-    something starting with __ and the normal name is an alias.  */
+-#if defined __stub_pcap_set_datalink || defined __stub___pcap_set_datalink
+-choke me
+-#endif
+-
+-int
+-main ()
+-{
+-return pcap_set_datalink ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_func_pcap_set_datalink=yes
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	ac_cv_func_pcap_set_datalink=no
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_func_pcap_set_datalink" >&5
+-echo "${ECHO_T}$ac_cv_func_pcap_set_datalink" >&6; }
+-if test $ac_cv_func_pcap_set_datalink = yes; then
+-  cat >>confdefs.h <<\_ACEOF
+-#define HAVE_PCAP_SET_DATALINK 1
+-_ACEOF
+-
+-fi
+-
+-    { echo "$as_me:$LINENO: checking for pcap_datalink_name_to_val" >&5
+-echo $ECHO_N "checking for pcap_datalink_name_to_val... $ECHO_C" >&6; }
+-if test "${ac_cv_func_pcap_datalink_name_to_val+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-/* Define pcap_datalink_name_to_val to an innocuous variant, in case <limits.h> declares pcap_datalink_name_to_val.
+-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define pcap_datalink_name_to_val innocuous_pcap_datalink_name_to_val
+-
+-/* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char pcap_datalink_name_to_val (); below.
+-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+-    <limits.h> exists even on freestanding compilers.  */
+-
+-#ifdef __STDC__
+-# include <limits.h>
+-#else
+-# include <assert.h>
+-#endif
+-
+-#undef pcap_datalink_name_to_val
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char pcap_datalink_name_to_val ();
+-/* The GNU C library defines this for functions which it implements
+-    to always fail with ENOSYS.  Some functions are actually named
+-    something starting with __ and the normal name is an alias.  */
+-#if defined __stub_pcap_datalink_name_to_val || defined __stub___pcap_datalink_name_to_val
+-choke me
+-#endif
+-
+-int
+-main ()
+-{
+-return pcap_datalink_name_to_val ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_func_pcap_datalink_name_to_val=yes
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	ac_cv_func_pcap_datalink_name_to_val=no
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_func_pcap_datalink_name_to_val" >&5
+-echo "${ECHO_T}$ac_cv_func_pcap_datalink_name_to_val" >&6; }
+-if test $ac_cv_func_pcap_datalink_name_to_val = yes; then
+-
+-	    cat >>confdefs.h <<\_ACEOF
+-#define HAVE_PCAP_DATALINK_NAME_TO_VAL 1
+-_ACEOF
+-
+-	    { echo "$as_me:$LINENO: checking for pcap_datalink_val_to_description" >&5
+-echo $ECHO_N "checking for pcap_datalink_val_to_description... $ECHO_C" >&6; }
+-if test "${ac_cv_func_pcap_datalink_val_to_description+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-/* Define pcap_datalink_val_to_description to an innocuous variant, in case <limits.h> declares pcap_datalink_val_to_description.
+-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define pcap_datalink_val_to_description innocuous_pcap_datalink_val_to_description
+-
+-/* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char pcap_datalink_val_to_description (); below.
+-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+-    <limits.h> exists even on freestanding compilers.  */
+-
+-#ifdef __STDC__
+-# include <limits.h>
+-#else
+-# include <assert.h>
+-#endif
+-
+-#undef pcap_datalink_val_to_description
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char pcap_datalink_val_to_description ();
+-/* The GNU C library defines this for functions which it implements
+-    to always fail with ENOSYS.  Some functions are actually named
+-    something starting with __ and the normal name is an alias.  */
+-#if defined __stub_pcap_datalink_val_to_description || defined __stub___pcap_datalink_val_to_description
+-choke me
+-#endif
+-
+-int
+-main ()
+-{
+-return pcap_datalink_val_to_description ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_func_pcap_datalink_val_to_description=yes
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	ac_cv_func_pcap_datalink_val_to_description=no
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_func_pcap_datalink_val_to_description" >&5
+-echo "${ECHO_T}$ac_cv_func_pcap_datalink_val_to_description" >&6; }
+-if test $ac_cv_func_pcap_datalink_val_to_description = yes; then
+-  cat >>confdefs.h <<\_ACEOF
+-#define HAVE_PCAP_DATALINK_VAL_TO_DESCRIPTION 1
+-_ACEOF
+-
+-else
+-
+-		    case " $LIBOBJS " in
+-  *" dlnames.$ac_objext "* ) ;;
+-  *) LIBOBJS="$LIBOBJS dlnames.$ac_objext"
+- ;;
+-esac
+-
+-
+-fi
+-
+-
+-else
+-
+-	    case " $LIBOBJS " in
+-  *" dlnames.$ac_objext "* ) ;;
+-  *) LIBOBJS="$LIBOBJS dlnames.$ac_objext"
+- ;;
+-esac
+-
+-
+-fi
+-
+-
+-
+-for ac_func in pcap_breakloop
+-do
+-as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
+-{ echo "$as_me:$LINENO: checking for $ac_func" >&5
+-echo $ECHO_N "checking for $ac_func... $ECHO_C" >&6; }
+-if { as_var=$as_ac_var; eval "test \"\${$as_var+set}\" = set"; }; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-/* Define $ac_func to an innocuous variant, in case <limits.h> declares $ac_func.
+-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define $ac_func innocuous_$ac_func
+-
+-/* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char $ac_func (); below.
+-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+-    <limits.h> exists even on freestanding compilers.  */
+-
+-#ifdef __STDC__
+-# include <limits.h>
+-#else
+-# include <assert.h>
+-#endif
+-
+-#undef $ac_func
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char $ac_func ();
+-/* The GNU C library defines this for functions which it implements
+-    to always fail with ENOSYS.  Some functions are actually named
+-    something starting with __ and the normal name is an alias.  */
+-#if defined __stub_$ac_func || defined __stub___$ac_func
+-choke me
+-#endif
+-
+-int
+-main ()
+-{
+-return $ac_func ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  eval "$as_ac_var=yes"
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	eval "$as_ac_var=no"
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-fi
+-ac_res=`eval echo '${'$as_ac_var'}'`
+-	       { echo "$as_me:$LINENO: result: $ac_res" >&5
+-echo "${ECHO_T}$ac_res" >&6; }
+-if test `eval echo '${'$as_ac_var'}'` = yes; then
+   cat >>confdefs.h <<_ACEOF
+-#define `echo "HAVE_$ac_func" | $as_tr_cpp` 1
+-_ACEOF
+-
+-fi
+-done
+-
+-
+-                { echo "$as_me:$LINENO: checking for pcap_dump_ftell" >&5
+-echo $ECHO_N "checking for pcap_dump_ftell... $ECHO_C" >&6; }
+-if test "${ac_cv_func_pcap_dump_ftell+set}" = set; then
+-  echo $ECHO_N "(cached) $ECHO_C" >&6
+-else
+-  cat >conftest.$ac_ext <<_ACEOF
+-/* confdefs.h.  */
+-_ACEOF
+-cat confdefs.h >>conftest.$ac_ext
+-cat >>conftest.$ac_ext <<_ACEOF
+-/* end confdefs.h.  */
+-/* Define pcap_dump_ftell to an innocuous variant, in case <limits.h> declares pcap_dump_ftell.
+-   For example, HP-UX 11i <limits.h> declares gettimeofday.  */
+-#define pcap_dump_ftell innocuous_pcap_dump_ftell
+-
+-/* System header to define __stub macros and hopefully few prototypes,
+-    which can conflict with char pcap_dump_ftell (); below.
+-    Prefer <limits.h> to <assert.h> if __STDC__ is defined, since
+-    <limits.h> exists even on freestanding compilers.  */
+-
+-#ifdef __STDC__
+-# include <limits.h>
+-#else
+-# include <assert.h>
+-#endif
+-
+-#undef pcap_dump_ftell
+-
+-/* Override any GCC internal prototype to avoid an error.
+-   Use char because int might match the return type of a GCC
+-   builtin and then its argument prototype would still apply.  */
+-#ifdef __cplusplus
+-extern "C"
+-#endif
+-char pcap_dump_ftell ();
+-/* The GNU C library defines this for functions which it implements
+-    to always fail with ENOSYS.  Some functions are actually named
+-    something starting with __ and the normal name is an alias.  */
+-#if defined __stub_pcap_dump_ftell || defined __stub___pcap_dump_ftell
+-choke me
+-#endif
+-
+-int
+-main ()
+-{
+-return pcap_dump_ftell ();
+-  ;
+-  return 0;
+-}
+-_ACEOF
+-rm -f conftest.$ac_objext conftest$ac_exeext
+-if { (ac_try="$ac_link"
+-case "(($ac_try" in
+-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+-  *) ac_try_echo=$ac_try;;
+-esac
+-eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+-  (eval "$ac_link") 2>conftest.er1
+-  ac_status=$?
+-  grep -v '^ *+' conftest.er1 >conftest.err
+-  rm -f conftest.er1
+-  cat conftest.err >&5
+-  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+-  (exit $ac_status); } && {
+-	 test -z "$ac_c_werror_flag" ||
+-	 test ! -s conftest.err
+-       } && test -s conftest$ac_exeext &&
+-       $as_test_x conftest$ac_exeext; then
+-  ac_cv_func_pcap_dump_ftell=yes
+-else
+-  echo "$as_me: failed program was:" >&5
+-sed 's/^/| /' conftest.$ac_ext >&5
+-
+-	ac_cv_func_pcap_dump_ftell=no
+-fi
+-
+-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+-      conftest$ac_exeext conftest.$ac_ext
+-fi
+-{ echo "$as_me:$LINENO: result: $ac_cv_func_pcap_dump_ftell" >&5
+-echo "${ECHO_T}$ac_cv_func_pcap_dump_ftell" >&6; }
+-if test $ac_cv_func_pcap_dump_ftell = yes; then
+-  cat >>confdefs.h <<\_ACEOF
+-#define HAVE_PCAP_DUMP_FTELL 1
++#define HAVE_LIBPCAP 1
+ _ACEOF
+ 
+-else
+-
+-	    case " $LIBOBJS " in
+-  *" pcap_dump_ftell.$ac_objext "* ) ;;
+-  *) LIBOBJS="$LIBOBJS pcap_dump_ftell.$ac_objext"
+- ;;
+-esac
+-
++  LIBS="-lpcap $LIBS"
+ 
+ fi
+ 
+-
+-
+ #
+ # Check for these after AC_LBL_LIBPCAP, so we link with the appropriate
+ # libraries (e.g., "-lsocket -lnsl" on Solaris).
+diff -rdup tcpdump-3.9.8.orig/configure.in tcpdump-3.9.8/configure.in
+--- tcpdump-3.9.8.orig/configure.in	2007-09-26 04:08:25.000000000 +0200
++++ tcpdump-3.9.8/configure.in	2008-01-21 13:02:03.000000000 +0100
+@@ -539,8 +539,8 @@ AC_SEARCH_LIBS(getrpcbynumber, nsl, AC_D
+ dnl AC_CHECK_LIB(z, uncompress)
+ dnl AC_CHECK_HEADERS(zlib.h)
+ 
+-AC_LBL_LIBPCAP(V_PCAPDEP, V_INCLS)
+-
++dnl AC_LBL_LIBPCAP(V_PCAPDEP, V_INCLS)
++AC_CHECK_LIB(pcap, main)
+ #
+ # Check for these after AC_LBL_LIBPCAP, so we link with the appropriate
+ # libraries (e.g., "-lsocket -lnsl" on Solaris).
