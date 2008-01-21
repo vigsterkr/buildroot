@@ -9,3 +9,34 @@ diff -rduNp libpcap-0.9.8.orig1/Makefile.in libpcap-0.9.8/Makefile.in
  # Pathname of directory to install the include files
  includedir = @includedir@
  # Pathname of directory to install the library
+diff -rdup libpcap-0.9.8.orig4/aclocal.m4 libpcap-0.9.8/aclocal.m4
+--- libpcap-0.9.8.orig4/aclocal.m4	2005-04-21 05:42:09.000000000 +0200
++++ libpcap-0.9.8/aclocal.m4	2008-01-21 13:47:20.000000000 +0100
+@@ -382,9 +382,9 @@ AC_DEFUN(AC_LBL_LEX_AND_YACC,
+ 	    AC_MSG_CHECKING(for flex 2.4 or higher)
+ 	    AC_CACHE_VAL(ac_cv_lbl_flex_v24,
+ 		if flex -V >/dev/null 2>&1; then
+-			ac_cv_lbl_flex_v24=yes
+-		else
+ 			ac_cv_lbl_flex_v24=no
++		else
++			ac_cv_lbl_flex_v24=yes
+ 		fi)
+ 	    AC_MSG_RESULT($ac_cv_lbl_flex_v24)
+ 	    if test $ac_cv_lbl_flex_v24 = no ; then
+diff -rdup libpcap-0.9.8.orig4/configure libpcap-0.9.8/configure
+--- libpcap-0.9.8.orig4/configure	2008-01-21 13:31:26.000000000 +0100
++++ libpcap-0.9.8/configure	2008-01-21 13:47:58.000000000 +0100
+@@ -6940,9 +6940,9 @@ echo $ECHO_N "checking for flex 2.4 or h
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+   if flex -V >/dev/null 2>&1; then
+-			ac_cv_lbl_flex_v24=yes
+-		else
+ 			ac_cv_lbl_flex_v24=no
++		else
++			ac_cv_lbl_flex_v24=yes
+ 		fi
+ fi
+ 
+
