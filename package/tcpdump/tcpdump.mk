@@ -52,7 +52,7 @@ $(TCPDUMP_DIR)/tcpdump: $(TCPDUMP_DIR)/.configured
 		-C $(TCPDUMP_DIR)
 
 $(TARGET_DIR)/usr/sbin/tcpdump: $(TCPDUMP_DIR)/tcpdump
-	cp -f $< $@
+	$(INSTALL) -D -m 0755 $< $@
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 tcpdump: uclibc zlib libpcap $(TARGET_DIR)/usr/sbin/tcpdump
