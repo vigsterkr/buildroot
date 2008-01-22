@@ -76,11 +76,10 @@ check-tools:
 clooproot: cloop check-tools $(IMAGE).cramfs ### cramfsroot
 	-@find $(TARGET_DIR) -type f -perm +111 | xargs $(STRIPCMD) 2>/dev/null || true
 ifneq ($(BR2_HAVE_MANPAGES),y)
-	@rm -rf $(TARGET_DIR)/usr/man
 	@rm -rf $(TARGET_DIR)/usr/share/man
 endif
 ifneq ($(BR2_HAVE_INFOPAGES),y)
-	@rm -rf $(TARGET_DIR)/usr/info
+	@rm -rf $(TARGET_DIR)/usr/share/info
 endif
 	@rmdir -p --ignore-fail-on-non-empty $(TARGET_DIR)/usr/share
 	### $(CLOOP_DIR)/create_compressed_fs -q -D target/default/device_table.txt $(TARGET_DIR) $(CLOOP_TARGET)
