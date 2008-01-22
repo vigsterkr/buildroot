@@ -12,8 +12,6 @@ MODULE_INIT_TOOLS_DIR2=$(TOOL_BUILD_DIR)/module-init-tools-$(MODULE_INIT_TOOLS_V
 MODULE_INIT_TOOLS_BINARY=depmod
 MODULE_INIT_TOOLS_TARGET_BINARY=$(TARGET_DIR)/sbin/$(MODULE_INIT_TOOLS_BINARY)
 
-STRIPPROG=$(STRIPCMD)
-
 $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE):
 	$(WGET) -P $(DL_DIR) $(MODULE_INIT_TOOLS_SITE)/$(MODULE_INIT_TOOLS_SOURCE)
 
@@ -21,7 +19,7 @@ $(MODULE_INIT_TOOLS_DIR)/.unpacked: $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE)
 	$(MODULE_INIT_TOOLS_CAT) $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE) | tar -C $(BUILD_DIR) -xvf -
 	toolchain/patch-kernel.sh $(MODULE_INIT_TOOLS_DIR) package/module-init-tools \*.patch
 	$(CONFIG_UPDATE) $(@D)
-	$(SED) 's/-O2//g' $(MODULE_INIT_TOOLS_DIR)/configure
+	$(SED) 's/-O2//g' $(@D)/configure
 	touch $@
 
 $(MODULE_INIT_TOOLS_DIR)/.configured: $(MODULE_INIT_TOOLS_DIR)/.unpacked
@@ -36,7 +34,7 @@ $(MODULE_INIT_TOOLS_DIR)/.configured: $(MODULE_INIT_TOOLS_DIR)/.unpacked
 
 $(MODULE_INIT_TOOLS_DIR)/$(MODULE_INIT_TOOLS_BINARY): $(MODULE_INIT_TOOLS_DIR)/.configured
 	$(MAKE) CC=$(TARGET_CC) -C $(MODULE_INIT_TOOLS_DIR)
-	touch -c $(MODULE_INIT_TOOLS_DIR)/$(MODULE_INIT_TOOLS_BINARY)
+	touch -c $@
 
 ifeq ($(BR2_PACKAGE_MODUTILS),y)
 $(MODULE_INIT_TOOLS_TARGET_BINARY): \
@@ -49,7 +47,7 @@ endif
 ifeq ($(BR2_PACKAGE_MODUTILS),y)
 	$(MAKE) prefix=$(TARGET_DIR) -C $(MODULE_INIT_TOOLS_DIR) moveold
 endif
-	STRIPPROG='$(STRIPPROG)' \
+	STRIPPROG='$(STRIPCMD) $(STRIP_STRIP_ALL)' \
 	$(MAKE) prefix=$(TARGET_DIR) -C $(MODULE_INIT_TOOLS_DIR) install-exec
 	rm -Rf $(TARGET_DIR)/usr/man
 	rm -f $(TARGET_DIR)/sbin/generate-modprobe.conf
@@ -59,8 +57,8 @@ endif
 module-init-tools: uclibc $(MODULE_INIT_TOOLS_TARGET_BINARY)
 
 module-init-tools-clean:
-	$(MAKE) prefix=$(TARGET_DIR)/usr -C $(MODULE_INIT_TOOLS_DIR) uninstall
 	-$(MAKE) -C $(MODULE_INIT_TOOLS_DIR) clean
+	$(MAKE) prefix=$(TARGET_DIR)/usr -C $(MODULE_INIT_TOOLS_DIR) uninstall
 
 module-init-tools-dirclean:
 	rm -rf $(MODULE_INIT_TOOLS_DIR)
@@ -71,8 +69,9 @@ module-init-tools-dirclean:
 $(MODULE_INIT_TOOLS_DIR2)/.source: $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE)
 	$(MODULE_INIT_TOOLS_CAT) $(DL_DIR)/$(MODULE_INIT_TOOLS_SOURCE) | tar -C $(TOOL_BUILD_DIR) -xvf -
 	toolchain/patch-kernel.sh $(MODULE_INIT_TOOLS_DIR2) package/module-init-tools \*.patch
-	$(CONFIG_UPDATE) $(MODULE_INIT_TOOLS_DIR2)
-	touch $(MODULE_INIT_TOOLS_DIR2)/.source
+	$(CONFIG_UPDATE) $(@D)
+	$(SED) 's/-O2//g' $(@D)/configure
+	touch $@
 
 $(MODULE_INIT_TOOLS_DIR2)/.configured: $(MODULE_INIT_TOOLS_DIR2)/.source
 	(cd $(MODULE_INIT_TOOLS_DIR2); \
@@ -88,7 +87,7 @@ $(MODULE_INIT_TOOLS_DIR2)/.configured: $(MODULE_INIT_TOOLS_DIR2)/.source
 
 $(MODULE_INIT_TOOLS_DIR2)/$(MODULE_INIT_TOOLS_BINARY): $(MODULE_INIT_TOOLS_DIR2)/.configured
 	$(MAKE) -C $(MODULE_INIT_TOOLS_DIR2)
-	touch -c $(MODULE_INIT_TOOLS_DIR2)/$(MODULE_INIT_TOOLS_BINARY)
+	touch -c $@
 
 
 $(STAGING_DIR)/bin/$(GNU_TARGET_NAME)-depmod26: $(MODULE_INIT_TOOLS_DIR2)/$(MODULE_INIT_TOOLS_BINARY)
