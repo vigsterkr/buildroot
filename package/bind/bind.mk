@@ -115,6 +115,7 @@ bind-clean:
 		$(TARGET_DIR)/usr/lib/libisc*so* \
 		$(TARGET_DIR)/usr/lib/libbind9*so* \
 		$(TARGET_DIR)/usr/lib/liblwres*so* \
+		$(TARGET_DIR)/etc/init.d/S81named \
 		$(addprefix $(TARGET_DIR)/usr/sbin/,named rndc rndc-confgen dnssec-keygen dnssec-signzone named-checkconf named-checkzone) \
 		$(addprefix $(TARGET_DIR)/usr/bin/,dig host nslookup)
 
