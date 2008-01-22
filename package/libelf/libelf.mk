@@ -8,11 +8,6 @@ LIBELF_SOURCE=libelf-$(LIBELF_VERSION).tar.gz
 LIBELF_SITE=http://www.mr511.de/software/
 LIBELF_DIR=$(BUILD_DIR)/libelf-$(LIBELF_VERSION)
 
-LIBELF_ARCH:=$(ARCH)
-ifeq ("$(strip $(ARCH))","armeb")
-LIBELF_ARCH:=arm
-endif
-
 ifeq ($(BR2_LARGEFILE),y)
 LIBELF_CONFIG:=--enable-elf64
 endif
@@ -52,10 +47,11 @@ $(STAGING_DIR)/usr/lib/libelf.a $(STAGING_DIR)/usr/lib/libelf.so.$(LIBELF_VERSIO
 ifeq ($(BR2_PACKAGE_LIBELF_HEADERS),y)
 libelf_headers: $(TARGET_DIR)/usr/lib/libelf.so.$(LIBELF_VERSION)
 $(TARGET_DIR)/usr/lib/libelf.so.$(LIBELF_VERSION): $(STAGING_DIR)/usr/lib/libelf.a
-	mkdir -p $(@D)
-	cp -dpf $(STAGING_DIR)/usr/lib/libelf* $(@D)
-	mkdir -p $(TARGET_DIR)/usr/include
-	cp -dpR $(STAGING_DIR)/usr/include/{gelf.h,libelf*} $(TARGET_DIR)/usr/include/
+	$(INSTALL) -d $(@D)
+	$(INSTALL) -m 0755 $(STAGING_DIR)/usr/lib/libelf* $(@D)
+	$(INSTALL) -d $(TARGET_DIR)/usr/include
+	$(INSTALL) -m 0644 $(wildcard $(addprefix $(STAGING_DIR)/usr/include/,gelf.h libelf*)) \
+		$(TARGET_DIR)/usr/include/
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $@
 
 libelf: uclibc $(TARGET_DIR)/usr/lib/libelf.so.$(LIBELF_VERSION)
