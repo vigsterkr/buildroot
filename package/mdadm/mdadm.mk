@@ -3,9 +3,9 @@
 # mdadm
 #
 #############################################################
-MDADM_VERSION:=2.6.2
+MDADM_VERSION:=2.6.4
 MDADM_SOURCE:=mdadm_$(MDADM_VERSION).orig.tar.gz
-MDADM_PATCH:=mdadm_$(MDADM_VERSION)-2.diff.gz
+MDADM_PATCH:=mdadm_$(MDADM_VERSION)-1.diff.gz
 MDADM_CAT:=$(ZCAT)
 MDADM_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/m/mdadm
 MDADM_DIR:=$(BUILD_DIR)/mdadm-$(MDADM_VERSION)
@@ -40,7 +40,10 @@ $(MDADM_DIR)/$(MDADM_BINARY): $(MDADM_DIR)/.unpacked
 $(TARGET_DIR)/$(MDADM_TARGET_BINARY): $(MDADM_DIR)/$(MDADM_BINARY)
 	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(MDADM_DIR) install
 ifneq ($(BR2_HAVE_MANPAGES),y)
-	rm -Rf $(TARGET_DIR)/usr/share/man
+	rm -rf $(TARGET_DIR)/usr/share/man
+endif
+ifneq ($(BR2_HAVE_INFOPAGES),y)
+	rm -rf $(TARGET_DIR)/usr/share/info
 endif
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
@@ -49,8 +52,8 @@ mdadm: uclibc $(TARGET_DIR)/$(MDADM_TARGET_BINARY)
 mdadm-source: $(DL_DIR)/$(MDADM_SOURCE)
 
 mdadm-clean:
-	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(MDADM_DIR) uninstall
 	-$(MAKE) -C $(MDADM_DIR) clean
+	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(MDADM_DIR) uninstall
 
 mdadm-dirclean:
 	rm -rf $(MDADM_DIR)
