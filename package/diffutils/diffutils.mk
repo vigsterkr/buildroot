@@ -22,8 +22,6 @@ $(DIFFUTILS_DIR)/.unpacked: $(DL_DIR)/$(DIFFUTILS_SOURCE)
 
 $(DIFFUTILS_DIR)/.configured: $(DIFFUTILS_DIR)/.unpacked
 	(cd $(DIFFUTILS_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
 		ac_cv_func_strtod=yes \
 		ac_fsusage_space=yes \
 		fu_cv_sys_stat_statfs2_bsize=yes \
@@ -77,19 +75,9 @@ $(DIFFUTILS_DIR)/.configured: $(DIFFUTILS_DIR)/.unpacked
 		ac_cv_func_working_mktime=yes \
 		jm_cv_func_working_re_compile_pattern=yes \
 		ac_use_included_regex=no \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
-		--exec-prefix=/usr \
-		--bindir=/usr/bin \
-		--sbindir=/usr/sbin \
-		--libdir=/lib \
-		--libexecdir=/usr/lib \
 		--sysconfdir=/etc \
-		--datadir=/usr/share \
-		--localstatedir=/var \
 		--mandir=/usr/share/man \
 		--infodir=/usr/share/info \
 		$(DISABLE_NLS) \
@@ -98,10 +86,10 @@ $(DIFFUTILS_DIR)/.configured: $(DIFFUTILS_DIR)/.unpacked
 	touch $@
 
 $(DIFFUTILS_DIR)/$(DIFFUTILS_BINARY): $(DIFFUTILS_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) -C $(DIFFUTILS_DIR)
+	$(MAKE) -C $(DIFFUTILS_DIR)
 
 $(TARGET_DIR)/$(DIFFUTILS_TARGET_BINARY): $(DIFFUTILS_DIR)/$(DIFFUTILS_BINARY)
-	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(DIFFUTILS_DIR) install
+	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(DIFFUTILS_DIR) install
 ifneq ($(BR2_HAVE_INFOPAGES),y)
 	rm -rf $(TARGET_DIR)/usr/share/info
 endif
@@ -110,16 +98,15 @@ ifneq ($(BR2_HAVE_MANPAGES),y)
 endif
 	rm -rf $(TARGET_DIR)/share/locale
 	rm -rf $(TARGET_DIR)/usr/share/doc
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@ $(@D)/diff3 $(@D)/sdiff $(@D)/cmp
 
 diffutils: uclibc $(TARGET_DIR)/$(DIFFUTILS_TARGET_BINARY)
 
 diffutils-source: $(DL_DIR)/$(DIFFUTILS_SOURCE)
 
-diff-utils-unpacked: $(DIFFUTILS_DIR)/.unpacked
-
 diffutils-clean:
-	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(DIFFUTILS_DIR) uninstall
 	-$(MAKE) -C $(DIFFUTILS_DIR) clean
+	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(DIFFUTILS_DIR) uninstall
 
 diffutils-dirclean:
 	rm -rf $(DIFFUTILS_DIR)
