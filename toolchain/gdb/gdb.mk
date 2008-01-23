@@ -18,6 +18,7 @@ GDB_SOURCE:=gdb.tar.bz2
 GDB_CAT:=$(BZCAT)
 GDB_DIR:=$(TOOL_BUILD_DIR)/gdb-$(GDB_VERSION)
 GDB_PATCH_DIR:=toolchain/gdb/$(GDB_VERSION)
+
 else
 
 ifeq ($(BR2_TOOLCHAIN_BUILDROOT),y)
@@ -62,7 +63,10 @@ ifeq ($(GDB_VERSION),snapshot)
 	ln -sf $(TOOL_BUILD_DIR)/$(shell tar jtf $(DL_DIR)/$(GDB_SOURCE) | head -1 | cut -d"/" -f1) $(GDB_DIR)
 endif
 	toolchain/patch-kernel.sh $(GDB_DIR) $(GDB_PATCH_DIR) \*.patch
+	$(SED) '/^ac_subdirs_all/s/ testsuite//g' \
+		-e '/^subdirs/s/ testsuite//g' $(@D)/gdb/configure
 	$(CONFIG_UPDATE) $(@D)
+	$(CONFIG_UPDATE) $(@D)/readline/support
 	touch $@
 
 gdb-dirclean:
@@ -86,18 +90,12 @@ GDB_TARGET_CONFIGURE_VARS:= \
 	bash_cv_func_sigsetjmp=present \
 	bash_cv_have_mbstate_t=yes
 
+$(GDB_TARGET_DIR)/.configured: THIS_SRCDIR = $(GDB_DIR)
 $(GDB_TARGET_DIR)/.configured: $(GDB_DIR)/.unpacked
 	mkdir -p $(GDB_TARGET_DIR)
 	(cd $(GDB_TARGET_DIR); rm -rf config.cache; \
 		gdb_cv_func_sigsetjmp=yes \
-		$(TARGET_CONFIGURE_OPTS) \
-		CFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_LDFLAGS) -Wno-error" \
-		CFLAGS="$(TARGET_CFLAGS) $(TARGET_LDFLAGS) -Wno-error" \
-		$(GDB_TARGET_CONFIGURE_VARS) \
-		$(GDB_DIR)/configure \
-		--build=$(GNU_HOST_NAME) \
-		--host=$(REAL_GNU_TARGET_NAME) \
-		--target=$(REAL_GNU_TARGET_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		$(DISABLE_NLS) \
 		--without-uiout $(DISABLE_GDBMI) \
@@ -112,22 +110,22 @@ endif
 	touch $@
 
 $(GDB_TARGET_DIR)/gdb/gdb: $(GDB_TARGET_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) MT_CFLAGS="$(TARGET_CFLAGS)" \
-		-C $(GDB_TARGET_DIR)
-	$(STRIPCMD) $(STRIP_STRIP_ALL) $(GDB_TARGET_DIR)/gdb/gdb
+	$(MAKE) -C $(GDB_TARGET_DIR)
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 $(TARGET_DIR)/usr/bin/gdb: $(GDB_TARGET_DIR)/gdb/gdb
-	install -c -D $(GDB_TARGET_DIR)/gdb/gdb $(TARGET_DIR)/usr/bin/gdb
+	$(INSTALL) -D -m 0755 $(GDB_TARGET_DIR)/gdb/gdb $@
 
 gdb_target: ncurses $(TARGET_DIR)/usr/bin/gdb
 
 gdb_target-source: $(DL_DIR)/$(GDB_SOURCE)
 
 gdb_target-clean:
-	-$(MAKE) -C $(GDB_DIR) clean
+	-$(MAKE) -C $(GDB_TARGET_DIR) clean
+	rm -f $(TARGET_DIR)/usr/bin/gdb
 
 gdb_target-dirclean:
-	rm -rf $(GDB_DIR)
+	rm -rf $(GDB_TARGET_DIR)
 
 ######################################################################
 #
@@ -137,16 +135,13 @@ gdb_target-dirclean:
 
 GDB_SERVER_DIR:=$(BUILD_DIR)/gdbserver-$(GDB_VERSION)
 
+$(GDB_SERVER_DIR)/.configured: THIS_SRCDIR = $(GDB_DIR)/gdb/gdbserver
 $(GDB_SERVER_DIR)/.configured: $(GDB_DIR)/.unpacked
 	mkdir -p $(GDB_SERVER_DIR)
 	(cd $(GDB_SERVER_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
 		gdb_cv_func_sigsetjmp=yes \
 		bash_cv_have_mbstate_t=yes \
-		$(GDB_DIR)/gdb/gdbserver/configure \
-		--build=$(GNU_HOST_NAME) \
-		--host=$(REAL_GNU_TARGET_NAME) \
-		--target=$(REAL_GNU_TARGET_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -155,8 +150,8 @@ $(GDB_SERVER_DIR)/.configured: $(GDB_DIR)/.unpacked
 		--sysconfdir=/etc \
 		--datadir=/usr/share \
 		--localstatedir=/var \
-		--mandir=/usr/man \
-		--infodir=/usr/info \
+		--mandir=/usr/share/man \
+		--infodir=/usr/share/info \
 		--includedir=$(STAGING_DIR)/usr/include \
 		$(DISABLE_NLS) \
 		--without-uiout $(DISABLE_GDBMI) \
@@ -166,21 +161,22 @@ $(GDB_SERVER_DIR)/.configured: $(GDB_DIR)/.unpacked
 	touch $@
 
 $(GDB_SERVER_DIR)/gdbserver: $(GDB_SERVER_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) MT_CFLAGS="$(TARGET_CFLAGS)" \
-		-C $(GDB_SERVER_DIR)
-	$(STRIPCMD) $(GDB_SERVER_DIR)/gdbserver
+	$(MAKE) -C $(GDB_SERVER_DIR)
+
 $(TARGET_DIR)/usr/bin/gdbserver: $(GDB_SERVER_DIR)/gdbserver
 ifeq ($(BR2_CROSS_TOOLCHAIN_TARGET_UTILS),y)
-	mkdir -p $(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils
-	install -c $(GDB_SERVER_DIR)/gdbserver \
+	$(INSTALL) -d $(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils
+	$(INSTALL) -D -m 0755 $(GDB_SERVER_DIR)/gdbserver \
 		$(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils/gdbserver
 endif
-	install -c -D $(GDB_SERVER_DIR)/gdbserver $(TARGET_DIR)/usr/bin/gdbserver
+	$(INSTALL) -D -m 0755 $(GDB_SERVER_DIR)/gdbserver $@
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 gdbserver: $(TARGET_DIR)/usr/bin/gdbserver
 
 gdbserver-clean:
 	-$(MAKE) -C $(GDB_SERVER_DIR) clean
+	rm -f $(TARGET_DIR)/usr/bin/gdbserver
 
 gdbserver-dirclean:
 	rm -rf $(GDB_SERVER_DIR)
@@ -216,7 +212,7 @@ $(GDB_HOST_DIR)/gdb/gdb: $(GDB_HOST_DIR)/.configured
 	strip $(GDB_HOST_DIR)/gdb/gdb
 
 $(TARGET_CROSS)gdb: $(GDB_HOST_DIR)/gdb/gdb
-	install -c $(GDB_HOST_DIR)/gdb/gdb $(TARGET_CROSS)gdb
+	$(INSTALL) -D $(GDB_HOST_DIR)/gdb/gdb $(TARGET_CROSS)gdb
 	ln -snf ../../bin/$(REAL_GNU_TARGET_NAME)-gdb \
 		$(STAGING_DIR)/usr/$(REAL_GNU_TARGET_NAME)/bin/gdb
 	ln -snf $(REAL_GNU_TARGET_NAME)-gdb \
@@ -226,11 +222,10 @@ gdbhost: $(TARGET_CROSS)gdb
 
 gdbhost-clean:
 	-$(MAKE) -C $(GDB_HOST_DIR) clean
+	rm -f $(TARGET_CROSS)gdb
 
 gdbhost-dirclean:
 	rm -rf $(GDB_HOST_DIR)
-
-
 
 #############################################################
 #
