@@ -1,10 +1,10 @@
 Index: config.guess
 ===================================================================
 RCS file: /cvsroot/config/config/config.guess,v
-retrieving revision 1.366
-diff -u -r1.366 config.guess
---- config.guess	17 May 2007 06:28:53 -0000	1.366
-+++ config.guess	9 Jul 2007 17:32:18 -0000
+retrieving revision 1.376
+diff -u -r1.376 config.guess
+--- config.guess	23 Jan 2008 01:22:36 -0000	1.376
++++ config.guess	23 Jan 2008 17:17:46 -0000
 @@ -139,6 +139,23 @@
  UNAME_SYSTEM=`(uname -s) 2>/dev/null`  || UNAME_SYSTEM=unknown
  UNAME_VERSION=`(uname -v) 2>/dev/null` || UNAME_VERSION=unknown
@@ -29,12 +29,16 @@ diff -u -r1.366 config.guess
  # Note: order is significant - the case branches are not exclusive.
  
  case "${UNAME_MACHINE}:${UNAME_SYSTEM}:${UNAME_RELEASE}:${UNAME_VERSION}" in
-@@ -833,28 +850,28 @@
- 	echo ${UNAME_MACHINE}-pc-minix
- 	exit ;;
-     arm*:Linux:*:*)
--	echo ${UNAME_MACHINE}-unknown-linux-gnu
-+	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+@@ -840,31 +857,31 @@
+ 	if echo __ARM_EABI__ | $CC_FOR_BUILD -E - 2>/dev/null \
+ 	    | grep -q __ARM_EABI__
+ 	then
+-	    echo ${UNAME_MACHINE}-unknown-linux-gnu
++	    echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+ 	else
+-	    echo ${UNAME_MACHINE}-unknown-linux-gnueabi
++	    echo ${UNAME_MACHINE}-unknown-linux-${LIBC}eabi
+ 	fi
  	exit ;;
      avr32*:Linux:*:*)
 -	echo ${UNAME_MACHINE}-unknown-linux-gnu
@@ -66,7 +70,7 @@ diff -u -r1.366 config.guess
  	exit ;;
      mips:Linux:*:*)
  	eval $set_cc_for_build
-@@ -877,7 +894,7 @@
+@@ -887,7 +904,7 @@
  		s: ::g
  		p
  	    }'`"
@@ -75,7 +79,7 @@ diff -u -r1.366 config.guess
  	;;
      mips64:Linux:*:*)
  	eval $set_cc_for_build
-@@ -900,16 +917,16 @@
+@@ -910,16 +927,16 @@
  		s: ::g
  		p
  	    }'`"
@@ -96,13 +100,13 @@ diff -u -r1.366 config.guess
  	exit ;;
      alpha:Linux:*:*)
  	case `sed -n '/^cpu model/s/^.*: \(.*\)/\1/p' < /proc/cpuinfo` in
-@@ -922,40 +939,40 @@
+@@ -932,40 +949,40 @@
  	  EV68*) UNAME_MACHINE=alphaev68 ;;
          esac
  	objdump --private-headers /bin/sh | grep ld.so.1 >/dev/null
 -	if test "$?" = 0 ; then LIBC="libc1" ; else LIBC="" ; fi
 -	echo ${UNAME_MACHINE}-unknown-linux-gnu${LIBC}
-+	if test "$?" = 0 ; then LIBC="gnulibc1" ; fi
++	if test "$?" = 0 ; then LIBC="gnulibc1" ; else LIBC="" ; fi
 +	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
  	exit ;;
      parisc:Linux:*:* | hppa:Linux:*:*)
@@ -125,7 +129,7 @@ diff -u -r1.366 config.guess
  	exit ;;
      sh64*:Linux:*:*)
 -    	echo ${UNAME_MACHINE}-unknown-linux-gnu
-+	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
++    	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
  	exit ;;
      sh*:Linux:*:*)
 -	echo ${UNAME_MACHINE}-unknown-linux-gnu
@@ -143,13 +147,13 @@ diff -u -r1.366 config.guess
 -	echo x86_64-unknown-linux-gnu
 +	echo x86_64-unknown-linux-${LIBC}
  	exit ;;
-     xtensa:Linux:*:*)
--    	echo xtensa-unknown-linux-gnu
-+    	echo xtensa-unknown-linux-${LIBC}
+     xtensa*:Linux:*:*)
+-    	echo ${UNAME_MACHINE}-unknown-linux-gnu
++    	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
  	exit ;;
      i*86:Linux:*:*)
  	# The BFD linker knows what the default object file format is, so
-@@ -970,20 +987,22 @@
+@@ -980,20 +997,22 @@
  				    p'`
          case "$ld_supported_targets" in
  	  elf32-i386)

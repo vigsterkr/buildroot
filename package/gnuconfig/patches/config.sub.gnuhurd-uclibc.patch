@@ -1,7 +1,5 @@
-Index: config.sub
-===================================================================
---- config.sub	(revision 20153)
-+++ config.sub	(working copy)
+--- config.sub.orig1	2008-01-23 17:30:30.000000000 +0100
++++ config.sub	2008-01-23 17:41:11.000000000 +0100
 @@ -121,6 +121,7 @@
  maybe_os=`echo $1 | sed 's/^\(.*\)-\([^-]*-[^-]*\)$/\2/'`
  case $maybe_os in
@@ -10,7 +8,7 @@ Index: config.sub
    uclinux-uclibc* | uclinux-gnu* | kfreebsd*-gnu* | knetbsd*-gnu* | netbsd*-gnu* | \
    storm-chaos* | os2-emx* | rtmk-nova*)
      os=-$maybe_os
-@@ -1237,6 +1238,7 @@
+@@ -1251,6 +1252,7 @@
  	      | -chorusos* | -chorusrdb* \
  	      | -cygwin* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
  	      | -mingw32* | -linux-gnu* | -linux-newlib* | -linux-uclibc* \

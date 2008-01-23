@@ -14,3 +14,18 @@ to get the latest config.sub / config.guess files.
 A few local customizations are used to support uClibc so you may
 have to make sure they're still needed.  The patches are broken 
 out in the patches/ dir to keep things simple.
+
+-----8<-----
+
+for i in patches/*patch
+do
+  patch -R -p0 -i $i
+done
+cvs up
+cvs diff -u
+# fixup conflicts
+
+for i in patches/*patch
+do
+  patch -p0 -i $i
+done

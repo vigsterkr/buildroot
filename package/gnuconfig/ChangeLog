@@ -1,3 +1,53 @@
+2008-01-23  Ben Elliston  <bje@gnu.org>
+
+	These files are now versioned in Git rather than CVS.  Please
+	refer to <http://savannah.gnu.org/projects/config> for details on
+	how to check out a copy using Git.
+
+2008-01-23  Ben Elliston  <bje@gnu.org>
+
+	* config.guess: Update URL for script location.
+
+2008-01-16  Chris Metcalf  <cmetcalf@tilera.com>
+	    Ben Elliston  <bje@gnu.org>
+
+	* config.sub (tile*): New.
+	* testsuite/config-sub.data: Add test cases.
+
+2008-01-08  Ben Elliston  <bje@gnu.org>
+
+	* config.guess: Update copyright years in version output.
+	* config.sub: Likewise.
+
+2008-01-07  Ralf Wildenhues  <Ralf.Wildenhues@gmx.de>
+
+	* config.guess (*:AIX:*:[4-9]): Accept UNAME_VERSIONs > 5, for AIX
+	6.1.  Reported by Rainer Tammer <tammer@tammer.net>.
+
+2007-12-12  Ben Elliston  <bje@gnu.org>
+
+	* config.guess (*:Interix*:[3456]*): Handle IA64 ${UNAME_MACHINE}.
+	Return ia64-unknown-interix${UNAME_RELEASE}.
+	* testsuite/config-guess.data: Add a test case.
+
+2007-12-05  Lennert Buytenhek  <buytenh@wantstofly.org>
+
+	* config.guess (arm*:Linux:*:*): Determine ABI in use.
+
+2007-12-05  Steve Kenton  <skenton@ou.edu>
+	    Ben Elliston  <bje@gnu.org>
+
+	* config.sub (blackfin, blackfin-*, m68knommu, m68knommu-*,
+	parisc, parisc-*): New Linux-specific aliases for conformity with
+	Linux architecture names.
+	* testsuite/config-sub.data: Add test cases.
+
+2007-11-19  Marc Gauthier  <marc@tensilica.com>
+
+	* config.guess (xtensa*:Linux:*:*): Accept variants.
+	* config.sub (xtensa*): Accept variants.
+	* testsuite/config-sub.data: Add test case.
+
 2007-07-25  Mike Frysinger  <vapier@gentoo.org>
 
 	* testsuite/config-guess.sh (run_config_guess): Do not prefix with

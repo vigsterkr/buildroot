@@ -1,25 +1,6 @@
-gnuconfig seems intent on only supporting superfluous targets that don't
-represent any real hardware (such as sh2a LE). GCC in its infinite wisdom is
-also incapable of supporting tuning for other variants in a sensible fashion.
-
-As such, we still need to be able to support such useful targets as
-sh2a_nofpueb in order to not only get the byte order right, but also to
-support -m2a-nofpu tuning from the kernel (though we tend to do this through
--Wa,-isa= instead, as the binutils people do a much better job of not screwing
-up their config code every other day. Way to go config.gcc..).
-
-The fact that the sh variant matching is the ugliest out of any of the other
-architectures doesn't seem to deter GCC folk from their well thought out and
-brilliantly managed config target list.
-
-Index: config.sub
-===================================================================
-RCS file: /cvsroot/config/config/config.sub,v
-retrieving revision 1.356
-diff -u -r1.356 config.sub
---- config.sub	28 Jun 2007 06:56:43 -0000	1.356
-+++ config.sub	9 Jul 2007 17:38:48 -0000
-@@ -277,7 +277,7 @@
+--- config.sub.orig3	2008-01-23 17:42:58.000000000 +0100
++++ config.sub	2008-01-23 17:43:44.000000000 +0100
+@@ -278,7 +278,7 @@
  	| powerpc | powerpc64 | powerpc64le | powerpcle | ppcbe \
  	| pyramid \
  	| score \
@@ -28,7 +9,7 @@ diff -u -r1.356 config.sub
  	| sh64 | sh64le \
  	| sparc | sparc64 | sparc64b | sparc64v | sparc86x | sparclet | sparclite \
  	| sparcv8 | sparcv9 | sparcv9b | sparcv9v \
-@@ -358,7 +358,7 @@
+@@ -359,7 +359,7 @@
  	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* | ppcbe-* \
  	| pyramid-* \
  	| romp-* | rs6000-* \
