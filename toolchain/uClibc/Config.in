@@ -79,7 +79,7 @@ config BR2_PTHREAD_DEBUG
 	  Build the thread library with debugging enabled.
 
 config BR2_UCLIBC_PROGRAM_INVOCATION
-	bool "Enable 'program invocation name'"
+	bool "Enable 'program_invocation_name'"
 	default n
 	help
 	  Support for the GNU-specific program_invocation_name and
