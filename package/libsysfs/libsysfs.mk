@@ -34,7 +34,10 @@ libsysfs-source: $(DL_DIR)/$(LIBSYSFS_SOURCE)
 
 $(LIBSYSFS_DIR)/.unpacked: $(DL_DIR)/$(LIBSYSFS_SOURCE)
 	$(LIBSYSFS_CAT) $(DL_DIR)/$(LIBSYSFS_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	toolchain/patch-kernel.sh $(LIBSYSFS_DIR) package/libsysfs/ \*.patch
 	$(CONFIG_UPDATE) $(@D)
+	# hmz
+	touch -c $(LIBSYSFS_DIR)/config.h.in
 	touch $@
 
 $(LIBSYSFS_DIR)/.configured: $(LIBSYSFS_DIR)/.unpacked
@@ -56,7 +59,8 @@ $(STAGING_DIR)/usr/lib/libsysfs.so: $(LIBSYSFS_DIR)/.compiled
 	touch -c $@
 
 $(TARGET_DIR)/usr/lib/libsysfs.so: $(STAGING_DIR)/usr/lib/libsysfs.so
-	cp -dpf $(STAGING_DIR)/usr/lib/libsysfs.so* $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -d $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -m 0755 $(STAGING_DIR)/usr/lib/libsysfs.so* $(TARGET_DIR)/usr/lib/
 	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libsysfs.so
 
 libsysfs: uclibc $(TARGET_DIR)/usr/lib/libsysfs.so

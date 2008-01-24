@@ -1,0 +1,20 @@
+--- sysfsutils-2.1.0.orig/cmd/names.c	2005-04-07 01:18:11.000000000 +0200
++++ sysfsutils-2.1.0/cmd/names.c	2008-01-24 19:07:24.000000000 +0100
+@@ -68,7 +68,7 @@
+   if (n)
+     return 1;
+   n = malloc(sizeof(struct nl_entry));
+-  bzero(n, sizeof(struct nl_entry));
++  memset(n, 0, sizeof(struct nl_entry));
+   n->id1 = id1;
+   n->id2 = id2;
+   n->id3 = id3;
+@@ -212,7 +212,7 @@
+     err_name_list(a, "read");
+   a->nl_list[st.st_size] = 0;
+   a->nl_hash = malloc(sizeof(struct nl_entry *) * HASH_SIZE);
+-  bzero(a->nl_hash, sizeof(struct nl_entry *) * HASH_SIZE);
++  memset(a->nl_hash, 0, sizeof(struct nl_entry *) * HASH_SIZE);
+   parse_name_list(a);
+   close(fd);
+ }
