@@ -1,7 +1,7 @@
 PROJECT_FILE:=$(LOCAL)/$(PROJECT)/$(PROJECT).config
 
 
-.PHONY: target-host-info saveconfig getconfig
+.PHONY: saveconfig getconfig
 
 target-host-info: $(TARGET_DIR)/etc/issue $(TARGET_DIR)/etc/hostname
 
