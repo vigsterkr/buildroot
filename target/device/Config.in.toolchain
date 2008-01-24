@@ -47,6 +47,7 @@ config BR2_VENDOR_PATCH_DIR
 	string
 	default "target/device/Atmel/toolchain/avr32" if BR2_TOOLCHAIN_ATMEL_AVR32
 endif
+
 if BR2_TOOLCHAIN_UNKNOWNVENDOR
 config BR2_VENDOR_SITE
 	string "vendor site"
@@ -76,6 +77,5 @@ config BR2_VENDOR_PATCH_DIR
 	string "local accumulated patchdir"
 	default "target/device/$(VENDOR)/toolchain/"
 endif
-
 
 endif
