@@ -1,5 +1,3 @@
-#
-
 if BR2_TOOLCHAIN_SOURCE
 source "toolchain/kernel-headers/Config.in"
 source "toolchain/uClibc/Config.in"
@@ -18,26 +16,37 @@ config BR2_ENABLE_MULTILIB
 	bool "Enable multilib support?"
 	default n
 	help
-	    Build libraries to support different ABIs.
+	  Build libraries to support different ABIs.
+
+config BR2_ENABLE_SSP
+	bool "Enable SSP support?"
+	default n
+	help
+	  Enable stack-protector support.
+	  Emit extra code to check for buffer overflows, such as stack
+	  smashing attacks.  This is done by adding a guard variable
+	  to functions with vulnerable objects.
+
+	  This increases binary size so only enable this for development.
 
 config BR2_LARGEFILE
 	bool "Enable large file (files > 2 GB) support?"
 	depends on !BR2_cris
 	default n
 	help
-	    Enable large file (files > 2 GB) support
+	  Enable large file (files > 2 GB) support
 
 config BR2_INET_IPV6
 	bool "Enable IPv6"
 	default n
 	help
-	    Enable IPv6.
+	  Enable IPv6.
 
 config BR2_INET_RPC
 	bool "Enable RPC"
 	default n
 	help
-	    Enable RPC. RPC support is needed for nfs.
+	  Enable RPC. RPC support is needed for nfs.
 
 config BR2_USE_WCHAR
 	bool "Enable WCHAR support"

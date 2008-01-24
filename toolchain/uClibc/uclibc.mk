@@ -400,6 +400,19 @@ endif
 ifeq ($(findstring y,$(BR2_GCC_CROSS_CXX)$(BR2_GCC_SHARED_LIBGCC)),y)
 	$(SED) 's/.*CONFIG_UCLIBC_CTOR_DTOR.*/CONFIG_UCLIBC_CTOR_DTOR=y/' $(UCLIBC_DIR)/.oldconfig
 endif
+	$(SED) '/HAVE_NO_SSP/d' -e '/UCLIBC_HAS_SSP/d' \
+		-e '/UCLIBC_HAS_SSP_COMPAT/d' -e '/SSP_QUICK_CANARY/d' \
+		-e '/PROPOLICE_BLOCK_/d' -e '/UCLIBC_BUILD_SSP/d' $(UCLIBC_DIR)/.oldconfig
+ifeq ($(BR2_ENABLE_SSP),y)
+	/bin/echo "# HAVE_NO_SSP is not set" >> $(UCLIBC_DIR)/.oldconfig
+	/bin/echo "UCLIBC_HAS_SSP=y" >> $(UCLIBC_DIR)/.oldconfig
+	/bin/echo "# UCLIBC_HAS_SSP_COMPAT is not set" >> $(UCLIBC_DIR)/.oldconfig
+	/bin/echo "# SSP_QUICK_CANARY is not set" >> $(UCLIBC_DIR)/.oldconfig
+	/bin/echo "PROPOLICE_BLOCK_ABRT=y" >> $(UCLIBC_DIR)/.oldconfig
+	/bin/echo "UCLIBC_BUILD_SSP=y" >> $(UCLIBC_DIR)/.oldconfig
+else
+	/bin/echo "HAVE_NO_SSP=y" >> $(UCLIBC_DIR)/.oldconfig
+endif
 
 
 $(UCLIBC_DIR)/.config: $(UCLIBC_DIR)/.oldconfig
