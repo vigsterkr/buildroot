@@ -122,8 +122,9 @@ config BR2_PACKAGE_BUSYBOX_SKELETON
 	  Use a minimal target skeleton. Make sure to select mdev
 	  which is used to populate /dev/.
 
-#config BR2_PACKAGE_BUSYBOX_INITRAMFS
-#	bool "initramfs perusing busybox"
-#	depends on BR2_PACKAGE_BUSYBOX
-#	help
-#	  Build small initramfs perusing busybox.
+config BR2_PACKAGE_BUSYBOX_INITRAMFS
+	bool "initramfs perusing busybox"
+	depends on BR2_PACKAGE_BUSYBOX
+	help
+	  Build small initramfs perusing busybox.
+	  This is still experimental.
