@@ -3,9 +3,9 @@
 # lm-sensors
 #
 #############################################################
-LM_SENSORS_VERSION:=2.10.4
+LM_SENSORS_VERSION:=2.10.5
 LM_SENSORS_SOURCE:=lm-sensors_$(LM_SENSORS_VERSION).orig.tar.gz
-LM_SENSORS_PATCH:=lm-sensors_$(LM_SENSORS_VERSION)-3.diff.gz
+LM_SENSORS_PATCH:=lm-sensors_$(LM_SENSORS_VERSION)-5.diff.gz
 LM_SENSORS_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/l/lm-sensors/
 LM_SENSORS_DIR:=$(BUILD_DIR)/lm_sensors-$(LM_SENSORS_VERSION)
 LM_SENSORS_CAT:=$(ZCAT)
@@ -38,6 +38,7 @@ endif
 
 $(LM_SENSORS_DIR)/$(LM_SENSORS_BINARY): $(LM_SENSORS_DIR)/.unpacked
 	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(LM_SENSORS_DIR) \
+		FLEX=/usr/bin/flex \
 		LINUX="$(LINUX_DIR)" KERNELVERSION=$(LINUX_HEADERS_VERSION) \
 		I2C_HEADERS=$(LINUX_DIR)/include \
 		DESTDIR=$(TARGET_DIR) user
@@ -50,8 +51,8 @@ $(TARGET_DIR)/$(LM_SENSORS_TARGET_BINARY): $(LM_SENSORS_DIR)/$(LM_SENSORS_BINARY
 			$(TARGET_DIR)/etc/sensors.conf; \
 	fi
 	$(INSTALL) -D $(LM_SENSORS_DIR)/$(LM_SENSORS_BINARY) $@
-	mkdir -p $(TARGET_DIR)/usr/lib
-	cp -dpf $(LM_SENSORS_DIR)/lib/libsensors.so* \
+	$(INSTALL) -d $(TARGET_DIR)/usr/lib
+	$(INSTALL) $(LM_SENSORS_DIR)/lib/libsensors.so* \
 		$(LM_SENSORS_DIR)/lib/libsensors.a $(TARGET_DIR)/usr/lib/
 	-$(STRIPCMD) $(STRIP_STRIP_ALL) $(TARGET_DIR)/usr/lib/libsensors.so*
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
