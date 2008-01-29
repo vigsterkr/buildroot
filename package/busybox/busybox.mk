@@ -148,8 +148,8 @@ busybox-update:
 	cp -f $(BUSYBOX_DIR)/.config $(BUSYBOX_CONFIG_FILE)
 
 busybox-clean:
-	rm -f $(TARGET_DIR)/bin/busybox
 	-$(MAKE) -C $(BUSYBOX_DIR) clean
+	rm -f $(TARGET_DIR)/bin/busybox
 
 busybox-dirclean:
 	rm -rf $(BUSYBOX_DIR)
