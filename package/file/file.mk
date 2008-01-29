@@ -3,8 +3,9 @@
 # file
 #
 #############################################################
-FILE_VERSION:=4.21
+FILE_VERSION:=4.23
 FILE_SOURCE:=file_$(FILE_VERSION).orig.tar.gz
+FILE_PATCH:=file_$(FILE_VERSION)-1.diff.gz
 FILE_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/f/file
 FILE_SOURCE_DIR:=$(BUILD_DIR)/file-$(FILE_VERSION)
 FILE_DIR1:=$(TOOL_BUILD_DIR)/file-$(FILE_VERSION)-host
@@ -13,11 +14,13 @@ FILE_CAT:=$(ZCAT)
 FILE_BINARY:=src/file
 FILE_TARGET_BINARY:=usr/bin/file
 
-$(DL_DIR)/$(FILE_SOURCE):
+ifneq ($(FILE_PATCH),)
+FILE_PATCH_FILE:=$(DL_DIR)/$(FILE_PATCH)
+$(FILE_PATCH_FILE):
+	 $(WGET) -P $(DL_DIR) $(FILE_SITE)/$(FILE_PATCH)
+endif
+$(DL_DIR)/$(FILE_SOURCE): $(FILE_PATCH_FILE)
 	 $(WGET) -P $(DL_DIR) $(FILE_SITE)/$(FILE_SOURCE)
-
-file-source: $(DL_DIR)/$(FILE_SOURCE)
-
 
 #############################################################
 #
@@ -27,7 +30,7 @@ file-source: $(DL_DIR)/$(FILE_SOURCE)
 $(FILE_DIR1)/.configured: $(FILE_SOURCE_DIR)/.unpacked
 	mkdir -p $(FILE_DIR1)
 	(cd $(FILE_DIR1); rm -rf config.cache; \
-		CC="$(HOSTCC)" \
+		CC="$(HOSTCC) $(HOST_CFLAGS)" \
 		$(FILE_SOURCE_DIR)/configure \
 		--prefix=$(FILE_DIR1)/install \
 	)
@@ -53,19 +56,21 @@ host-file-dirclean:
 file-unpacked: $(FILE_SOURCE_DIR)/.unpacked
 $(FILE_SOURCE_DIR)/.unpacked: $(DL_DIR)/$(FILE_SOURCE)
 	$(FILE_CAT) $(DL_DIR)/$(FILE_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+ifneq ($(FILE_PATCH),)
+	(cd $(FILE_SOURCE_DIR) && $(FILE_CAT) $(FILE_PATCH_FILE) | patch -p1)
+	if [ -d $(FILE_SOURCE_DIR)/debian/patches ]; then \
+		toolchain/patch-kernel.sh $(FILE_SOURCE_DIR) $(FILE_SOURCE_DIR) debian/patches/\?\?\?-\*.dpatch; \
+	fi
+endif
 	toolchain/patch-kernel.sh $(FILE_SOURCE_DIR) package/file/ file\*.patch
 	$(CONFIG_UPDATE) $(FILE_SOURCE_DIR)
 	touch $@
 
+$(FILE_DIR2)/.configured: THIS_SRCDIR = $(FILE_SOURCE_DIR)
 $(FILE_DIR2)/.configured: $(FILE_SOURCE_DIR)/.unpacked
 	mkdir -p $(FILE_DIR2)
 	(cd $(FILE_DIR2); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		$(FILE_SOURCE_DIR)/configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -103,6 +108,8 @@ endif
 	mv $(TARGET_DIR)/usr/include/magic.h $(STAGING_DIR)/usr/include
 
 file: zlib uclibc $(TARGET_DIR)/$(FILE_TARGET_BINARY)
+
+file-source: $(DL_DIR)/$(FILE_SOURCE)
 
 file-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(FILE_DIR2) uninstall
