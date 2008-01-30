@@ -16,17 +16,13 @@ $(DL_DIR)/$(DBUS_SOURCE):
 
 $(DBUS_DIR)/.unpacked: $(DL_DIR)/$(DBUS_SOURCE)
 	$(DBUS_CAT) $(DL_DIR)/$(DBUS_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(DBUS_DIR)/.configured: $(DBUS_DIR)/.unpacked
 	(cd $(DBUS_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
 		ac_cv_have_abstract_sockets=yes \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--localstatedir=/var \
@@ -55,7 +51,8 @@ $(STAGING_DIR)/usr/lib/libdbus-1.so: $(DBUS_DIR)/$(DBUS_BINARY)
 	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(DBUS_DIR) install
 
 $(TARGET_DIR)/$(DBUS_TARGET_BINARY): $(STAGING_DIR)/usr/lib/libdbus-1.so
-	$(INSTALL) -d $(TARGET_DIR)/var/run/dbus $(TARGET_DIR)/etc/init.d
+	$(INSTALL) -d $(TARGET_DIR)/var/run/dbus $(TARGET_DIR)/etc/init.d \
+		$(TARGET_DIR)/var/lib/dbus
 	$(MAKE) DESTDIR=$(TARGET_DIR) STRIPPROG='$(STRIPCMD)' \
 		initdir=/etc/init.d -C $(DBUS_DIR)/dbus install-strip
 	rm -rf $(TARGET_DIR)/usr/lib/dbus-1.0 \
@@ -66,6 +63,9 @@ $(TARGET_DIR)/$(DBUS_TARGET_BINARY): $(STAGING_DIR)/usr/lib/libdbus-1.so
 	rm -f $(TARGET_DIR)/etc/init.d/messagebus
 ifneq ($(BR2_HAVE_MANPAGES),y)
 	rm -rf $(TARGET_DIR)/usr/share/man
+endif
+ifneq ($(BR2_HAVE_INFOPAGES),y)
+	rm -rf $(TARGET_DIR)/usr/share/info
 endif
 
 dbus: uclibc expat libxml2-headers $(TARGET_DIR)/$(DBUS_TARGET_BINARY)
@@ -80,7 +80,8 @@ dbus-clean:
 	rm -f $(TARGET_DIR)/etc/init.d/S97messagebus
 	rm -f $(TARGET_DIR)/usr/lib/libdbus-1.so*
 	rm -f $(TARGET_DIR)/usr/bin/dbus-daemon
-	rm -rf $(TARGET_DIR)/tmp/dbus
+	rm -rf $(TARGET_DIR)/tmp/dbus $(TARGET_DIR)/var/run/dbus \
+		$(TARGET_DIR)/var/lib/dbus
 	rm -f $(STAGING_DIR)/usr/lib/libdbus-1.*
 	rm -rf $(STAGING_DIR)/usr/lib/dbus-1.0
 	rm -rf $(STAGING_DIR)/usr/include/dbus-1.0
