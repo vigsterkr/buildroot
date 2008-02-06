@@ -1,19 +1,4 @@
---- gcc/gcc/config/cris/linux.h
-+++ gcc/gcc/config/cris/linux.h
-@@ -74,7 +74,11 @@
- #define CRIS_DEFAULT_CPU_VERSION CRIS_CPU_NG
- 
- #undef CRIS_SUBTARGET_VERSION
--#define CRIS_SUBTARGET_VERSION " - cris-axis-linux-gnu"
-+#if UCLIBC_DEFAULT
-+# define CRIS_SUBTARGET_VERSION " - cris-axis-linux-uclibc"
-+#else
-+# define CRIS_SUBTARGET_VERSION " - cris-axis-linux-gnu"
-+#endif
- 
- #define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
- 
---- gcc/contrib/regression/objs-gcc.sh
+--- gcc/gcc/config/--- gcc/contrib/regression/objs-gcc.sh
 +++ gcc/contrib/regression/objs-gcc.sh
 @@ -105,6 +105,10 @@
   then
