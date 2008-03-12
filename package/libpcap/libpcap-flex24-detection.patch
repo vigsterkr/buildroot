@@ -1,0 +1,31 @@
+diff -rdup libpcap-0.9.8.patched/aclocal.m4 libpcap-0.9.8/aclocal.m4
+--- libpcap-0.9.8.patched/aclocal.m4	2008-02-29 09:06:30.000000000 +0100
++++ libpcap-0.9.8/aclocal.m4	2008-03-12 11:04:26.000000000 +0100
+@@ -382,9 +382,9 @@ AC_DEFUN(AC_LBL_LEX_AND_YACC,
+ 	    AC_MSG_CHECKING(for flex 2.4 or higher)
+ 	    AC_CACHE_VAL(ac_cv_lbl_flex_v24,
+ 		if flex -V >/dev/null 2>&1; then
+-			ac_cv_lbl_flex_v24=no
+-		else
+ 			ac_cv_lbl_flex_v24=yes
++		else
++			ac_cv_lbl_flex_v24=no
+ 		fi)
+ 	    AC_MSG_RESULT($ac_cv_lbl_flex_v24)
+ 	    if test $ac_cv_lbl_flex_v24 = no ; then
+Only in libpcap-0.9.8: autom4te.cache
+diff -rdup libpcap-0.9.8.patched/configure libpcap-0.9.8/configure
+--- libpcap-0.9.8.patched/configure	2008-02-29 09:06:30.000000000 +0100
++++ libpcap-0.9.8/configure	2008-03-12 11:04:35.000000000 +0100
+@@ -6940,9 +6940,9 @@ echo $ECHO_N "checking for flex 2.4 or h
+   echo $ECHO_N "(cached) $ECHO_C" >&6
+ else
+   if flex -V >/dev/null 2>&1; then
+-			ac_cv_lbl_flex_v24=no
+-		else
+ 			ac_cv_lbl_flex_v24=yes
++		else
++			ac_cv_lbl_flex_v24=no
+ 		fi
+ fi
+ 
