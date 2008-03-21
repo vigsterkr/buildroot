@@ -3,7 +3,7 @@
 # ltp-testsuite
 #
 #############################################################
-LTP_TESTSUITE_VERSION:=20070228
+LTP_TESTSUITE_VERSION:=20080229
 LTP_TESTSUITE_SOURCE:=ltp-full-$(LTP_TESTSUITE_VERSION).tgz
 LTP_TESTSUITE_SITE:=http://$(BR2_SOURCEFORGE_MIRROR).dl.sourceforge.net/sourceforge/ltp
 LTP_TESTSUITE_CAT:=$(ZCAT)
@@ -30,8 +30,6 @@ endif
 $(DL_DIR)/$(LTP_TESTSUITE_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LTP_TESTSUITE_SITE)/$(LTP_TESTSUITE_SOURCE)
 
-ltp-testsuite-source: $(DL_DIR)/$(LTP_TESTSUITE_SOURCE)
-
 $(LTP_TESTSUITE_DIR)/Makefile: $(DL_DIR)/$(LTP_TESTSUITE_SOURCE)
 	mkdir -p $(LTP_TESTSUITE_ROOT)
 	$(LTP_TESTSUITE_CAT) $(DL_DIR)/$(LTP_TESTSUITE_SOURCE) | tar -C $(LTP_TESTSUITE_ROOT) $(TAR_OPTIONS) -
@@ -51,6 +49,8 @@ $(LTP_TESTSUITE_DIR)/.installed: $(LTP_TESTSUITE_DIR)/.compiled
 	touch $@
 
 ltp-testsuite: uclibc host-fakeroot $(LTP_TESTSUITE_DIR)/.installed
+
+ltp-testsuite-source: $(DL_DIR)/$(LTP_TESTSUITE_SOURCE)
 
 ltp-testsuite-clean:
 	$(MAKE) -C $(LTP_TESTSUITE_DIR) clean
