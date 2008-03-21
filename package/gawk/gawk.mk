@@ -3,7 +3,7 @@
 # gawk
 #
 #############################################################
-GAWK_VERSION:=3.1.5
+GAWK_VERSION:=3.1.6
 GAWK_SOURCE:=gawk-$(GAWK_VERSION).tar.bz2
 GAWK_SITE:=$(BR2_GNU_MIRROR)/gawk
 GAWK_CAT:=$(BZCAT)
@@ -14,11 +14,9 @@ GAWK_TARGET_BINARY:=usr/bin/gawk
 $(DL_DIR)/$(GAWK_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(GAWK_SITE)/$(GAWK_SOURCE)
 
-gawk-source: $(DL_DIR)/$(GAWK_SOURCE)
-
 $(GAWK_DIR)/.unpacked: $(DL_DIR)/$(GAWK_SOURCE)
 	$(GAWK_CAT) $(DL_DIR)/$(GAWK_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	toolchain/patch-kernel.sh $(GAWK_DIR) package/gawk gawk\*.patch
+	toolchain/patch-kernel.sh $(GAWK_DIR) package/gawk gawk-$(GAWK_VERSION)\*.patch
 	$(CONFIG_UPDATE) $(GAWK_DIR)
 	touch $@
 
@@ -66,6 +64,8 @@ endif
 	rm -rf $(TARGET_DIR)/usr/share/doc
 
 gawk: uclibc $(TARGET_DIR)/$(GAWK_TARGET_BINARY)
+
+gawk-source: $(DL_DIR)/$(GAWK_SOURCE)
 
 gawk-clean:
 	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(GAWK_DIR) uninstall
