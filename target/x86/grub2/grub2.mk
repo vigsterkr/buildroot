@@ -20,12 +20,13 @@ ifeq ($(GRUB2_SUPPORTED_ARCH),y)
 # grub2
 #
 #############################################################
-GRUB2_SOURCE:=grub2_1.95.orig.tar.gz
-GRUB2_PATCH:=grub2_1.95-5.diff.gz
+GRUB2_VER:=1.96+20080228
+GRUB2_SOURCE:=grub2_$(GRUB2_VER).orig.tar.gz
+GRUB2_PATCH:=grub2_$(GRUB2_VER)-1.diff.gz
 GRUB2_SITE=$(BR2_DEBIAN_MIRROR)/debian/pool/main/g/grub2
 GRUB2_PATCH_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/g/grub2
 GRUB2_CAT:=$(ZCAT)
-GRUB2_DIR:=$(BUILD_DIR)/grub-1.95
+GRUB2_DIR:=$(BUILD_DIR)/grub2-$(GRUB2_VER)
 GRUB2_BINARY:=grub2/grub2
 GRUB2_TARGET_BINARY:=sbin/grub2
 GRUB2_SPLASHIMAGE=$(TOPDIR)/target/x86/grub/splash.xpm.gz
@@ -72,10 +73,11 @@ grub2-source: $(DL_DIR)/$(GRUB2_SOURCE) $(DL_DIR)/$(GRUB2_PATCH)
 $(GRUB2_DIR)/.unpacked: $(DL_DIR)/$(GRUB2_SOURCE) $(DL_DIR)/$(GRUB2_PATCH)
 	$(GRUB2_CAT) $(DL_DIR)/$(GRUB2_SOURCE) | tar -C $(BUILD_DIR) -xvf -
 	toolchain/patch-kernel.sh $(GRUB2_DIR) $(DL_DIR) $(GRUB2_PATCH)
-	for i in `grep -v "^#" $(GRUB2_DIR)/debian/patches/00list`; do \
-		cat $(GRUB2_DIR)/debian/patches/$$i | patch -p1 -d $(GRUB2_DIR); \
-	done
-	toolchain/patch-kernel.sh $(GRUB2_DIR) target/x86/grub2 grub-\*.patch
+	toolchain/patch-kernel.sh $(GRUB2_DIR) $(GRUB2_DIR)/debian/patches \*.diff 
+	#for i in `grep -v "^#" $(GRUB2_DIR)/debian/patches/00list`; do \
+	#	cat $(GRUB2_DIR)/debian/patches/$$i | patch -p1 -d $(GRUB2_DIR); \
+	#done
+	toolchain/patch-kernel.sh $(GRUB2_DIR) target/x86/grub2 grub\*.patch
 	touch $@
 
 $(GRUB2_DIR)/.configured: $(GRUB2_DIR)/.unpacked
@@ -98,7 +100,7 @@ $(GRUB2_DIR)/.configured: $(GRUB2_DIR)/.unpacked
 	touch $@
 
 $(GRUB2_DIR)/$(GRUB2_BINARY): $(GRUB2_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) -C $(GRUB2_DIR)
+	$(MAKE) -C $(GRUB2_DIR)
 
 $(GRUB2_DIR)/.installed: $(GRUB2_DIR)/$(GRUB2_BINARY)
 	cp $(GRUB2_DIR)/$(GRUB2_BINARY) $(TARGET_DIR)/$(GRUB2_TARGET_BINARY)
