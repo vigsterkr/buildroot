@@ -280,7 +280,21 @@ else
 	echo "makeinfo installed:				Ok"
 fi
 
+#############################################################
+#
+# check build system 'ruby' interpreter
+#
+#############################################################
 
+if [ "x$NEED_RUBY" = "xy" ]
+then
+RUBY=$(which ruby 2> /dev/null)
+  if [ -z "$RUBY" ] ; then
+	echo "ruby installed:		    FALSE"
+	/bin/echo -e "\n\nYou must install 'ruby' on your build machine\n"
+	exit 1
+  fi
+fi
 #############################################################
 #
 # All done

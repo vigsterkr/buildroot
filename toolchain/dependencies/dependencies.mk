@@ -13,6 +13,11 @@ ifneq ($(findstring y,$(BR2_KERNEL_HEADERS_LZMA)),)
 DEPENDENCIES_HOST_PREREQ+=host-lzma
 endif
 
+# grub2 needs ruby to generate its Makefiles. brrr
+ifeq ($(BR2_TARGET_GRUB2),y)
+NEED_RUBY:=y
+endif
+
 # We record the environ of the caller to see if we have to recheck
 # via dependencies.sh.
 dependencies:=.br.dependencies.host
@@ -26,6 +31,7 @@ $(ENV_DEP_HOST): $(ENV_DEP_HOST_SOURCE) | host-sed $(DEPENDENCIES_HOST_PREREQ)
 $(dependencies): $(ENV_DEP_HOST)
 	@HOSTCC="$(firstword $(HOSTCC))" MAKE="$(MAKE)" \
 		HOST_SED_DIR="$(HOST_SED_DIR)" \
+		NEED_RUBY="$(NEED_RUBY)" \
 		$(TOPDIR)/toolchain/dependencies/dependencies.sh
 	@$(ENV_DEP_HOST) > $@
 
