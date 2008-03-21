@@ -1,0 +1,487 @@
+Index: gcc-4.3.0/libgcc/shared-object.mk
+===================================================================
+--- gcc-4.3.0/libgcc/shared-object.mk	(revision 131778)
++++ gcc-4.3.0/libgcc/shared-object.mk	(working copy)
+@@ -8,11 +8,22 @@ base := $(basename $(notdir $o))
+ 
+ ifeq ($(suffix $o),.c)
+ 
++ifeq ($(onestep),)
+ $(base)$(objext): $o
+ 	$(gcc_compile) $(c_flags) -c $< $(vis_hide)
+ 
+ $(base)_s$(objext): $o
+ 	$(gcc_s_compile) $(c_flags) -c $<
++else
++$(iter-item-onestep)_onestep$(objext): $o
++$(iter-item-onestep)_s_onestep$(objext): $o
++ifeq ($(iter-items),)
++$(iter-item-onestep)_onestep$(objext):
++	$(gcc_compile) $(c_flags) -c -combine $^ $(vis_hide)
++$(iter-item-onestep)_s_onestep$(objext):
++	$(gcc_s_compile) $(c_flags) -c -combine $^
++endif
++endif
+ 
+ else
+ 
+@@ -22,6 +33,7 @@ $(error Unsupported file type: $o)
+ endif
+ endif
+ 
++ifeq ($(onestep),)
+ $(base)$(objext): $o $(base).vis
+ 	$(gcc_compile) -c -xassembler-with-cpp -include $*.vis $<
+ 
+@@ -30,5 +42,18 @@ $(base).vis: $(base)_s$(objext)
+ 
+ $(base)_s$(objext): $o
+ 	$(gcc_s_compile) -c -xassembler-with-cpp $<
++else
++$(iter-item-onestep)_onestep$(objext): $o
++$(iter-item-onestep)_s_onestep$(objext): $o
++ifeq ($(iter-items),)
++$(iter-item-onestep)_onestep$(objext): $(iter-item-onestep).vis
++	$(gcc_compile) -c -combine -xassembler-with-cpp \
++		-include $*.vis $(filter-out $(iter-item-onestep).vis,$^)
++$(iter-item-onestep).vis: $(iter-item-onestep)_s_onestep$(objext)
++	$(gen-hide-list)
++$(iter-item-onestep)_s_onestep$(objext):
++	$(gcc_s compile) -c -combine -xassembler-with-cpp $^
++endif
++endif
+ 
+ endif
+Index: gcc-4.3.0/libgcc/configure
+===================================================================
+--- gcc-4.3.0/libgcc/configure	(revision 131778)
++++ gcc-4.3.0/libgcc/configure	(working copy)
+@@ -272,7 +272,7 @@ PACKAGE_STRING='GNU C Runtime Library 1.
+ PACKAGE_BUGREPORT=''
+ 
+ ac_unique_file="static-object.mk"
+-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS libgcc_topdir enable_shared slibdir INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AWK build build_cpu build_vendor build_os host host_cpu host_vendor host_os host_noncanonical build_libsubdir build_subdir host_subdir target_subdir AR ac_ct_AR LIPO ac_ct_LIPO NM ac_ct_NM RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP LN_S CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP decimal_float enable_decimal_float fixed_point vis_hide set_have_cc_tls tmake_file extra_parts asm_hidden_op LIBOBJS LTLIBOBJS'
++ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS libgcc_topdir enable_shared slibdir onestep INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AWK build build_cpu build_vendor build_os host host_cpu host_vendor host_os host_noncanonical build_libsubdir build_subdir host_subdir target_subdir AR ac_ct_AR LIPO ac_ct_LIPO NM ac_ct_NM RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP LN_S CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP decimal_float enable_decimal_float fixed_point vis_hide set_have_cc_tls tmake_file extra_parts asm_hidden_op LIBOBJS LTLIBOBJS'
+ ac_subst_files=''
+ 
+ # Initialize some variables set by options.
+@@ -811,6 +811,7 @@ Optional Features:
+   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
+   --disable-shared        don't provide a shared libgcc
+   --enable-version-specific-runtime-libs    Specify that runtime libraries should be installed in a compiler-specific directory
++  --enable-intermodule    build the library in one step
+   --enable-decimal-float={no,yes,bid,dpd}
+ 			enable decimal float extension to C.  Selecting 'bid'
+ 			or 'dpd' choses which decimal floating point format
+@@ -1404,6 +1405,23 @@ fi
+ fi;
+ 
+ 
++# Build with intermodule optimisations
++echo "$as_me:$LINENO: checking for --enable-intermodule" >&5
++echo $ECHO_N "checking for --enable-intermodule... $ECHO_C" >&6
++# Check whether --enable-intermodule or --disable-intermodule was given.
++if test "${enable_intermodule+set}" = set; then
++  enableval="$enable_intermodule"
++  case "$enable_intermodule" in
++  yes) onestep="-onestep";;
++    *) onestep="";;
++esac
++else
++  onestep=""
++fi;
++echo "$as_me:$LINENO: result: $enable_intermodule" >&5
++echo "${ECHO_T}$enable_intermodule" >&6
++
++
+ # Find a good install program.  We prefer a C program (faster),
+ # so one script is as good as another.  But avoid the broken or
+ # incompatible versions:
+@@ -4159,6 +4177,7 @@ s,@LIBS@,$LIBS,;t t
+ s,@libgcc_topdir@,$libgcc_topdir,;t t
+ s,@enable_shared@,$enable_shared,;t t
+ s,@slibdir@,$slibdir,;t t
++s,@onestep@,$onestep,;t t
+ s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
+ s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
+ s,@INSTALL_DATA@,$INSTALL_DATA,;t t
+Index: gcc-4.3.0/libgcc/Makefile.in
+===================================================================
+--- gcc-4.3.0/libgcc/Makefile.in	(revision 131778)
++++ gcc-4.3.0/libgcc/Makefile.in	(working copy)
+@@ -327,8 +327,26 @@ LIB2_DIVMOD_FUNCS := $(filter-out $(LIB2
+ 		       $(LIB2_DIVMOD_FUNCS))
+ 
+ # Build "libgcc1" (assembly) components.
++
++lib1asmfuncs-onestep-sources += $(gcc_srcdir)/config/$(LIB1ASMSRC)
++lib1asmfuncs-onestep-defines += $(patsubst %,-DL%,$(LIB1ASMFUNCS))
++libgcc-objects-onestep += $(if $(LIB1ASMSRC),lib1asmfuncs_onestep.o)
++
+ ifeq ($(enable_shared),yes)
+ 
++libgcc-s-objects-onestep += $(if $(LIB1ASMSRC),lib1asmfuncs_s_onestep.o)
++
++lib1asmfuncs-onestep-prereq += $(patsubst %,%.vis,$(LIB1ASMFUNCS))
++
++lib1asmfuncs_onestep.o: $(lib1asmfuncs-onestep-sources) \
++			$(lib1asmfuncs-onestep-prereq)
++	$(gcc_compile) $(lib1asmfuncs-onestep-defines) -xassembler-with-cpp \
++	  -c $(gcc_srcdir)/config/$(LIB1ASMSRC) \
++	  $(patsubst %,-include %,$(lib1asmfuncs-onestep-prereq)) -combine
++lib1asmfuncs_s_onestep.o: $(lib1asmfuncs-onestep-sources)
++	$(gcc_s_compile) $(lib1asmfuncs-onestep-defines) -xassembler-with-cpp \
++	  -c $(gcc_srcdir)/config/$(LIB1ASMSRC) -combine
++
+ lib1asmfuncs-o = $(patsubst %,%$(objext),$(LIB1ASMFUNCS))
+ $(lib1asmfuncs-o): %$(objext): $(gcc_srcdir)/config/$(LIB1ASMSRC) %.vis
+ 	$(gcc_compile) -DL$* -xassembler-with-cpp \
+@@ -345,6 +363,10 @@ libgcc-s-objects += $(lib1asmfuncs-s-o)
+ 
+ else
+ 
++lib1asmfuncs_onestep.o: $(lib1asmfuncs-onestep-sources)
++	$(gcc_compile) $(lib1asmfuncs-onestep-defines) -xassembler-with-cpp \
++	  -c $(gcc_srcdir)/config/$(LIB1ASMSRC) -combine
++
+ lib1asmfuncs-o = $(patsubst %,%$(objext),$(LIB1ASMFUNCS))
+ $(lib1asmfuncs-o): %$(objext): $(gcc_srcdir)/config/$(LIB1ASMSRC)
+ 	$(gcc_compile) -DL$* -xassembler-with-cpp \
+@@ -359,12 +381,17 @@ $(lib2funcs-o): %$(objext): $(gcc_srcdir
+ 	$(gcc_compile) -DL$* -c $(gcc_srcdir)/libgcc2.c \
+ 	  $(vis_hide)
+ libgcc-objects += $(lib2funcs-o)
++libgcc-onestep-sources += $(gcc_srcdir)/libgcc2.c
++libgcc-onestep-defines += $(patsubst %,-DL%,$(lib2funcs) $(LIB2FUNCS_ST))
+ 
+ ifeq ($(enable_shared),yes)
+ lib2funcs-s-o = $(patsubst %,%_s$(objext),$(lib2funcs))
+ $(lib2funcs-s-o): %_s$(objext): $(gcc_srcdir)/libgcc2.c
+ 	$(gcc_s_compile) -DL$* -c $(gcc_srcdir)/libgcc2.c
+ libgcc-s-objects += $(lib2funcs-s-o)
++libgcc-s-onestep-sources += $(gcc_srcdir)/libgcc2.c
++libgcc-s-onestep-defines += $(patsubst %,-DL%,$(lib2funcs) $(LIB2FUNCS_ST))
++
+ endif
+ 
+ ifneq ($(LIB2_SIDITI_CONV_FUNCS),)
+@@ -395,6 +422,8 @@ $(lib2-divmod-o): %$(objext): $(gcc_srcd
+ 	$(gcc_compile) -DL$* -c $(gcc_srcdir)/libgcc2.c \
+ 	  -fexceptions -fnon-call-exceptions $(vis_hide)
+ libgcc-objects += $(lib2-divmod-o)
++libgcc-onestep-sources += $(gcc_srcdir)/libgcc2.c
++libgcc-onestep-defines += $(patsubst %,-DL%,$(LIB2_DIVMOD_FUNCS))
+ 
+ ifeq ($(enable_shared),yes)
+ lib2-divmod-s-o = $(patsubst %,%_s$(objext),$(LIB2_DIVMOD_FUNCS))
+@@ -402,6 +431,8 @@ $(lib2-divmod-s-o): %_s$(objext): $(gcc_
+ 	$(gcc_s_compile) -DL$* -c $(gcc_srcdir)/libgcc2.c \
+ 	  -fexceptions -fnon-call-exceptions
+ libgcc-s-objects += $(lib2-divmod-s-o)
++libgcc-s-onestep-sources += $(gcc_srcdir)/libgcc2.c
++libgcc-s-onestep-defines += $(patsubst %,-DL%,$(LIB2_DIVMOD_FUNCS))
+ endif
+ 
+ # $(FPBIT) et al. are pathnames relative to the GCC build
+@@ -427,12 +458,16 @@ fpbit-o = $(patsubst %,%$(objext),$(FPBI
+ $(fpbit-o): %$(objext): $(FPBIT)
+ 	$(gcc_compile) -DFINE_GRAINED_LIBRARIES -DL$* -c $(FPBIT) $(vis_hide)
+ libgcc-objects += $(fpbit-o)
++libgcc-onestep-sources += $(FPBIT)
++libgcc-onestep-defines += $(patsubst %,-DL%,$(FPBIT_FUNCS))
+ 
+ ifeq ($(enable_shared),yes)
+ fpbit-s-o = $(patsubst %,%_s$(objext),$(FPBIT_FUNCS))
+ $(fpbit-s-o): %_s$(objext): $(FPBIT)
+ 	$(gcc_s_compile) -DFINE_GRAINED_LIBRARIES -DL$* -c $(FPBIT)
+ libgcc-s-objects += $(fpbit-s-o)
++libgcc-s-onestep-sources += $(FPBIT)
++libgcc-s-onestep-defines += $(patsubst %,-DL%,$(FPBIT_FUNCS))
+ endif
+ endif
+ 
+@@ -442,12 +477,16 @@ dpbit-o = $(patsubst %,%$(objext),$(DPBI
+ $(dpbit-o): %$(objext): $(DPBIT)
+ 	$(gcc_compile) -DFINE_GRAINED_LIBRARIES -DL$* -c $(DPBIT) $(vis_hide)
+ libgcc-objects += $(dpbit-o)
++libgcc-onestep-sources += $(DPBIT)
++libgcc-onestep-defines += $(patsubst %,-DL%,$(DPBIT_FUNCS))
+ 
+ ifeq ($(enable_shared),yes)
+ dpbit-s-o = $(patsubst %,%_s$(objext),$(DPBIT_FUNCS))
+ $(dpbit-s-o): %_s$(objext): $(DPBIT)
+ 	$(gcc_s_compile) -DFINE_GRAINED_LIBRARIES -DL$* -c $(DPBIT)
+ libgcc-s-objects += $(dpbit-s-o)
++libgcc-s-onestep-sources += $(DPBIT)
++libgcc-s-onestep-defines += $(patsubst %,-DL%,$(DPBIT_FUNCS))
+ endif
+ endif
+ 
+@@ -457,12 +496,16 @@ tpbit-o = $(patsubst %,%$(objext),$(TPBI
+ $(tpbit-o): %$(objext): $(TPBIT)
+ 	$(gcc_compile) -DFINE_GRAINED_LIBRARIES -DL$* -c $(TPBIT) $(vis_hide)
+ libgcc-objects += $(tpbit-o)
++libgcc-onestep-sources += $(TPBIT)
++libgcc-onestep-defines += $(patsubst %,-DL%,$(TPBIT_FUNCS))
+ 
+ ifeq ($(enable_shared),yes)
+ tpbit-s-o = $(patsubst %,%_s$(objext),$(TPBIT_FUNCS))
+ $(tpbit-s-o): %_s$(objext): $(TPBIT)
+ 	$(gcc_s_compile) -DFINE_GRAINED_LIBRARIES -DL$* -c $(TPBIT)
+ libgcc-s-objects += $(tpbit-s-o)
++libgcc-s-onestep-sources += $(TPBIT)
++libgcc-s-onestep-defines += $(patsubst %,-DL%,$(TPBIT_FUNCS))
+ endif
+ endif
+ 
+@@ -497,8 +540,10 @@ endif
+ 
+ dfp-objects = $(patsubst %,%$(objext),$(dfp-filenames))
+ ifeq ($(enable_decimal_float),bid)
++libgcc-onestep-sources += $(patsubst %,$(srcdir)/config/libbid/%.c,$(dfp-filenames))
+ $(dfp-objects): %$(objext): $(srcdir)/config/libbid/%.c
+ else
++libgcc-onestep-sources += $(patsubst %,$(srcdir)/../libdecnumber/%.c,$(dfp-filenames))
+ $(dfp-objects): %$(objext): $(srcdir)/../libdecnumber/%.c
+ endif
+ 	$(gcc_compile) -c $<
+@@ -521,8 +566,10 @@ endif
+ 
+ decbits-objects = $(patsubst %,%$(objext),$(decbits-filenames))
+ ifeq ($(enable_decimal_float),bid)
++libgcc-onestep-sources += $(patsubst %,$(srcdir)/config/libbid/%.c,$(decbits-filenames))
+ $(decbits-objects): %$(objext): $(srcdir)/config/libbid/%.c
+ else
++libgcc-onestep-sources += $(patsubst %,$(srcdir)/../libdecnumber/$(enable_decimal_float)/%.c,$(decbits-filenames))
+ $(decbits-objects): %$(objext): $(srcdir)/../libdecnumber/$(enable_decimal_float)/%.c
+ endif
+ 	$(gcc_compile) -c $<
+@@ -544,36 +591,49 @@ endif
+ endif
+ 
+ ifneq ($(D32PBIT),)
++libgcc-objects-onestep += libgcc_32_onestep.o
+ d32pbit-o = $(patsubst %,%$(objext),$(D32PBIT_FUNCS))
+ ifeq ($(enable_decimal_float),bid)
++libgcc-32-onestep-sources += $(patsubst %,$(srcdir)/config/libbid/%.c,$(D32PBIT_FUNCS))
+ $(d32pbit-o): %$(objext): $(srcdir)/config/libbid/%.c
+ else
++libgcc-32-onestep-sources += $(gcc_srcdir)/config/dfp-bit.c
+ $(d32pbit-o): %$(objext): $(gcc_srcdir)/config/dfp-bit.c
+ endif
+ 	$(gcc_compile) -DFINE_GRAINED_LIBRARIES -DL$* -DWIDTH=32 -c $<
+ libgcc-objects += $(d32pbit-o)
++libgcc-32-onestep-defines += $(patsubst %,-DL%,$(D32PBIT_FUNCS)) -DWIDTH=32
+ endif
+ 
+ ifneq ($(D64PBIT),)
++libgcc-objects-onestep += libgcc_64_onestep.o
+ d64pbit-o = $(patsubst %,%$(objext),$(D64PBIT_FUNCS))
+ ifeq ($(enable_decimal_float),bid)
++libgcc-64-onestep-sources += $(patsubst %,$(srcdir)/config/libbid/%.c,$(D64PBIT_FUNCS))
+ $(d64pbit-o): %$(objext): $(srcdir)/config/libbid/%.c
+ else
++libgcc-64-onestep-sources += $(gcc_srcdir)/config/dfp-bit.c
+ $(d64pbit-o): %$(objext): $(gcc_srcdir)/config/dfp-bit.c
++
+ endif
+ 	$(gcc_compile) -DFINE_GRAINED_LIBRARIES -DL$* -DWIDTH=64 -c $<
+ libgcc-objects += $(d64pbit-o)
++libgcc-64-onestep-defines += $(patsubst %,-DL%,$(D64PBIT_FUNCS)) -DWIDTH=64
+ endif
+ 
+ ifneq ($(D128PBIT),)
++libgcc-objects-onestep += libgcc_128_onestep.o
+ d128pbit-o = $(patsubst %,%$(objext),$(D128PBIT_FUNCS))
+ ifeq ($(enable_decimal_float),bid)
++libgcc-128-onestep-sources += $(patsubst %,$(srcdir)/config/libbid/%.c,$(D128PBIT_FUNCS))
+ $(d128pbit-o): %$(objext): $(srcdir)/config/libbid/%.c
+ else
++libgcc-128-onestep-sources += $(gcc_srcdir)/config/dfp-bit.c
+ $(d128pbit-o): %$(objext): $(gcc_srcdir)/config/dfp-bit.c
+ endif
+ 	$(gcc_compile) -DFINE_GRAINED_LIBRARIES -DL$* -DWIDTH=128 -c $<
+ libgcc-objects += $(d128pbit-o)
++libgcc-128-onestep-defines += $(patsubst %,-DL%,$(D128PBIT_FUNCS)) -DWIDTH=128
+ endif
+ 
+ endif
+@@ -669,7 +729,7 @@ libunwind-objects += $(addsuffix $(objex
+ ifeq ($(enable_shared),yes)
+ libunwind-s-objects += $(addsuffix _s$(objext),$(basename $(notdir $(LIBUNWIND))))
+ endif
+-
++iter-item-onestep := libunwind
+ iter-items := $(LIBUNWIND)
+ include $(iterator)
+ 
+@@ -678,10 +738,35 @@ libgcov-objects = $(patsubst %,%$(objext
+ $(libgcov-objects): %$(objext): $(gcc_srcdir)/libgcov.c
+ 	$(gcc_compile) -DL$* -c $(gcc_srcdir)/libgcov.c
+ 
++libgcov-objects-onestep = libgcov_onestep.o
++libgcov_onestep.o: $(gcc_srcdir)/libgcov.c
++	$(gcc_compile) $^ $(patsubst %,-DL%,$(LIBGCOV)) -c -combine
++
++
++ifeq ($(enable_shared),yes)
++libgcc-s-objects-onestep += libgcc_s_onestep.o
++endif
++libgcc-objects-onestep += libgcc_onestep.o $(libgcc-s-objects-onestep)
++
++libgcc_onestep.o: $(libgcc-onestep-sources)
++	$(gcc_compile) $^ $(libgcc-onestep-defines) \
++		-DFINE_GRAINED_LIBRARIES $(vis_hide) -c -combine 
++libgcc_s_onestep.o: $(libgcc-s-onestep-sources)
++	$(gcc_s_compile) $^ $(libgcc-s-onestep-defines) \
++		-DFINE_GRAINED_LIBRARIES $(vis_hide) -c -combine 
++libgcc_32_onestep.o: $(libgcc-32-onestep-sources)
++	$(gcc_compile) $^ $(libgcc-32-onestep-defines) \
++		-DFINE_GRAINED_LIBRARIES -c -combine
++libgcc_64_onestep.o: $(libgcc-64-onestep-sources)
++	$(gcc_compile) $^ $(libgcc-64-onestep-defines) \
++		-DFINE_GRAINED_LIBRARIES -c -combine
++libgcc_128_onestep.o: $(libgcc-128-onestep-sources)
++	$(gcc_compile) $^ $(libgcc-128-onestep-defines) \
++		-DFINE_GRAINED_LIBRARIES -c -combine
+ 
+ # Static libraries.
+-libgcc.a: $(libgcc-objects)
+-libgcov.a: $(libgcov-objects)
++libgcc.a: $(libgcc-objects@onestep@)
++libgcov.a: $(libgcov-objects@onestep@)
+ libunwind.a: $(libunwind-objects)
+ libgcc_eh.a: $(libgcc-eh-objects)
+ 
+@@ -717,8 +802,8 @@ ifeq ($(enable_shared),yes)
+ 
+ # Map-file generation.
+ ifneq ($(SHLIB_MKMAP),)
+-libgcc.map: $(SHLIB_MKMAP) $(SHLIB_MAPFILES) $(libgcc-s-objects)
+-	{ $(NM) $(SHLIB_NM_FLAGS) $(libgcc-s-objects); echo %%; \
++libgcc.map: $(SHLIB_MKMAP) $(SHLIB_MAPFILES) $(libgcc-s-objects@onestep@)
++	{ $(NM) $(SHLIB_NM_FLAGS) $(libgcc-s-objects@onestep@); echo %%; \
+ 	  cat $(SHLIB_MAPFILES) \
+ 	    | sed -e '/^[ 	]*#/d' \
+ 		  -e 's/^%\(if\|else\|elif\|endif\|define\)/#\1/' \
+@@ -729,7 +814,7 @@ libgcc_s$(SHLIB_EXT): libgcc.map
+ mapfile = libgcc.map
+ endif
+ 
+-libgcc_s$(SHLIB_EXT): $(libgcc-s-objects) $(extra-parts)
++libgcc_s$(SHLIB_EXT): $(libgcc-s-objects@onestep@) $(extra-parts)
+ 	# @multilib_flags@ is still needed because this may use
+ 	# $(GCC_FOR_TARGET) and $(LIBGCC2_CFLAGS) directly.
+ 	# @multilib_dir@ is not really necessary, but sometimes it has
+Index: gcc-4.3.0/libgcc/configure.ac
+===================================================================
+--- gcc-4.3.0/libgcc/configure.ac	(revision 131778)
++++ gcc-4.3.0/libgcc/configure.ac	(working copy)
+@@ -77,6 +77,18 @@ else
+ fi)
+ AC_SUBST(slibdir)
+ 
++# Build with intermodule optimisations
++AC_MSG_CHECKING([for --enable-intermodule])
++AC_ARG_ENABLE(intermodule,
++[  --enable-intermodule    build the library in one step],
++[case "$enable_intermodule" in
++  yes) onestep="-onestep";;
++    *) onestep="";;
++esac],
++[onestep=""])
++AC_MSG_RESULT($enable_intermodule)
++AC_SUBST(onestep)
++
+ AC_PROG_INSTALL
+ 
+ AC_PROG_AWK
+Index: gcc-4.3.0/libgcc/config/libbid/bid128_div.c
+===================================================================
+--- gcc-4.3.0/libgcc/config/libbid/bid128_div.c	(revision 131778)
++++ gcc-4.3.0/libgcc/config/libbid/bid128_div.c	(working copy)
+@@ -34,9 +34,9 @@ Software Foundation, 51 Franklin Street,
+ #define FE_ALL_FLAGS FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW|FE_UNDERFLOW|FE_INEXACT
+ #endif
+ 
+-extern UINT32 convert_table[5][128][2];
+-extern SINT8 factors[][2];
+-extern UINT8 packed_10000_zeros[];
++extern const UINT32 convert_table[5][128][2];
++extern const SINT8 factors[][2];
++extern const UINT8 packed_10000_zeros[];
+ 
+ BID128_FUNCTION_ARG2 (bid128_div, x, y)
+ 
+Index: gcc-4.3.0/libgcc/config/libbid/bid64_div.c
+===================================================================
+--- gcc-4.3.0/libgcc/config/libbid/bid64_div.c	(revision 131778)
++++ gcc-4.3.0/libgcc/config/libbid/bid64_div.c	(working copy)
+@@ -66,9 +66,9 @@ Software Foundation, 51 Franklin Street,
+ #define FE_ALL_FLAGS FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW|FE_UNDERFLOW|FE_INEXACT
+ #endif
+ 
+-extern UINT32 convert_table[5][128][2];
+-extern SINT8 factors[][2];
+-extern UINT8 packed_10000_zeros[];
++extern const UINT32 convert_table[5][128][2];
++extern const SINT8 factors[][2];
++extern const UINT8 packed_10000_zeros[];
+ 
+ 
+ #if DECIMAL_CALL_BY_REFERENCE
+@@ -1366,11 +1366,6 @@ if (!done) {
+ 
+ //#define LEAVE_TRAILING_ZEROS
+ 
+-extern UINT32 convert_table[5][128][2];
+-extern SINT8 factors[][2];
+-extern UINT8 packed_10000_zeros[];
+-
+-
+ //UINT64* bid64_div128x128(UINT64 res, UINT128 *px, UINT128 *py, unsigned rnd_mode, unsigned *pfpsf) 
+ 
+ TYPE0_FUNCTION_ARG128_ARG128 (UINT64, bid64qq_div, x, y)
+Index: gcc-4.3.0/gcc/libgcc2.c
+===================================================================
+--- gcc-4.3.0/gcc/libgcc2.c	(revision 131778)
++++ gcc-4.3.0/gcc/libgcc2.c	(working copy)
+@@ -1538,17 +1538,17 @@ FUNC (DWtype u)
+    && SIZE > (DI_SIZE - SIZE + FSSIZE)					\
+    && !AVOID_FP_TYPE_CONVERSION(SIZE))
+ #if defined(L_floatundisf)
+-#define FUNC __floatundisf
++#define FUNCU __floatundisf
+ #define FSTYPE SFtype
+ #define FSSIZE SF_SIZE
+ #else
+-#define FUNC __floatundidf
++#define FUNCU __floatundidf
+ #define FSTYPE DFtype
+ #define FSSIZE DF_SIZE
+ #endif
+ 
+ FSTYPE
+-FUNC (UDWtype u)
++FUNCU (UDWtype u)
+ {
+ #if FSSIZE >= W_TYPE_SIZE
+   /* When the word size is small, we never get any rounding error.  */
+Index: gcc-4.3.0/gcc/gbl-ctors.h
+===================================================================
+--- gcc-4.3.0/gcc/gbl-ctors.h	(revision 131778)
++++ gcc-4.3.0/gcc/gbl-ctors.h	(working copy)
+@@ -38,6 +38,8 @@ Software Foundation, 51 Franklin Street,
+ 	Note that this file should only be compiled with GCC.
+ */
+ 
++#ifndef GCC_GBL_CTORS_H
++#define GCC_GBL_CTORS_H
+ /*  Declare a pointer to void function type.  */
+ 
+ typedef void (*func_ptr) (void);
+@@ -84,3 +86,4 @@ do {									\
+ } while (0)
+ #endif
+ 
++#endif /* GCC_GBL_CTORS_H */

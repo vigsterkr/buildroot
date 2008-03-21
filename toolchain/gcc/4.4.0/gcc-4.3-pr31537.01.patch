@@ -1,0 +1,32 @@
+Index: gcc-4.3/gcc/varasm.c
+===================================================================
+--- gcc-4.3/gcc/varasm.c	(revision 131820)
++++ gcc-4.3/gcc/varasm.c	(working copy)
+@@ -5349,7 +5349,26 @@ assemble_alias (tree decl, tree target)
+     do_assemble_alias (decl, target);
+   else
+     {
+-      alias_pair *p = VEC_safe_push (alias_pair, gc, alias_pairs, NULL);
++      unsigned int i;
++      alias_pair *p;
++
++      if (is_weakref && flag_unit_at_a_time)
++	/* Do not insert duplicate weakrefs.  */
++	for (i = 0; VEC_iterate (alias_pair, alias_pairs, i, p); i++)
++	  if (DECL_ASSEMBLER_NAME (p->decl) == DECL_ASSEMBLER_NAME (decl))
++	    {
++	      /* The last specified target is used.  */
++	      if (target != p->target)
++		{
++		  warning (OPT_Wattributes, "%q+D overriding symbol "
++			   "%qs with %qs", decl,
++			   IDENTIFIER_POINTER (p->target),
++			   IDENTIFIER_POINTER (target));
++		  p->target = target;
++		}
++	      return;
++	    }
++      p = VEC_safe_push (alias_pair, gc, alias_pairs, NULL);
+       p->decl = decl;
+       p->target = target;
+     }
