@@ -32,6 +32,7 @@ endif
 
 $(FLEX_DIR)/.configured: $(FLEX_DIR)/.unpacked
 	(cd $(FLEX_DIR); rm -rf config.cache; \
+		HELP2MAN=/bin/false \
 		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--sysconfdir=/etc \
