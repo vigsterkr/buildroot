@@ -24,6 +24,10 @@ choice
 		bool "BusyBox 1.6.1"
 		depends on BR2_DEPRECATED
 
+	config BR2_BUSYBOX_VERSION_1_6_2
+		bool "BusyBox 1.6.2"
+		depends on BR2_DEPRECATED
+
 	config BR2_BUSYBOX_VERSION_1_7_0
 		bool "BusyBox 1.7.0"
 		depends on BR2_DEPRECATED
@@ -42,6 +46,11 @@ choice
 
 	config BR2_BUSYBOX_VERSION_1_7_4
 		bool "BusyBox 1.7.4"
+		depends on BR2_DEPRECATED
+
+	config BR2_BUSYBOX_VERSION_1_7_5
+		bool "BusyBox 1.7.5"
+		depends on BR2_DEPRECATED
 
 	config BR2_BUSYBOX_VERSION_1_8_0
 		bool "BusyBox 1.8.0"
@@ -53,6 +62,11 @@ choice
 
 	config BR2_BUSYBOX_VERSION_1_8_2
 		bool "BusyBox 1.8.2"
+		depends on BR2_DEPRECATED
+
+	config BR2_BUSYBOX_VERSION_1_8_3
+		bool "BusyBox 1.8.3"
+		depends on BR2_DEPRECATED
 
 	config BR2_BUSYBOX_VERSION_1_9_0
 		bool "BusyBox 1.9.0"
@@ -60,6 +74,13 @@ choice
 
 	config BR2_BUSYBOX_VERSION_1_9_1
 		bool "BusyBox 1.9.1"
+		depends on BR2_DEPRECATED
+
+	config BR2_BUSYBOX_VERSION_1_9_2
+		bool "BusyBox 1.9.2"
+
+	config BR2_BUSYBOX_VERSION_1_10_0
+		bool "BusyBox 1.10.0"
 
 	config BR2_PACKAGE_BUSYBOX_SNAPSHOT
 		bool "daily snapshot"
@@ -70,16 +91,21 @@ config BR2_BUSYBOX_VERSION
 	string
 	default "1.2.2.1"	if BR2_BUSYBOX_VERSION_1_2_2_1
 	default "1.6.1"		if BR2_BUSYBOX_VERSION_1_6_1
+	default "1.6.2"		if BR2_BUSYBOX_VERSION_1_6_2
 	default "1.7.0"		if BR2_BUSYBOX_VERSION_1_7_0
 	default "1.7.1"		if BR2_BUSYBOX_VERSION_1_7_1
 	default "1.7.2"		if BR2_BUSYBOX_VERSION_1_7_2
 	default "1.7.3"		if BR2_BUSYBOX_VERSION_1_7_3
-	default "1.7.4"		if BR2_BUSYBOX_VERSION_1_7_3
+	default "1.7.4"		if BR2_BUSYBOX_VERSION_1_7_4
+	default "1.7.5"		if BR2_BUSYBOX_VERSION_1_7_5
 	default "1.8.0"		if BR2_BUSYBOX_VERSION_1_8_0
 	default "1.8.1"		if BR2_BUSYBOX_VERSION_1_8_1
 	default "1.8.2"		if BR2_BUSYBOX_VERSION_1_8_2
+	default "1.8.3"		if BR2_BUSYBOX_VERSION_1_8_3
 	default "1.9.0"		if BR2_BUSYBOX_VERSION_1_9_0
 	default "1.9.1"		if BR2_BUSYBOX_VERSION_1_9_1
+	default "1.9.2"		if BR2_BUSYBOX_VERSION_1_9_2
+	default "1.10.0"	if BR2_BUSYBOX_VERSION_1_10_0
 
 
 config BR2_PACKAGE_BUSYBOX_INSTALL_SYMLINKS
@@ -101,16 +127,21 @@ config BR2_PACKAGE_BUSYBOX_CONFIG
 	default "target/device/x86/i386/busybox.config" if BR2_PACKAGE_BUSYBOX_SNAPSHOT
 	default "package/busybox/busybox-1.2.2.1.config" if BR2_BUSYBOX_VERSION_1_2_2_1
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_6_1
+	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_6_2
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_7_0
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_7_1
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_7_2
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_7_3
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_7_4
+	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_7_5
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_8_0
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_8_1
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_8_2
+	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_8_3
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_9_0
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_9_1
+	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_9_2
+	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_10_0
 	help
 	  Some people may wish to use their own modified BusyBox configuration
 	  file, and will specify their config file location with this option.
