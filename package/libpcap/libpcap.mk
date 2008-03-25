@@ -28,6 +28,12 @@ LIBPCAP_SOURCE:=libpcap-$(LIBPCAP_VERSION).tar.gz
 LIBPCAP_CAT:=$(ZCAT)
 #default to dynamic lib for better reuse
 LIBPCAP_LIBEXT:=so
+ifeq ($(LIBPCAP_LIBEXT),so)
+LIBPCAP_LIB_VERSION:=.$(LIBPCAP_VERSION)
+LIBPCAP_MAKE_TARGET:=shared
+else
+LIBPCAP_LIB_VERSION:=# empty
+endif
 
 $(DL_DIR)/$(LIBPCAP_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LIBPCAP_SITE)/$(LIBPCAP_SOURCE)
@@ -56,10 +62,10 @@ $(LIBPCAP_DIR)/.configured: $(LIBPCAP_DIR)/.unpacked
 	)
 	touch $@
 
-$(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT): $(LIBPCAP_DIR)/.configured
+$(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT)$(LIBPCAP_LIB_VERSION): $(LIBPCAP_DIR)/.configured
 	$(MAKE) -C $(LIBPCAP_DIR) shared
 
-$(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT): $(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT)
+$(STAGING_DIR)/usr/lib/libpcap.$(LIBPCAP_LIBEXT): $(LIBPCAP_DIR)/libpcap.$(LIBPCAP_LIBEXT)$(LIBPCAP_LIB_VERSION)
 	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(LIBPCAP_DIR) install install-shared
 	test "x$(LIBPCAP_LIBEXT)" = "xso" && \
 		rm -f $(STAGING_DIR)/usr/lib/libpcap.a
