@@ -155,7 +155,7 @@ endif
 INSTALL=/usr/bin/install
 FLEX:=$(shell $(CONFIG_SHELL) -c 'which flex || type -p flex')
 BISON:=$(shell $(CONFIG_SHELL) -c 'which bison || type -p bison')
-BISON+= -y
+#BISON+= -y
 
 HOST_ARCH:=$(shell $(HOSTCC) -dumpmachine | sed -e s'/-.*//' \
 	-e 's/sparc.*/sparc/' \
