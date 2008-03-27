@@ -412,6 +412,7 @@ ifeq ($(BR2_ENABLE_SSP),y)
 	/bin/echo "UCLIBC_BUILD_SSP=y" >> $(UCLIBC_DIR)/.oldconfig
 else
 	/bin/echo "HAVE_NO_SSP=y" >> $(UCLIBC_DIR)/.oldconfig
+	/bin/echo "# UCLIBC_HAS_SSP is not set" >> $(UCLIBC_DIR)/.oldconfig
 endif
 
 
