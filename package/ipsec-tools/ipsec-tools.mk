@@ -143,7 +143,7 @@ ipsec-tools-uninstall:
 
 ipsec-tools-clean:
 	$(MAKE) -C $(IPSEC_TOOLS_DIR) DESTDIR=$(TARGET_DIR) uninstall
-	$(MAKE) -C $(IPSEC_TOOLS_DIR) clean
+	-$(MAKE) -C $(IPSEC_TOOLS_DIR) clean
 ifeq ($(BR2_PACKAGE_IPSEC_TOOLS_LIBS),y)
 	rm -f $(addprefix $(STAGING_DIR)/lib/, \
 		libipsec.a libipsec.la libracoon.a libracoon.la)

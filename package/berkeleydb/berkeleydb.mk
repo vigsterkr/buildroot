@@ -86,7 +86,7 @@ berkeleydb: uclibc $(TARGET_DIR)/lib/$(DB_SHARLIB)
 berkeleydb-source: $(DL_DIR)/$(DB_SOURCE)
 
 berkeleydb-clean:
-	$(MAKE) -C $(DB_DIR)/build_unix clean
+	-$(MAKE) -C $(DB_DIR)/build_unix clean
 
 berkeleydb-dirclean:
 	rm -rf $(DB_DIR)

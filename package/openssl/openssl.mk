@@ -94,7 +94,7 @@ openssl: uclibc $(TARGET_DIR)/usr/lib/libcrypto.so.0.9.7
 openssl-source: $(DL_DIR)/$(OPENSSL_SOURCE)
 
 openssl-clean:
-	$(MAKE) -C $(OPENSSL_DIR) clean
+	-$(MAKE) -C $(OPENSSL_DIR) clean
 	rm -f $(STAGING_DIR)/usr/bin/openssl $(TARGET_DIR)/usr/bin/openssl
 	rm -f $(STAGING_DIR)/usr/lib/libcrypto.so* $(TARGET_DIR)/usr/lib/libcrypto.so*
 	rm -f $(STAGING_DIR)/usr/lib/libssl.so* $(TARGET_DIR)/usr/lib/libssl.so*

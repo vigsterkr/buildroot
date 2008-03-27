@@ -116,7 +116,7 @@ dm-source: $(DL_DIR)/$(DM_SOURCE)
 dm-clean:
 	rm $(DM_TARGET_BINARY) $(DM_TARGET_LIBRARY) \
 		$(DM_TARGET_LIBRARY).$(DM_BASEVER) $(DM_TARGET_HEADER)
-	$(MAKE) -C $(DM_DIR) clean
+	-$(MAKE) -C $(DM_DIR) clean
 
 dm-dirclean:
 	rm -rf $(DM_DIR)

@@ -36,7 +36,7 @@ links: uclibc $(TARGET_DIR)/usr/bin/links
 links-source: $(DL_DIR)/$(LINKS_SOURCE)
 
 links-clean:
-	$(MAKE) -C $(LINKS_DIR) clean
+	-$(MAKE) -C $(LINKS_DIR) clean
 	rm -f $(TARGET_DIR)/usr/bin/links
 
 links-dirclean:

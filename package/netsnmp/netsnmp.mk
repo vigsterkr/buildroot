@@ -136,7 +136,7 @@ netsnmp-source: $(DL_DIR)/$(NETSNMP_SOURCE)
 
 netsnmp-clean:
 	$(MAKE) PREFIX=$(TARGET_DIR) INSTALL_PREFIX=$(TARGET_DIR) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(NETSNMP_DIR) uninstall
-	$(MAKE) -C $(NETSNMP_DIR) clean
+	-$(MAKE) -C $(NETSNMP_DIR) clean
 	rm -rf $(TARGET_DIR)/etc/snmp/{snmpd{,trapd},mib2c*}.conf \
 		$(TARGET_DIR)/etc/default/snmpd \
 		$(TARGET_DIR)/usr/include/net-snmp

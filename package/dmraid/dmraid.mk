@@ -52,7 +52,7 @@ dmraid-source: $(DL_DIR)/$(DMRAID_SOURCE)
 
 dmraid-clean:
 	rm -f $(DMRAID_TARGET_BINARY) $(TARGET_DIR)/etc/init.d/dmraid
-	$(MAKE) -C $(DMRAID_DIR) clean
+	-$(MAKE) -C $(DMRAID_DIR) clean
 
 dmraid-dirclean:
 	rm -rf $(DMRAID_DIR)

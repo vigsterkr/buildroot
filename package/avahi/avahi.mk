@@ -184,7 +184,7 @@ avahi: uclibc busybox libdaemon $(AVAHI_TARGETS)
 avahi-source: $(DL_DIR)/$(AVAHI_SOURCE)
 
 avahi-clean:
-	$(MAKE) -C $(AVAHI_DIR) distclean
+	-$(MAKE) -C $(AVAHI_DIR) distclean
 	rm -rf $(TARGET_DIR)/etc/avahi
 	rm -f $(TARGET_DIR)/var/lib/avahi-autoipd
 	rm -f $(TARGET_DIR)/etc/init.d/S*avahi*

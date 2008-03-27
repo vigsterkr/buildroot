@@ -47,7 +47,7 @@ tn5250: uclibc slang $(TARGET_DIR)/usr/bin/tn5250
 tn5250-source: $(DL_DIR)/$(TN5250_SOURCE)
 
 tn5250-clean:
-	$(MAKE) -C $(TN5250_DIR) clean
+	-$(MAKE) -C $(TN5250_DIR) clean
 
 tn5250-dirclean:
 	rm -rf $(TN5250_DIR)

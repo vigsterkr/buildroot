@@ -75,7 +75,7 @@ valgrind: $(TARGET_DIR)/usr/bin/valgrind
 valgrind-source: $(DL_DIR)/$(VALGRIND_SOURCE)
 
 valgrind-clean:
-	$(MAKE) -C $(VALGRIND_DIR) clean
+	-$(MAKE) -C $(VALGRIND_DIR) clean
 
 valgrind-dirclean:
 	rm -rf $(VALGRIND_DIR)

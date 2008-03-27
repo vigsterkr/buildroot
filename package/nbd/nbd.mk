@@ -43,7 +43,7 @@ nbd-source: $(DL_DIR)/$(NBD_SOURCE)
 
 nbd-clean:
 	@if [ -d $(NBD_DIR)/Makefile ]; then \
-		$(MAKE) -C $(NBD_DIR) clean; \
+		-$(MAKE) -C $(NBD_DIR) clean; \
 	fi
 
 nbd-dirclean:

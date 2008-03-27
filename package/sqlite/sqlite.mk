@@ -68,7 +68,7 @@ sqlite-source: $(DL_DIR)/$(SQLITE_SOURCE)
 
 sqlite-clean:
 	@if [ -d $(SQLITE_DIR)/Makefile ]; then \
-		$(MAKE) -C $(SQLITE_DIR) clean; \
+		-$(MAKE) -C $(SQLITE_DIR) clean; \
 	fi
 
 sqlite-dirclean:

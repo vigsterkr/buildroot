@@ -45,7 +45,7 @@ rdesktop-source: $(DL_DIR)/$(RDESKTOP_SOURCE)
 
 rdesktop-clean:
 	@if [ -d $(RDESKTOP_DIR)/Makefile ]; then \
-		$(MAKE) -C $(RDESKTOP_DIR) clean; \
+		-$(MAKE) -C $(RDESKTOP_DIR) clean; \
 	fi
 
 rdesktop-dirclean:

@@ -80,7 +80,7 @@ vtun-source: $(DL_DIR)/$(VTUN_SOURCE) $(VTUN_PATCH_FILE)
 
 vtun-clean:
 	-$(MAKE) DESTDIR=$(TARGET_DIR) -C $(VTUN_DIR) uninstall
-	$(MAKE) -C $(VTUN_DIR) clean
+	-$(MAKE) -C $(VTUN_DIR) clean
 
 vtun-dirclean:
 	rm -rf $(VTUN_DIR)

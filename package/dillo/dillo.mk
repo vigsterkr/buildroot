@@ -45,7 +45,7 @@ dillo-source: $(DL_DIR)/$(DILLO_SOURCE)
 
 dillo-clean:
 	@if [ -d $(DILLO_DIR)/Makefile ]; then \
-		$(MAKE) -C $(DILLO_DIR) clean; \
+		-$(MAKE) -C $(DILLO_DIR) clean; \
 	fi
 
 dillo-dirclean:
