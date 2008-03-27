@@ -11,6 +11,14 @@ BASH_DIR:=$(BUILD_DIR)/bash-$(BASH_VERSION)
 BASH_BINARY:=bash
 BASH_TARGET_BINARY:=bin/bash
 
+BASH_CONFIGURE_CLUE:=ac_cv_func_setvbuf_reversed=no
+ifeq ($(BR2_GCC_USE_SJLJ_EXCEPTIONS),y)
+BASH_CONFIGURE_CLUE+=bash_cv_func_sigsetjmp=yes
+else
+BASH_CONFIGURE_CLUE+=bash_cv_func_sigsetjmp=no
+endif
+BASH_CONFIGURE_CLUE+= ac_cv_func_getcwd=yes
+
 $(DL_DIR)/$(BASH_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(BASH_SITE)/$(BASH_SOURCE)
 
@@ -29,7 +37,7 @@ $(BASH_DIR)/.configured: $(BASH_DIR)/.unpacked
 	# bash_cv_have_mbstate_t=yes
 	(cd $(BASH_DIR); rm -rf config.cache; \
 		CCFLAGS_FOR_BUILD="$(HOST_CFLAGS)" \
-		ac_cv_func_setvbuf_reversed=no \
+		$(BASH_CONFIGURE_CLUE) \
 		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
