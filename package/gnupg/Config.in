@@ -1,0 +1,8 @@
+config BR2_PACKAGE_GNUPG
+	bool "gpg"
+	default n
+	help
+	  GNU Privacy Guard
+
+	  http://gnupg.org/
+
