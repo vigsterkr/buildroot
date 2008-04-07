@@ -11,7 +11,7 @@ config BR2_PACKAGE_MATCHBOX
 
 config BR2_PACKAGE_MATCHBOX_SNOTIFY
 	bool "Enable Matchbox Startup Notification"
-	depends BR2_PACKAGE_MATCHBOX
+	depends on BR2_PACKAGE_MATCHBOX
 	select BR2_PACKAGE_XAPP_XSM
 	default n
 	help
@@ -20,7 +20,7 @@ config BR2_PACKAGE_MATCHBOX_SNOTIFY
 
 config BR2_PACKAGE_MATCHBOX_PANEL
 	bool "Matchbox Panel"
-	depends BR2_PACKAGE_MATCHBOX
+	depends on BR2_PACKAGE_MATCHBOX
 	default n
 	help
 
@@ -28,7 +28,7 @@ config BR2_PACKAGE_MATCHBOX_PANEL
 
 config BR2_PACKAGE_MATCHBOX_DESKTOP
 	bool "Matchbox Desktop"
-	depends BR2_PACKAGE_MATCHBOX
+	depends on BR2_PACKAGE_MATCHBOX
 	default n
 	help
 
@@ -36,7 +36,7 @@ config BR2_PACKAGE_MATCHBOX_DESKTOP
 
 config BR2_PACKAGE_MATCHBOX_KEYBOARD
 	bool "Metchbox Virtual Keyboard"
-	depends BR2_PACKAGE_MATCHBOX
+	depends on BR2_PACKAGE_MATCHBOX
 	select BR2_PACKAGE_XLIB_LIBXTST
 	default n
 	help

@@ -9,7 +9,7 @@ config BR2_PACKAGE_NFS_UTILS
 	  http://sourceforge.net/projects/nfs
 
 menu "NFS utilities selection"
-	depends BR2_PACKAGE_NFS_UTILS
+	depends on BR2_PACKAGE_NFS_UTILS
 
 config BR2_PACKAGE_NFS_UTILS_RPCDEBUG
 	bool "rpcdebug"

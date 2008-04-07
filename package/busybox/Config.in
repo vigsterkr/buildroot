@@ -11,7 +11,7 @@ config BR2_PACKAGE_BUSYBOX
 
 choice
 	prompt "BusyBox Version"
-	depends BR2_PACKAGE_BUSYBOX
+	depends on BR2_PACKAGE_BUSYBOX
 	default BR2_BUSYBOX_VERSION_1_10_0
 	help
 	  Select the version of BusyBox you wish to use.
@@ -110,7 +110,7 @@ config BR2_BUSYBOX_VERSION
 
 config BR2_PACKAGE_BUSYBOX_INSTALL_SYMLINKS
 	bool "Install symlinks for BusyBox applets"
-	depends BR2_PACKAGE_BUSYBOX
+	depends on BR2_PACKAGE_BUSYBOX
 	default y
 	help
 	  If you want to automatically install symlinks for all the
@@ -123,7 +123,7 @@ config BR2_PACKAGE_BUSYBOX_INSTALL_SYMLINKS
 
 config BR2_PACKAGE_BUSYBOX_CONFIG
 	string "BusyBox configuration file to use?"
-	depends BR2_PACKAGE_BUSYBOX
+	depends on BR2_PACKAGE_BUSYBOX
 	default "target/device/x86/i386/busybox.config" if BR2_PACKAGE_BUSYBOX_SNAPSHOT
 	default "package/busybox/busybox-1.2.2.1.config" if BR2_BUSYBOX_VERSION_1_2_2_1
 	default "package/busybox/busybox-1.6.0.config" if BR2_BUSYBOX_VERSION_1_6_1

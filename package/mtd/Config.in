@@ -53,7 +53,7 @@ config BR2_PACKAGE_MTD_ORIG_STRING
 	default $(BR2_PACKAGE_MTD_SNAPSHOT_STRING) if BR2_PACKAGE_MTD_SNAPSHOT
 
 menu "MTD tools selection"
-	depends BR2_PACKAGE_MTD
+	depends on BR2_PACKAGE_MTD
 
 config BR2_PACKAGE_MTD_FLASH_ERASE
 	bool "flash_erase"
