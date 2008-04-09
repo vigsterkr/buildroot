@@ -6,7 +6,7 @@
 ACPID_VERSION:=1.0.6
 ACPID_DIR=$(BUILD_DIR)/acpid-$(ACPID_VERSION)
 ACPID_SOURCE=acpid_$(ACPID_VERSION).orig.tar.gz
-ACPID_PATCH=acpid_$(ACPID_VERSION)-4.diff.gz
+ACPID_PATCH=acpid_$(ACPID_VERSION)-5.1.diff.gz
 ACPID_SITE=$(BR2_DEBIAN_MIRROR)/debian/pool/main/a/acpid
 ACPID_CAT=$(ZCAT)
 
