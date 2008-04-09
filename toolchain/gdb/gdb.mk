@@ -111,10 +111,11 @@ endif
 
 $(GDB_TARGET_DIR)/gdb/gdb: $(GDB_TARGET_DIR)/.configured
 	$(MAKE) -C $(GDB_TARGET_DIR)
-	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
+	touch -c $@
 
 $(TARGET_DIR)/usr/bin/gdb: $(GDB_TARGET_DIR)/gdb/gdb
 	$(INSTALL) -D -m 0755 $(GDB_TARGET_DIR)/gdb/gdb $@
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 gdb_target: ncurses $(TARGET_DIR)/usr/bin/gdb
 
