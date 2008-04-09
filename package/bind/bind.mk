@@ -3,7 +3,7 @@
 # bind
 #
 #############################################################
-BIND_VERSION:=9.4.1
+BIND_VERSION:=9.4.2
 BIND_SOURCE:=bind-$(BIND_VERSION).tar.gz
 BIND_SITE:=ftp://ftp.isc.org/isc/bind9/$(BIND_VERSION)
 BIND_DIR1:=$(TOOL_BUILD_DIR)/bind-$(BIND_VERSION)
@@ -94,9 +94,7 @@ $(STAGING_DIR)/usr/lib/libdns.so: $(BIND_DIR2)/$(BIND_BINARY)
 
 $(TARGET_DIR)/usr/lib/libdns.so: $(STAGING_DIR)/usr/lib/libdns.so
 	$(INSTALL) -d $(TARGET_DIR)/usr/lib
-	cd $(STAGING_DIR)/usr/lib && \
-	    $(INSTALL) libdns*so* libisc*so* libbind9*so* \
-	    liblwres*so* $(TARGET_DIR)/usr/lib/
+	cp -dpf $(wildcard $(addprefix $(STAGING_DIR)/usr/lib/,libdns*so* libisc*so* libbind9*so* liblwres*so*)) $(TARGET_DIR)/usr/lib/
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) \
 		$(TARGET_DIR)/usr/lib/libdns*so* \
 		$(TARGET_DIR)/usr/lib/libisc*so* \
