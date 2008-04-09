@@ -1,0 +1,33 @@
+diff -u bind-9.4.2.oorig/configure bind-9.4.2/configure
+--- bind-9.4.2.oorig/configure	2007-09-14 06:27:29.000000000 +0200
++++ bind-9.4.2/configure	2008-04-09 16:27:16.000000000 +0200
+@@ -8123,13 +8123,7 @@
+ # Large File
+ #
+ # Check whether --enable-largefile was given.
+-if test "${enable_largefile+set}" = set; then
+-  enableval=$enable_largefile; want_largefile="yes"
+-else
+-  want_largefile="no"
+-fi
+-
+-case $want_largefile in
++case $enable_largefile in
+ 	yes)
+ 		ALWAYS_DEFINES="$ALWAYS_DEFINES -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+ 		;;
+diff -u bind-9.4.2.oorig/configure.in bind-9.4.2/configure.in
+--- bind-9.4.2.oorig/configure.in	2007-09-14 06:26:38.000000000 +0200
++++ bind-9.4.2/configure.in	2008-04-09 16:25:47.000000000 +0200
+@@ -787,9 +787,8 @@
+ #
+ # Large File
+ #
+-AC_ARG_ENABLE(largefile, [  --enable-largefile	  64-bit file support],
+-	      want_largefile="yes", want_largefile="no")
+-case $want_largefile in
++AC_ARG_ENABLE(largefile, [  --enable-largefile	  64-bit file support])
++case $enable_largefile in
+ 	yes)
+ 		ALWAYS_DEFINES="$ALWAYS_DEFINES -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+ 		;;
