@@ -31,7 +31,12 @@ $(STRACE_DIR)/.configured: $(STRACE_DIR)/.unpacked
 		$(TARGET_CONFIGURE_OPTS) \
 		$(TARGET_CONFIGURE_ARGS) \
 		CFLAGS="$(TARGET_CFLAGS) $(BR2_STRACE_CFLAGS)" \
-		aaa_ac_cv_header_linux_if_packet_h=yes \
+		ac_cv_header_linux_icmp_h=yes \
+		ac_cv_header_linux_if_packet_h=yes \
+		ac_cv_header_linux_netlink_h=yes \
+		ac_cv_header_linux_in6_h=yes \
+		$(if $(BR2__UCLIBC_UCLIBC_HAS_SYS_ERRLIST),ac_cv_have_decl_sys_errlist=yes,ac_cv_have_decl_sys_errlist=no) \
+		$(if $(BR2__UCLIBC_UCLIBC_HAS_SYS_SIGLIST),ac_cv_have_decl_sys_siglist=yes,ac_cv_have_decl_sys_siglist=no) \
 		./configure \
 		--target=$(REAL_GNU_TARGET_NAME) \
 		--host=$(REAL_GNU_TARGET_NAME) \
