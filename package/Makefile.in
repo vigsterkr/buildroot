@@ -315,6 +315,7 @@ TARGET_CONFIGURE_ARGS= \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_func_memcmp_working=yes \
 	$(BR2_AC_CV_FUNC_MALLOC_0_NONNULL) \
+	ac_cv_type_mode_t=yes \
 	ac_cv_prog_LEX="$(FLEX)" \
 	ac_cv_prog_YACC="$(BISON)" \
 	$(BR2_AC_CV_C_BIGENDIAN)

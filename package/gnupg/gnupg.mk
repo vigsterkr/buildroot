@@ -9,8 +9,8 @@ GNUPG_PATCH:=gnupg_$(GNUPG_VERSION)-2.1.diff.gz
 GNUPG_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/g/gnupg
 GNUPG_DIR:=$(BUILD_DIR)/gnupg-$(GNUPG_VERSION)
 GNUPG_CAT:=$(ZCAT)
-GNUPG_BINARY:=bin/gnupg
-GNUPG_TARGET_BINARY:=usr/sbin/gnupg
+GNUPG_BINARY:=g10/gpg
+GNUPG_TARGET_BINARY:=usr/bin/gpg
 
 $(DL_DIR)/$(GNUPG_SOURCE):
 	$(WGET) -P $(DL_DIR) $(GNUPG_SITE)/$(GNUPG_SOURCE)
@@ -28,19 +28,17 @@ ifneq ($(GNUPG_PATCH),)
 	fi
 endif
 	$(CONFIG_UPDATE) $(@D)
+	$(SED) 's/-O2//g' $(@D)/configure
 	touch $@
 
 $(GNUPG_DIR)/.configured: $(GNUPG_DIR)/.unpacked
 	(cd $(GNUPG_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		ac_cv_sys_symbol_underscore=no \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		$(DISABLE_LARGEFILE) \
 		$(DISABLE_NLS) \
+		--disable-regex \
 		--disable-dns-srv \
 		--disable-dns-pka \
 		--disable-dns-cert \
@@ -52,8 +50,9 @@ $(GNUPG_DIR)/$(GNUPG_BINARY): $(GNUPG_DIR)/.configured
 	$(MAKE) $(TARGET_CONFIGURE_OPTS) -C $(GNUPG_DIR)
 
 $(TARGET_DIR)/$(GNUPG_TARGET_BINARY): $(GNUPG_DIR)/$(GNUPG_BINARY)
-	$(INSTALL) -D $(GNUPG_DIR)/$(GNUPG_BINARY) $@
-	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
+	$(INSTALL) -D -m0755 $(GNUPG_DIR)/$(GNUPG_BINARY) $@
+	$(INSTALL) -D -m0755 $(GNUPG_DIR)/$(GNUPG_BINARY)v $(@D)/
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@ $@v
 
 gnupg: uclibc $(TARGET_DIR)/$(GNUPG_TARGET_BINARY)
 
@@ -61,7 +60,7 @@ gnupg-source: $(DL_DIR)/$(GNUPG_SOURCE) $(DL_DIR)/$(GNUPG_PATCH)
 
 gnupg-clean:
 	-$(MAKE) -C $(GNUPG_DIR) clean
-	rm -f $(TARGET_DIR)/$(GNUPG_TARGET_BINARY)
+	rm -f $(TARGET_DIR)/$(GNUPG_TARGET_BINARY)*
 
 gnupg-dirclean:
 	rm -rf $(GNUPG_DIR)
