@@ -94,7 +94,7 @@ $(STAGING_DIR)/usr/lib/libdns.so: $(BIND_DIR2)/$(BIND_BINARY)
 
 $(TARGET_DIR)/usr/lib/libdns.so: $(STAGING_DIR)/usr/lib/libdns.so
 	$(INSTALL) -d $(TARGET_DIR)/usr/lib
-	cp -dpf $(wildcard $(addprefix $(STAGING_DIR)/usr/lib/,libdns*so* libisc*so* libbind9*so* liblwres*so*)) $(TARGET_DIR)/usr/lib/
+	cp -dpf $(addprefix $(STAGING_DIR)/usr/lib/,libdns*so* libisc*so* libbind9*so* liblwres*so*) $(TARGET_DIR)/usr/lib/
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) \
 		$(TARGET_DIR)/usr/lib/libdns*so* \
 		$(TARGET_DIR)/usr/lib/libisc*so* \
