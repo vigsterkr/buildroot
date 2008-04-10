@@ -3,7 +3,7 @@
 # file
 #
 #############################################################
-FILE_VERSION:=4.23
+FILE_VERSION:=4.24
 FILE_SOURCE:=file_$(FILE_VERSION).orig.tar.gz
 FILE_PATCH:=file_$(FILE_VERSION)-1.diff.gz
 FILE_SITE:=$(BR2_DEBIAN_MIRROR)/debian/pool/main/f/file
@@ -46,7 +46,7 @@ host-file-clean:
 	-$(MAKE) -C $(FILE_DIR1) clean
 
 host-file-dirclean:
-	rm -rf $(FILE_DIR1)
+	rm -rf $(FILE_DIR1) $(FILE_SOURCE_DIR)
 
 #############################################################
 #
@@ -63,7 +63,8 @@ ifneq ($(FILE_PATCH),)
 	fi
 endif
 	toolchain/patch-kernel.sh $(FILE_SOURCE_DIR) package/file/ file\*.patch
-	$(CONFIG_UPDATE) $(FILE_SOURCE_DIR)
+	$(CONFIG_UPDATE) $(@D)
+	$(SED) 's/-O2//g' $(@D)/configure
 	touch $@
 
 $(FILE_DIR2)/.configured: THIS_SRCDIR = $(FILE_SOURCE_DIR)
@@ -73,10 +74,6 @@ $(FILE_DIR2)/.configured: $(FILE_SOURCE_DIR)/.unpacked
 		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
-		--bindir=/usr/bin \
-		--sbindir=/usr/sbin \
-		--libdir=/lib \
-		--libexecdir=/usr/lib \
 		--sysconfdir=/etc \
 		--datadir=/usr/share/misc \
 		--localstatedir=/var \
@@ -90,11 +87,15 @@ $(FILE_DIR2)/.configured: $(FILE_SOURCE_DIR)/.unpacked
 	touch $@
 
 $(FILE_DIR2)/$(FILE_BINARY): $(FILE_DIR2)/.configured $(TOOL_BUILD_DIR)/bin/file
-	$(MAKE) $(TARGET_CONFIGURE_OPTS) LDFLAGS="-static" -C $(FILE_DIR2)
+	# Make sure that we find the correct binary to create our magic..
+	ln -sf $(TOOL_BUILD_DIR)/bin/file $(FILE_DIR2)/magic/file
+	$(MAKE) -C $(FILE_DIR2)
 
 $(TARGET_DIR)/$(FILE_TARGET_BINARY): $(FILE_DIR2)/$(FILE_BINARY)
-	$(MAKE) $(TARGET_CONFIGURE_OPTS) DESTDIR=$(TARGET_DIR) -C $(FILE_DIR2) install
-	-($(STRIPCMD) $(TARGET_DIR)/usr/lib/libmagic.so.*.* > /dev/null 2>&1)
+	$(MAKE) -C $(FILE_DIR2) \
+		DESTDIR=$(TARGET_DIR) FILE_COMPILE=$(TOOL_BUILD_DIR)/bin/file \
+		install
+	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libmagic.so.*.*
 ifneq ($(BR2_HAVE_INFOPAGES),y)
 	rm -rf $(TARGET_DIR)/usr/share/info
 endif
@@ -112,7 +113,7 @@ file: zlib uclibc $(TARGET_DIR)/$(FILE_TARGET_BINARY)
 file-source: $(DL_DIR)/$(FILE_SOURCE)
 
 file-clean:
-	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(FILE_DIR2) uninstall
+	-$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(FILE_DIR2) uninstall
 	-$(MAKE) -C $(FILE_DIR2) clean
 
 file-dirclean:
