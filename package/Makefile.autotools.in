@@ -171,6 +171,7 @@ ifeq ($(strip $(BR2_UPDATE_CONFIG)),y)
 		done; \
 	done)
 endif
+	-$(Q)chmod +x $(@D)/configure
 	$(Q)touch $@
 
 # Running autoreconf
