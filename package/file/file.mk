@@ -102,9 +102,9 @@ endif
 ifneq ($(BR2_HAVE_MANPAGES),y)
 	rm -rf $(TARGET_DIR)/usr/share/man
 endif
-	rm -rf $(TARGET_DIR)/share/locale
+	rm -rf $(TARGET_DIR)/usr/share/locale
 	rm -rf $(TARGET_DIR)/usr/share/doc
-	mv $(TARGET_DIR)/lib/libmagic.a $(STAGING_DIR)/lib
+	mv $(TARGET_DIR)/usr/lib/libmagic.a $(STAGING_DIR)/usr/lib
 	rm -f $(TARGET_DIR)/lib/libmagic.la
 	mv $(TARGET_DIR)/usr/include/magic.h $(STAGING_DIR)/usr/include
 
