@@ -3,7 +3,7 @@
 # iptables
 #
 #############################################################
-IPTABLES_VERSION:=1.3.8
+IPTABLES_VERSION:=1.4.0
 IPTABLES_SOURCE_URL:=http://ftp.netfilter.org/pub/iptables
 IPTABLES_SOURCE:=iptables-$(IPTABLES_VERSION).tar.bz2
 IPTABLES_CAT:=$(BZCAT)
