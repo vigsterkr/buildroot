@@ -4,7 +4,7 @@ comment "GCC Options"
 
 choice
 	prompt "GCC compiler Version"
-	default BR2_GCC_VERSION_4_2_3
+	default BR2_GCC_VERSION_4_3_0
 	help
 	  Select the version of gcc you wish to use.
 
@@ -66,7 +66,7 @@ config BR2_GCC_SUPPORTS_FINEGRAINEDMTUNE
 
 config BR2_GCC_SNAP_DATE
 	string "GCC snapshot date"
-	default "20080321"
+	default "20080502"
 	depends on BR2_GCC_IS_SNAP
 	help
 	  Enter snapshot date to use for gcc.  Format is:
