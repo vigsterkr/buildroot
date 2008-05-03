@@ -147,6 +147,6 @@ config BR2_DEFAULT_KERNEL_HEADERS
 	default "2.6.22.9"  if BR2_KERNEL_HEADERS_2_6_22
 	default "2.6.23.14" if BR2_KERNEL_HEADERS_2_6_23
 	default "2.6.24.4"  if BR2_KERNEL_HEADERS_2_6_24
-	default "2.6.25"    if BR2_KERNEL_HEADERS_2_6_25
+	default "2.6.25.1"  if BR2_KERNEL_HEADERS_2_6_25
 	default "2.6"       if BR2_KERNEL_HEADERS_SNAP
 
