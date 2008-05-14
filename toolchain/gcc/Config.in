@@ -164,6 +164,8 @@ config BR2_INSTALL_FORTRAN
 config BR2_GCC_SHARED_LIBGCC
 	bool "Build/install a shared libgcc?"
 	default y
+	# uClibc for alpha currently does not support shared libs
+	depends on !BR2_alpha
 	help
 	  Build/install a shared libgcc library
 
