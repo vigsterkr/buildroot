@@ -543,11 +543,26 @@ endif
 		PREFIX=$(STAGING_DIR) \
 		HOSTCC="$(HOSTCC)" \
 		hostutils
+	# install readelf and eventually other host-utils
+	install -c $(UCLIBC_DIR)/utils/readelf.host $(STAGING_DIR)/usr/bin/readelf
+	ln -sf readelf $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-readelf
+	ln -sf readelf $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-readelf
+ifeq ($(BR2__UCLIBC_HAVE_SHARED),y)
 	install -c $(UCLIBC_DIR)/utils/ldd.host $(STAGING_DIR)/usr/bin/ldd
 	ln -sf ldd $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-ldd
-	install -c $(UCLIBC_DIR)/utils/ldconfig.host $(STAGING_DIR)/usr/bin/ldconfig
-	ln -sf ldconfig $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-ldconfig
-	ln -sf ldconfig $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-ldconfig
+	ln -sf ldd $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-ldd
+	install -c $(UCLIBC_DIR)/utils/ldconfig.host $(STAGING_DIR)/usr/sbin/ldconfig
+	ln -sf ldconfig $(STAGING_DIR)/usr/sbin/$(REAL_GNU_TARGET_NAME)-ldconfig
+	ln -sf ldconfig $(STAGING_DIR)/usr/sbin/$(GNU_TARGET_NAME)-ldconfig
+endif
+ifeq ($(BR2__UCLIBC_UCLIBC_HAS_LOCALE),y)
+	install -c $(UCLIBC_DIR)/utils/iconv.host $(STAGING_DIR)/usr/bin/iconv
+	ln -sf iconv $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-iconv
+	ln -sf iconv $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-iconv
+	install -c $(UCLIBC_DIR)/utils/locale.host $(STAGING_DIR)/usr/bin/locale
+	ln -sf locale $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-locale
+	ln -sf locale $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-locale
+endif
 	touch -c $@
 
 ifneq ($(TARGET_DIR),)
@@ -596,7 +611,27 @@ uclibc-configured-source: uclibc-source
 
 uclibc-clean:
 	-$(MAKE1) -C $(UCLIBC_DIR) clean
-	rm -f $(UCLIBC_DIR)/.config
+	$(patsubst %,rm -f %, $(wildcard $(STAGING_DIR)/usr/bin/*readelf \
+		$(STAGING_DIR)/usr/bin/*ldd \
+		$(STAGING_DIR)/usr/bin/*ldconfig \
+		$(STAGING_DIR)/usr/bin/*iconv \
+		$(STAGING_DIR)/usr/bin/*locale \
+		$(STAGING_DIR)/usr/sbin/*readelf \
+		$(STAGING_DIR)/usr/sbin/*ldd \
+		$(STAGING_DIR)/usr/sbin/*ldconfig \
+		$(STAGING_DIR)/usr/sbin/*iconv \
+		$(STAGING_DIR)/usr/sbin/*locale \
+		$(TARGET_DIR)/usr/bin/*readelf \
+		$(TARGET_DIR)/usr/bin/*ldd \
+		$(TARGET_DIR)/usr/bin/*ldconfig \
+		$(TARGET_DIR)/usr/bin/*iconv \
+		$(TARGET_DIR)/usr/bin/*locale \
+		$(TARGET_DIR)/usr/sbin/*readelf \
+		$(TARGET_DIR)/usr/sbin/*ldd \
+		$(TARGET_DIR)/usr/sbin/*ldconfig \
+		$(TARGET_DIR)/usr/sbin/*iconv \
+		$(TARGET_DIR)/usr/sbin/*locale))
+	rm -f $(UCLIBC_DIR)/.config $(UCLIBC_DIR)/.configured
 
 uclibc-dirclean:
 	rm -rf $(UCLIBC_DIR)
