@@ -50,6 +50,9 @@ $(LIBPCAP_DIR)/.unpacked: $(DL_DIR)/$(LIBPCAP_SOURCE)
 
 $(LIBPCAP_DIR)/.configured: $(LIBPCAP_DIR)/.unpacked
 	(cd $(LIBPCAP_DIR); rm -rf config.cache; \
+		V_LEX="$(FLEX) -Ppcap_" \
+		V_YACC="$(BISON) -y -p pcap_" \
+		ac_cv_prog_V_LEX="$(FLEX) -Ppcap_" \
 		$(if $(KERNEL_MAJORVERSION),ac_cv_linux_vers=$(KERNEL_MAJORVERSION)) \
 		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
@@ -58,6 +61,8 @@ $(LIBPCAP_DIR)/.configured: $(LIBPCAP_DIR)/.unpacked
 		--infodir=/usr/share/info \
 		--disable-yydebug \
 		--with-pcap=linux \
+		--with-flex="$(FLEX)" \
+		--with-bison="$(BISON)" \
 		$(DISABLE_IPV6) \
 	)
 	touch $@
