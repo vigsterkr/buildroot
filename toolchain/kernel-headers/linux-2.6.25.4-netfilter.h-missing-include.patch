@@ -1,0 +1,11 @@
+--- linux-2.6.25.x/include/linux/netfilter.h	2008-04-20 03:54:47.000000000 -0400
++++ linux-2.6.25.4/include/linux/netfilter.h	2008-04-20 03:46:38.000000000 -0400
+@@ -1,6 +1,8 @@
+ #ifndef __LINUX_NETFILTER_H
+ #define __LINUX_NETFILTER_H
+ 
++#include <linux/types.h>
++
+ /* Responses from hook functions. */
+ #define NF_DROP 0
+ #define NF_ACCEPT 1
