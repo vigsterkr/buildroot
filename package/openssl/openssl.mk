@@ -30,7 +30,7 @@ $(DL_DIR)/$(OPENSSL_SOURCE):
 openssl-unpack: $(OPENSSL_DIR)/.unpacked
 $(OPENSSL_DIR)/.unpacked: $(DL_DIR)/$(OPENSSL_SOURCE)
 	$(OPENSSL_CAT) $(DL_DIR)/$(OPENSSL_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	toolchain/patch-kernel.sh $(OPENSSL_DIR) package/openssl/ openssl\*.patch
+	toolchain/patch-kernel.sh $(OPENSSL_DIR) package/openssl/ openssl-$(OPENSSL_VERSION)\*.patch
 	# sigh... we have to resort to this just to set a gcc flag.
 	# grumble.. and of course make sure to escape any '/' in CFLAGS
 	$(SED) 's,/CFLAG=,/CFLAG= $(TARGET_SOFT_FLOAT) ,g' \
