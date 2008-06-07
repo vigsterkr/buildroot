@@ -54,6 +54,8 @@ endif
 else # no softfloat support
 SOFT_FLOAT_CONFIG_OPTION:=
 TARGET_SOFT_FLOAT:=
+endif # softfloat support
+
 # some additional defaults
 ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_ARCH))),)
 # ")))
@@ -66,7 +68,6 @@ endif
 ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_ABI))),)
 # ")))
 GCC_WITH_ABI:=--with-abi=$(BR2_GCC_TARGET_ABI)
-endif
 endif
 
 TARGET_GCC_FLAGS= CFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)" \
