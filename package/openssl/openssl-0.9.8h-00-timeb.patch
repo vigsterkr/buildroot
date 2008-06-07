@@ -1,0 +1,18 @@
+diff -rdup openssl-0.9.8h.orig/apps/speed.c openssl-0.9.8h/apps/speed.c
+--- openssl-0.9.8h.orig/apps/speed.c	2007-11-15 14:33:47.000000000 +0100
++++ openssl-0.9.8h/apps/speed.c	2008-06-07 23:38:44.000000000 +0200
+@@ -117,6 +117,14 @@
+ # define TIMEB
+ #endif
+ 
++#if defined __UCLIBC__
++# if defined __UCLIBC_SUSV3_LEGACY__
++#  define TIMEB
++# else
++#  undef TIMEB
++# endif
++#endif
++
+ #if defined(OPENSSL_SYS_NETWARE)
+ #undef TIMES
+ #undef TIMEB
