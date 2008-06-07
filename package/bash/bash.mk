@@ -19,6 +19,8 @@ BASH_CONFIGURE_CLUE+=bash_cv_func_sigsetjmp=no
 endif
 BASH_CONFIGURE_CLUE+= ac_cv_func_getcwd=yes
 
+BASH_BISON_FLAGS = -y
+
 $(DL_DIR)/$(BASH_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(BASH_SITE)/$(BASH_SOURCE)
 
@@ -33,6 +35,7 @@ $(BASH_DIR)/.unpacked: $(DL_DIR)/$(BASH_SOURCE)
 	$(CONFIG_UPDATE) $(BASH_DIR)/support
 	touch $@
 
+$(BASH_DIR)/.configured: PKG:=BASH
 $(BASH_DIR)/.configured: $(BASH_DIR)/.unpacked
 	# bash_cv_have_mbstate_t=yes
 	(cd $(BASH_DIR); rm -rf config.cache; \
