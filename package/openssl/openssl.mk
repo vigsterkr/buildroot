@@ -59,12 +59,10 @@ $(OPENSSL_DIR)/Makefile: $(OPENSSL_DIR)/.unpacked
 	CFLAGS="-DOPENSSL_NO_KRB5 -DOPENSSL_NO_IDEA -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 $(TARGET_CFLAGS)" \
 	PATH=$(TARGET_PATH) \
 	./Configure linux-$(OPENSSL_TARGET_ARCH) --prefix=/ \
-		--openssldir=/lib/ssl -L$(STAGING_DIR)/lib -ldl \
+		--openssldir=/lib/ssl -L$(STAGING_DIR)/usr/lib -ldl \
 		-I$(STAGING_DIR)/usr/include $(OPENSSL_OPTS) \
 		$(OPENSSL_THREADS) \
 		shared no-idea no-mdc2 no-rc5)
-
-# --openssldir=/usr/lib/ssl results in files in /usr/usr/lib...
 
 $(OPENSSL_DIR)/apps/openssl: $(OPENSSL_DIR)/Makefile
 	$(MAKE1) CC=$(TARGET_CC) -C $(OPENSSL_DIR) all build-shared
@@ -73,7 +71,9 @@ $(OPENSSL_DIR)/apps/openssl: $(OPENSSL_DIR)/Makefile
 	$(MAKE1) CC=$(TARGET_CC) -C $(OPENSSL_DIR) do_linux-shared
 
 $(STAGING_DIR)/usr/lib/libcrypto.a: $(OPENSSL_DIR)/apps/openssl
-	$(MAKE) CC=$(TARGET_CC) INSTALL_PREFIX=$(STAGING_DIR)/usr INSTALLTOP=$(STAGING_DIR)/usr/ -C $(OPENSSL_DIR) install
+	$(MAKE) CC=$(TARGET_CC) INSTALL_PREFIX=$(STAGING_DIR)/usr \
+		INSTALLTOP=/ ENGINESDIR="/lib/ssl/engines" \
+		-C $(OPENSSL_DIR) install
 	cp -fa $(OPENSSL_DIR)/libcrypto.so* $(STAGING_DIR)/usr/lib/
 	chmod a-x $(STAGING_DIR)/usr/lib/libcrypto.so.0.9.8
 	(cd $(STAGING_DIR)/usr/lib; \
@@ -89,18 +89,18 @@ $(STAGING_DIR)/usr/lib/libcrypto.a: $(OPENSSL_DIR)/apps/openssl
 	touch -c $@
 
 $(TARGET_DIR)/usr/lib/libcrypto.so.0.9.8: $(STAGING_DIR)/usr/lib/libcrypto.a
-	mkdir -p $(TARGET_DIR)/usr/lib
-	cp -fa $(STAGING_DIR)/usr/lib/libcrypto.so* $(TARGET_DIR)/usr/lib/
-	cp -fa $(STAGING_DIR)/usr/lib/libssl.so* $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -d $(@D)
+	$(INSTALL) -m 0755 -t $(@D) $(STAGING_DIR)/usr/lib/libcrypto.so*
+	$(INSTALL) -m 0755 -t $(@D) $(STAGING_DIR)/usr/lib/libssl.so*
 	#cp -fa $(STAGING_DIR)/bin/openssl $(TARGET_DIR)/bin/
 	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libssl.so.0.9.8
 	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libcrypto.so.0.9.8
 
 $(TARGET_DIR)/usr/lib/libssl.a: $(STAGING_DIR)/usr/lib/libcrypto.a
-	mkdir -p $(TARGET_DIR)/usr/include
+	$(INSTALL) -d $(TARGET_DIR)/usr/include
 	cp -a $(STAGING_DIR)/usr/include/openssl $(TARGET_DIR)/usr/include/
-	cp -dpf $(STAGING_DIR)/usr/lib/libssl.a $(TARGET_DIR)/usr/lib/
-	cp -dpf $(STAGING_DIR)/usr/lib/libcrypto.a $(TARGET_DIR)/usr/lib/
+	$(INSTALL) -D -m 0644 $(STAGING_DIR)/usr/lib/libssl.a $@
+	$(INSTALL) -m 0644 $(STAGING_DIR)/usr/lib/libcrypto.a $(TARGET_DIR)/usr/lib/libcrypto.a
 	touch -c $@
 
 openssl-headers: $(TARGET_DIR)/usr/lib/libssl.a
@@ -112,9 +112,16 @@ openssl-source: $(DL_DIR)/$(OPENSSL_SOURCE)
 openssl-clean:
 	-$(MAKE) -C $(OPENSSL_DIR) clean
 	rm -f $(STAGING_DIR)/usr/bin/openssl $(TARGET_DIR)/usr/bin/openssl
-	rm -f $(STAGING_DIR)/usr/lib/libcrypto.so* $(TARGET_DIR)/usr/lib/libcrypto.so*
-	rm -f $(STAGING_DIR)/usr/lib/libssl.so* $(TARGET_DIR)/usr/lib/libssl.so*
+	rm -f $(STAGING_DIR)/usr/lib/libcrypto.* $(TARGET_DIR)/usr/lib/libcrypto.*
+	rm -f $(STAGING_DIR)/usr/lib/libssl.* $(TARGET_DIR)/usr/lib/libssl.*
 	rm -rf $(STAGING_DIR)/usr/include/openssl $(TARGET_DIR)/usr/include/openssl
+	rm -rf $(STAGING_DIR)/usr/lib/ssl $(TARGET_DIR)/usr/lib/ssl
+	rm -f $(STAGING_DIR)/usr/lib/pkgconfig/libssl.pc \
+		$(STAGING_DIR)/usr/lib/pkgconfig/openssl.pc \
+		$(STAGING_DIR)/usr/lib/pkgconfig/libcrypto.pc
+	rm -f $(TARGET_DIR)/usr/lib/pkgconfig/libssl.pc \
+		$(TARGET_DIR)/usr/lib/pkgconfig/openssl.pc \
+		$(TARGET_DIR)/usr/lib/pkgconfig/libcrypto.pc
 
 openssl-dirclean:
 	rm -rf $(OPENSSL_DIR)
