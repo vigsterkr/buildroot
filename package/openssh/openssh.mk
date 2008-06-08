@@ -3,7 +3,7 @@
 # openssh
 #
 #############################################################
-OPENSSH_VERSION=4.7p1
+OPENSSH_VERSION=5.0p1
 OPENSSH_SITE=ftp://ftp.openbsd.org/pub/OpenBSD/OpenSSH/portable
 OPENSSH_DIR=$(BUILD_DIR)/openssh-$(OPENSSH_VERSION)
 OPENSSH_SOURCE=openssh-$(OPENSSH_VERSION).tar.gz
