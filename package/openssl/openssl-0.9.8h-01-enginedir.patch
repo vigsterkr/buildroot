@@ -1,0 +1,51 @@
+--- openssl-0.9.8h.orig/Configure	2008-06-08 10:42:11.000000000 +0200
++++ openssl-0.9.8h/Configure	2008-06-08 10:54:24.000000000 +0200
+@@ -1517,7 +1517,7 @@ while (<IN>)
+ 	if	(/^#define\s+OPENSSLDIR/)
+ 		{ print OUT "#define OPENSSLDIR \"$openssldir\"\n"; }
+ 	elsif	(/^#define\s+ENGINESDIR/)
+-		{ print OUT "#define ENGINESDIR \"$prefix/lib/engines\"\n"; }
++		{ print OUT "#define ENGINESDIR \"$openssldir/engines\"\n"; }
+ 	elsif	(/^#((define)|(undef))\s+OPENSSL_EXPORT_VAR_AS_FUNCTION/)
+ 		{ printf OUT "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION\n"
+ 			if $export_var_as_fn;
+--- openssl-0.9.8h.orig/engines/Makefile	2006-02-04 02:49:34.000000000 +0100
++++ openssl-0.9.8h/engines/Makefile	2008-06-08 12:17:53.000000000 +0200
+@@ -89,6 +89,8 @@ install:
+ 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+ 	@if [ -n "$(SHARED_LIBS)" ]; then \
+ 		set -e; \
++		[ -d $(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR) ] || \
++			$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR); \
+ 		for l in $(LIBNAMES); do \
+ 			( echo installing $$l; \
+ 			  if [ "$(PLATFORM)" != "Cygwin" ]; then \
+@@ -97,13 +99,13 @@ install:
+ 				*DSO_DL*)	sfx="sl";;	\
+ 				*)		sfx="bad";;	\
+ 				esac; \
+-				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
++				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR)/lib$$l.$$sfx.new; \
+ 			  else \
+ 			  	sfx="so"; \
+-				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
++				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR)/lib$$l.$$sfx.new; \
+ 			  fi; \
+-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
+-			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx ); \
++			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR)/lib$$l.$$sfx.new; \
++			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR)/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR)/lib$$l.$$sfx ); \
+ 		done; \
+ 	fi
+ 
+--- openssl-0.9.8h.orig/Makefile	2008-06-08 10:42:11.000000000 +0200
++++ openssl-0.9.8h/Makefile	2008-06-08 12:29:37.000000000 +0200
+@@ -480,7 +480,7 @@ install: all install_sw
+ install_sw:
+ 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
+ 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
+-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines \
++		$(INSTALL_PREFIX)$(INSTALLTOP)/$(ENGINESDIR) \
+ 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig \
+ 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
+ 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
