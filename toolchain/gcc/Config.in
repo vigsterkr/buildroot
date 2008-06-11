@@ -107,6 +107,25 @@ config BR2_GCC_USE_SJLJ_EXCEPTIONS
 	  proper stack unwinding during exception handling.  Most people
 	  can leave this set to n.
 
+config BR2_INTERWORKING_SUPPORT
+	bool "Enable interworking support"
+	default n
+	depends on BR2_arm || BR2_armeb
+	depends on !BR2_generic_arm && !BR2_arm610 && !BR2_arm710
+	help
+	  Interworking allows Thumb userspace binaries to be linked
+	  against the C standard library compiled in ARM mode.
+
+	  This is only possible on Thumb-aware architectures, i.e not
+	  Generic ARM, ARM610 or ARM710.
+
+config BR2_THUMB_BINARIES
+	bool "Generate Thumb binaries"
+	default n
+	depends on BR2_INTERWORKING_SUPPORT
+	help
+	  Compile binaries in Thumb mode.
+
 config BR2_EXTRA_GCC_CONFIG_OPTIONS
 	string "Additional gcc options"
 	default ""
