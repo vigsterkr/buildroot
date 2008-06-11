@@ -531,3 +531,46 @@ Index: gcc-4.3.0/gcc/libgcc2.c
  {
  #if FSSIZE >= W_TYPE_SIZE
    /* When the word size is small, we never get any rounding error.  */
+Index: gcc-4.4.0/libgcc/static-object.mk
+===================================================================
+--- gcc-4.4.0/libgcc/static-object.mk	(revision 136638)
++++ gcc-4.4.0/libgcc/static-object.mk	(working copy)
+@@ -8,8 +8,16 @@ base := $(basename $(notdir $o))
+ 
+ ifeq ($(suffix $o),.c)
+ 
++ifeq ($(onestep),)
+ $(base)$(objext): $o
+ 	$(gcc_compile) $(c_flags) -c $< $(vis_hide)
++else
++$(iter-item-onestep)_onestep$(objext): $o
++ifeq ($(iter-items),)
++$(iter-item-onestep)_onestep$(objext):
++	$(gcc_compile) $(c_flags) $^ $(vis_hide) -c -combine
++endif
++endif
+ 
+ else
+ 
+@@ -19,7 +27,21 @@ $(error Unsupported file type: $o)
+ endif
+ endif
+ 
++ifeq ($(onestep),)
+ $(base)$(objext): $o
+ 	$(gcc_compile) -c -xassembler-with-cpp $<
++else
++ifeq ($(iter-items),)
++$(iter-item-onestep)_onestep$(objext): $(iter-item-onestep).vis
++	$(gcc_compile) -xassembler-with-cpp -include $*.vis \
++		$(filter-out $(iter-item-onestep).vis,$^) -c -combine
++# XXX: FIXME: for static libs vis_hide is forced off, so why does the normal
++# build above have this superfluous occurence?
++# Play safe and provide this wrong rule and retain the mention of vis_hide
++# above, too.
++$(iter-item-onestep).vis: $(iter-item-onestep)_s_onestep$(objext)
++	$(gen-hide-list)
++endif
++endif
+ 
+ endif
