@@ -488,3 +488,46 @@ Index: gcc-4.4.0/libgcc/config/libbid/bid64_div.c
  //UINT64* bid64_div128x128(UINT64 res, UINT128 *px, UINT128 *py, unsigned rnd_mode, unsigned *pfpsf) 
  
  TYPE0_FUNCTION_ARG128_ARG128 (UINT64, bid64qq_div, x, y)
+Index: gcc-4.3.0/gcc/gbl-ctors.h
+===================================================================
+--- gcc-4.3.0/gcc/gbl-ctors.h	(revision 131778)
++++ gcc-4.3.0/gcc/gbl-ctors.h	(working copy)
+@@ -38,6 +38,8 @@ Software Foundation, 51 Franklin Street,
+ 	Note that this file should only be compiled with GCC.
+ */
+ 
++#ifndef GCC_GBL_CTORS_H
++#define GCC_GBL_CTORS_H
+ /*  Declare a pointer to void function type.  */
+ 
+ typedef void (*func_ptr) (void);
+@@ -84,3 +86,4 @@ do {									\
+ } while (0)
+ #endif
+ 
++#endif /* GCC_GBL_CTORS_H */
+Index: gcc-4.3.0/gcc/libgcc2.c
+===================================================================
+--- gcc-4.3.0/gcc/libgcc2.c	(revision 131778)
++++ gcc-4.3.0/gcc/libgcc2.c	(working copy)
+@@ -1538,17 +1538,17 @@ FUNC (DWtype u)
+    && SIZE > (DI_SIZE - SIZE + FSSIZE)					\
+    && !AVOID_FP_TYPE_CONVERSION(SIZE))
+ #if defined(L_floatundisf)
+-#define FUNC __floatundisf
++#define FUNCU __floatundisf
+ #define FSTYPE SFtype
+ #define FSSIZE SF_SIZE
+ #else
+-#define FUNC __floatundidf
++#define FUNCU __floatundidf
+ #define FSTYPE DFtype
+ #define FSSIZE DF_SIZE
+ #endif
+ 
+ FSTYPE
+-FUNC (UDWtype u)
++FUNCU (UDWtype u)
+ {
+ #if FSSIZE >= W_TYPE_SIZE
+   /* When the word size is small, we never get any rounding error.  */
