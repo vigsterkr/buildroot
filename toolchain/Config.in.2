@@ -12,6 +12,12 @@ comment "Common Toolchain Options"
 
 source "toolchain/sstrip/Config.in"
 
+config BR2_ENABLE_SHARED
+	bool "Enable shared library support?"
+	default y
+	help
+	  Enable shared library support.
+
 config BR2_ENABLE_MULTILIB
 	bool "Enable multilib support?"
 	default n
@@ -28,6 +34,12 @@ config BR2_ENABLE_SSP
 	  to functions with vulnerable objects.
 
 	  This increases binary size so only enable this for development.
+
+config BR2_ENABLE_MUDFLAP
+	bool "Enable mudflap support?"
+	default n
+	help
+	  Enable libmudflap support.
 
 config BR2_LARGEFILE
 	bool "Enable large file (files > 2 GB) support?"

@@ -57,6 +57,7 @@ UCLIBC_TARGET_ARCH:=$(shell $(SHELL) -c "echo $(ARCH) | sed \
 		-e 's/i.86/i386/' \
 		-e 's/sparc.*/sparc/' \
 		-e 's/arm.*/arm/g' \
+		-e 's/bfin.*/bfin/g' \
 		-e 's/m68k.*/m68k/' \
 		-e 's/ppc/powerpc/g' \
 		-e 's/v850.*/v850/g' \
@@ -261,6 +262,11 @@ ifeq ($(UCLIBC_TARGET_ARCH),sparc)
 		>> $(UCLIBC_DIR)/.oldconfig
 	$(SED) 's/^.*$(UCLIBC_SPARC_TYPE).*/$(UCLIBC_SPARC_TYPE)=y/g' $(UCLIBC_DIR)/.oldconfig
 endif
+ifeq ($(UCLIBC_TARGET_ARCH),bfin)
+	$(SED) 's/^\(UCLIBC_FORMAT_[^[:space:]]*\).*/# \1 is not set/g' $(UCLIBC_DIR)/.oldconfig
+	$(SED) '/UCLIBC_FORMAT_FDPIC_ELF/d' $(UCLIBC_DIR)/.oldconfig
+	echo 'UCLIBC_FORMAT_FDPIC_ELF=y' >> $(UCLIBC_DIR)/.oldconfig
+endif
 ifneq ($(UCLIBC_TARGET_ENDIAN),)
 	# The above doesn't work for me, so redo
 	$(SED) 's/.*\(ARCH_$(UCLIBC_NOT_TARGET_ENDIAN)_ENDIAN\).*/# \1 is not set/g' \
@@ -268,6 +274,11 @@ ifneq ($(UCLIBC_TARGET_ENDIAN),)
 		-e 's/.*\(ARCH_$(UCLIBC_TARGET_ENDIAN)_ENDIAN\).*/\1=y/g' \
 		-e 's/.*\(ARCH_WANTS_$(UCLIBC_TARGET_ENDIAN)_ENDIAN\).*/\1=y/g' \
 		$(UCLIBC_DIR)/.oldconfig
+endif
+ifeq ($(BR2_ENABLE_SHARED),y)
+	$(SED) 's/.*\(HAVE_SHARED\).*/\1=y' $(UCLIBC_DIR)/.oldconfig
+else
+	$(SED) 's/.*\(HAVE_SHARED\).*/# \1 is not set' $(UCLIBC_DIR)/.oldconfig
 endif
 ifeq ($(BR2_LARGEFILE),y)
 	$(SED) 's,.*UCLIBC_HAS_LFS.*,UCLIBC_HAS_LFS=y,g' $(UCLIBC_DIR)/.oldconfig

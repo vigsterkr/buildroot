@@ -184,7 +184,7 @@ config BR2_GCC_SHARED_LIBGCC
 	bool "Build/install a shared libgcc?"
 	default y
 	# uClibc for alpha currently does not support shared libs
-	depends on !BR2_alpha
+	depends on BR2_ENABLE_SHARED && !BR2_alpha
 	help
 	  Build/install a shared libgcc library
 

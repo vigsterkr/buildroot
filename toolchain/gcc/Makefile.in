@@ -89,6 +89,17 @@ EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--with-build-time-tools=$(STAGING_DIR)/$(REAL_G
 EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--with-as=$(TARGET_CROSS)as
 endif
 
+ifeq ($(BR2_ENABLE_SSP),y)
+EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--enable-libssp
+else
+EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--disable-libssp
+endif
+ifeq ($(BR2_ENABLE_MUDFLAP),y)
+EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--enable-libmudflap
+else
+EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--disable-libmudflap
+endif
+
 # and finally pull in config opts from the user
 EXTRA_TARGET_GCC_CONFIG_OPTIONS+=$(strip $(subst ",, $(BR2_EXTRA_TARGET_GCC_CONFIG_OPTIONS)))
 #"))
