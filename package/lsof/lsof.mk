@@ -3,10 +3,10 @@
 # lsof
 #
 #############################################################
-LSOF_VERSION:=4.78
+LSOF_VERSION:=4.80
 LSOF_SOURCE:=lsof_$(LSOF_VERSION).tar.bz2
 LSOF_SITE:=ftp://lsof.itap.purdue.edu/pub/tools/unix/lsof/
-LSOF_SITE:=http://buildroot.uclibc.org/downloads/buildroot-sources/
+#LSOF_SITE:=http://buildroot.uclibc.org/downloads/buildroot-sources/
 LSOF_CAT:=$(BZCAT)
 LSOF_DIR:=$(BUILD_DIR)/lsof_$(LSOF_VERSION)
 LSOF_BINARY:=lsof
