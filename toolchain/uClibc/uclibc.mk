@@ -94,7 +94,7 @@ UCLIBC_ARM_TYPE:=CONFIG_$(strip $(subst ",, $(BR2_ARM_TYPE)))
 UCLIBC_SPARC_TYPE:=CONFIG_SPARC_$(strip $(subst ",, $(BR2_SPARC_TYPE)))
 #"))
 
-ifeq ($(BR2_INTERWORKING_SUPPORT),y)
+ifeq ($(BR2_GCC_USE_INTERWORKING),y)
 __UCLIBC_EXTRA_TARGET_CFLAGS+=-mthumb-interwork
 endif
 

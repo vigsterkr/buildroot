@@ -11,18 +11,6 @@ TARGET_OPTIMIZATION:=$(strip $(subst ",, $(BR2_TARGET_OPTIMIZATION)))
 EXTRA_GCC_CONFIG_OPTIONS:=$(strip $(subst ",, $(BR2_EXTRA_GCC_CONFIG_OPTIONS)))
 #"))
 
-# AVR32 GCC configuration
-ifeq ($(BR2_avr32),y)
-EXTRA_GCC_CONFIG_OPTIONS+=--disable-libmudflap
-EXTRA_GCC_CONFIG_OPTIONS+=--disable-libssp
-EXTRA_GCC_CONFIG_OPTIONS+=--with-build-time-tools=$(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/bin \
-#EXTRA_GCC_CONFIG_OPTIONS+=--with-as=$(TARGET_CROSS)as
-endif
-
-ifeq ($(BR2_INTERWORKING_SUPPORT),y)
-EXTRA_GCC_CONFIG_OPTIONS+=--enable-interwork
-endif
-
 ifeq ($(strip $(subst ",, $(BR2_GCC_IS_SNAP))),y)
 #"))
 GCC_SNAP_DATE:=$(strip $(subst ",, $(BR2_GCC_SNAP_DATE)))
@@ -34,6 +22,21 @@ endif
 
 ifeq ($(BR2_GCC_USE_SJLJ_EXCEPTIONS),y)
 GCC_USE_SJLJ_EXCEPTIONS:=--enable-sjlj-exceptions
+endif
+ifeq ($(BR2_ENABLE_SSP),y)
+GCC_USE_LIBSSP+=--enable-libssp
+else
+GCC_USE_LIBSSP+=--disable-libssp
+endif
+ifeq ($(BR2_ENABLE_MUDFLAP),y)
+GCC_USE_LIBMUDFLAP+=--enable-libmudflap
+else
+GCC_USE_LIBMUDFLAP+=--disable-libmudflap
+endif
+ifeq ($(BR2_ENABLE_LIBGOMP),y)
+GCC_USE_LIBGOMP+=--enable-libgomp
+else
+GCC_USE_LIBGOMP+=--disable-libgomp
 endif
 
 ifeq ($(BR2_SOFT_FLOAT),y)
@@ -78,27 +81,15 @@ TARGET_GCC_FLAGS= CFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)" \
 	CXXFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)" \
 	BOOT_CFLAGS="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)"
 
+EXTRA_GCC_CONFIG_OPTIONS+=$(BR2_MAYBE_USE_INTERWORKING) \
+	$(GCC_USE_LIBSSP) $(GCC_USE_LIBSSP) $(GCC_USE_LIBMUDFLAP) \
+	$(GCC_USE_LIBGOMP)
+
+####################### T A R G E T  s e t t i n g s #######################
 ifeq ($(BR2_PACKAGE_GCC_TARGET),y)
-EXTRA_TARGET_GCC_CONFIG_OPTIONS:=
-
-# AVR32 target GCC configuration
-ifeq ($(BR2_avr32),y)
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--disable-libmudflap
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--disable-libssp
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--with-build-time-tools=$(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/bin \
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--with-as=$(TARGET_CROSS)as
-endif
-
-ifeq ($(BR2_ENABLE_SSP),y)
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--enable-libssp
-else
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--disable-libssp
-endif
-ifeq ($(BR2_ENABLE_MUDFLAP),y)
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--enable-libmudflap
-else
-EXTRA_TARGET_GCC_CONFIG_OPTIONS+=--disable-libmudflap
-endif
+EXTRA_TARGET_GCC_CONFIG_OPTIONS:= \
+	$(GCC_USE_LIBSSP) $(GCC_USE_LIBSSP) $(GCC_USE_LIBMUDFLAP) \
+	$(GCC_USE_LIBGOMP)
 
 # and finally pull in config opts from the user
 EXTRA_TARGET_GCC_CONFIG_OPTIONS+=$(strip $(subst ",, $(BR2_EXTRA_TARGET_GCC_CONFIG_OPTIONS)))

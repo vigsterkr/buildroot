@@ -30,6 +30,10 @@ ifneq ($(BR2_INET_IPV6),y)
 DISABLE_IPV6= --disable-ipv6
 endif
 
+ifeq ($(BR2_GCC_USE_INTERWORKING),y)
+BR2_MAYBE_USE_INTERWORKING+=--enable-interwork
+endif
+
 
 ifeq ($(BR2_TOOLCHAIN_SYSROOT),y)
 BR2_SYSROOT_PREFIX=# nothing, straight into /usr

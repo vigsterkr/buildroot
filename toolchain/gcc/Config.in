@@ -114,7 +114,7 @@ config BR2_GCC_USE_SJLJ_EXCEPTIONS
 	  proper stack unwinding during exception handling.  Most people
 	  can leave this set to n.
 
-config BR2_INTERWORKING_SUPPORT
+config BR2_GCC_USE_INTERWORKING
 	bool "Enable interworking support"
 	default n
 	depends on BR2_arm || BR2_armeb
@@ -129,7 +129,7 @@ config BR2_INTERWORKING_SUPPORT
 config BR2_THUMB_BINARIES
 	bool "Generate Thumb binaries"
 	default n
-	depends on BR2_INTERWORKING_SUPPORT
+	depends on BR2_GCC_USE_INTERWORKING
 	help
 	  Compile binaries in Thumb mode.
 
