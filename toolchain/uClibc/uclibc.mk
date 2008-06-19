@@ -276,9 +276,9 @@ ifneq ($(UCLIBC_TARGET_ENDIAN),)
 		$(UCLIBC_DIR)/.oldconfig
 endif
 ifeq ($(BR2_ENABLE_SHARED),y)
-	$(SED) 's/.*\(HAVE_SHARED\).*/\1=y' $(UCLIBC_DIR)/.oldconfig
+	$(SED) 's/.*\(HAVE_SHARED\).*/\1=y/g' $(UCLIBC_DIR)/.oldconfig
 else
-	$(SED) 's/.*\(HAVE_SHARED\).*/# \1 is not set' $(UCLIBC_DIR)/.oldconfig
+	$(SED) 's/.*\(HAVE_SHARED\).*/# \1 is not set/g' $(UCLIBC_DIR)/.oldconfig
 endif
 ifeq ($(BR2_LARGEFILE),y)
 	$(SED) 's,.*UCLIBC_HAS_LFS.*,UCLIBC_HAS_LFS=y,g' $(UCLIBC_DIR)/.oldconfig
