@@ -267,6 +267,19 @@ ifeq ($(UCLIBC_TARGET_ARCH),bfin)
 	$(SED) '/UCLIBC_FORMAT_FDPIC_ELF/d' $(UCLIBC_DIR)/.oldconfig
 	echo 'UCLIBC_FORMAT_FDPIC_ELF=y' >> $(UCLIBC_DIR)/.oldconfig
 endif
+ifeq ($(BR2_cris),y)
+	$(SED) '/CONFIG_CRIS/d' $(UCLIBC_DIR)/.oldconfig
+	echo '# CONFIG_CRIS is not set' >> $(UCLIBC_DIR)/.oldconfig
+	echo '# CONFIG_CRISV32 is not set' >> $(UCLIBC_DIR)/.oldconfig
+ifeq ($(BR2_cris_cris32),y)
+	$(SED) 's,^TARGET_ARCH=".*",TARGET_ARCH=\"crisv32\",g' \
+	-e 's,.*\(CONFIG_CRIS\) .*,\1=y,' $(UCLIBC_DIR)/.oldconfig
+endif
+ifeq ($(BR2_cris_cris),y)
+	$(SED) 's,^TARGET_ARCH=".*",TARGET_ARCH=\"cris\",g' \
+	-e 's,.*\(CONFIG_CRISV32\) .*,\1=y,' $(UCLIBC_DIR)/.oldconfig
+endif
+endif
 ifneq ($(UCLIBC_TARGET_ENDIAN),)
 	# The above doesn't work for me, so redo
 	$(SED) 's/.*\(ARCH_$(UCLIBC_NOT_TARGET_ENDIAN)_ENDIAN\).*/# \1 is not set/g' \
