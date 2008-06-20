@@ -29,7 +29,7 @@ config BR2_SVN_UP
 
 config BR2_GIT
 	string "Git command to download source tree"
-	default "git clone"
+	default "git"
 
 config BR2_ZCAT
 	string "zcat command"

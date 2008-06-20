@@ -54,7 +54,7 @@ BR2_ENDIAN="LITTLE"
 #
 BR2_WGET="wget --passive-ftp"
 BR2_SVN="svn co"
-BR2_GIT="git clone"
+BR2_GIT="git"
 BR2_ZCAT="gzip -d -c"
 BR2_BZCAT="bzcat"
 BR2_TAR_OPTIONS=""
