@@ -806,7 +806,11 @@ config BR2_GCC_TARGET_ARCH
 	default c3		if BR2_x86_c3
 	default geode		if BR2_x86_geode
 	default iwmmxt		if BR2_iwmmxt
-#	cris has no --with-arch
+	default v0		if BR2_cris_unknown
+	default v10		if BR2_cris_generic
+	default v3		if BR2_cris_etrax_4
+	default v8		if BR2_cris_etrax_100
+	default v10		if BR2_cris_etrax_100lx
 	default 68000		if BR2_m68k_68000
 	default 68010		if BR2_m68k_68010
 	default 68020		if BR2_m68k_68020
