@@ -63,18 +63,33 @@ SOFT_FLOAT_CONFIG_OPTION:=
 TARGET_SOFT_FLOAT:=
 endif # softfloat support
 
+HAVE_GCC_TARGET_ARCH:=y
+HAVE_GCC_TARGET_TUNE:=y
+HAVE_GCC_TARGET_ABI :=y
+# Some arches (e.g. cris) do not have supported_defaults
+ifeq ($(BR2_cris),y)
+HAVE_GCC_TARGET_ARCH:=n
+HAVE_GCC_TARGET_TUNE:=n
+HAVE_GCC_TARGET_ABI :=n
+endif
 # some additional defaults
+ifeq ($(HAVE_GCC_TARGET_ARCH),y)
 ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_ARCH))),)
 # ")))
 GCC_WITH_ARCH:=--with-arch=$(BR2_GCC_TARGET_ARCH)
 endif
+endif
+ifeq ($(HAVE_GCC_TARGET_TUNE),y)
 ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_TUNE))),)
 # ")))
 GCC_WITH_TUNE:=--with-tune=$(BR2_GCC_TARGET_TUNE)
 endif
+endif
+ifeq ($(HAVE_GCC_TARGET_ABI),y)
 ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_ABI))),)
 # ")))
 GCC_WITH_ABI:=--with-abi=$(BR2_GCC_TARGET_ABI)
+endif
 endif
 
 TARGET_GCC_FLAGS= CFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)" \
