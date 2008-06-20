@@ -274,7 +274,7 @@ endif
 
 $(BR2_DEPENDS_DIR): .config
 	rm -rf $(BR2_DEPENDS_DIR)
-	mkdir -p $(BR2_DEPENDS_DIR)
+	$(INSTALL) -d $(@D)
 	cp -dpRf $(CONFIG)/buildroot-config $(BR2_DEPENDS_DIR)
 	touch $@/.done
 
