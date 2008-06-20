@@ -71,6 +71,18 @@ endif
 	touch $@
 
 $(LINUX_HEADERS_DIR)/.configured: $(LINUX_HEADERS_UNPACK_DIR)/.patched
+	$(INSTALL) -D $(LINUX26_KCONFIG) $(LINUX_HEADERS_DIR)/.config
+	# some arches need archprepare
+	# Could very well be that we need to expand on that some more, later on
+	-(cd $(LINUX_HEADERS_UNPACK_DIR); \
+	 $(MAKE) ARCH=$(KERNEL_ARCH) \
+	 	HOSTCC="$(HOSTCC)" HOSTCFLAGS="$(HOSTCFLAGS)" \
+		HOSTCXX="$(HOSTCXX)" \
+		KCONFIG_CONFIG="$($(LINUX_HEADERS_DIR)/.config)" \
+		INSTALL_HDR_PATH=$(LINUX_HEADERS_DIR) archprepare; \
+	)
+	# wipe it, just to be sure to prevent misconfiguration
+	rm -f $(LINUX_HEADERS_DIR)/.config
 	(cd $(LINUX_HEADERS_UNPACK_DIR); \
 	 $(MAKE) ARCH=$(KERNEL_ARCH) \
 	 	HOSTCC="$(HOSTCC)" HOSTCFLAGS="$(HOSTCFLAGS)" \

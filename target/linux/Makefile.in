@@ -3,8 +3,38 @@
 # Linux kernel 2.6 target
 #
 #############################################################
-ifneq ($(filter $(TARGETS),linux26),)
 
+# XXX This crap should be in project!
+ifeq ($(BOARD_PATH),)
+BOARD_PATH:=$(strip $(subst ",,$(BR2_BOARD_PATH)))
+#"))
+endif
+
+# Linux kernel configuration file
+# Has to be set by the target/device
+# If it is not set by the target/device, then pick the one from .config
+ifndef LINUX26_KCONFIG
+ifneq ($(strip $(subst ",,$(BR2_PACKAGE_LINUX_KCONFIG))),)
+LINUX26_KCONFIG:=$(strip $(subst ",,$(BR2_PACKAGE_LINUX_KCONFIG)))
+#"))
+#"))
+else
+# LINUX26_KCONFIG=$(BOARD_PATH)/linux26.config
+endif
+endif
+
+ifndef LINUX26_FORMAT
+ifneq ($(strip $(subst ",,$(BR2_PACKAGE_LINUX_FORMAT))),)
+LINUX26_FORMAT:=$(strip $(subst ",,$(BR2_PACKAGE_LINUX_FORMAT)))
+#"))
+#"))
+else
+LINUX26_FORMAT:=zImage
+endif
+endif
+
+
+ifneq ($(filter $(TARGETS),linux26),)
 
 ifeq ($(DOWNLOAD_LINUX26_VERSION),)
 # User did not define linux version, try using headers
@@ -25,33 +55,6 @@ LINUX26_SOURCE=linux-$(DOWNLOAD_LINUX26_VERSION).tar.bz2
 LINUX26_BZCAT:=$(BZCAT)
 LINUX26_SITE=$(BR2_KERNEL_MIRROR)/linux/kernel/v2.6
 
-ifeq ($(BOARD_PATH),)
-BOARD_PATH:=$(strip $(subst ",,$(BR2_BOARD_PATH)))
-#"))
-endif
-
-# Linux kernel configuration file
-# Has to be set by the target/device
-# If it is not set by the target/device, then pick the one from .config
-ifndef LINUX26_KCONFIG
-ifneq ($(strip $(subst ",,$(BR2_PACKAGE_LINUX_KCONFIG))),)
-LINUX26_KCONFIG=$(strip $(subst ",,$(BR2_PACKAGE_LINUX_KCONFIG)))
-#"))
-#"))
-else
-# LINUX26_KCONFIG=$(BOARD_PATH)/linux26.config
-endif
-endif
-
-ifndef LINUX26_FORMAT
-ifneq ($(strip $(subst ",,$(BR2_PACKAGE_LINUX_FORMAT))),)
-LINUX26_FORMAT=$(strip $(subst ",,$(BR2_PACKAGE_LINUX_FORMAT)))
-#"))
-#"))
-else
-LINUX26_FORMAT=zImage
-endif
-endif
 
 # Has to be set by the target/device
 ifndef LINUX26_BINLOC
