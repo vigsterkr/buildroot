@@ -506,7 +506,7 @@ endchoice
 choice
 	prompt "Target Architecture Variant"
 	depends on BR2_bfin
-	default BR2_bf532
+	default BR2_bf537
 	help
 	  Specific CPU variant to use
 config BR2_bf522
@@ -555,6 +555,34 @@ config BR2_bfin_sirevision
 	  
 	  Default: any
 
+choice
+	prompt "Target Architecture Variant"
+	depends on BR2_cris
+	default BR2_cris_cris
+	help
+	  Architecture variant.
+config BR2_cris_cris
+        bool "cris"
+config BR2_cris_crisv32
+        bool "crisv32"
+endchoice
+choice
+	prompt "Target CPU Variant"
+	depends on BR2_cris
+	default BR2_cris_generic
+	help
+	  CPU variant.
+config BR2_cris_generic
+        bool "generic (v10)"
+config BR2_cris_unknown
+        bool "unknown (v0)"
+config BR2_cris_etrax_4
+        bool "etrax_4 (v3)"
+config BR2_cris_etrax_100
+        bool "etrax_100 (v8)"
+config BR2_cris_etrax_100lx
+        bool "etrax_100lx (v10)"
+endchoice
 
 
 config BR2_ARCH
@@ -564,7 +592,8 @@ config BR2_ARCH
 	default "armeb"		if BR2_armeb
 	default "avr32"		if BR2_avr32
 	default "bfin"		if BR2_bfin
-	default "cris"		if BR2_cris
+	default "cris"		if BR2_cris_cris
+	default "crisv32"	if BR2_cris_crisv32
 	default "i386"		if BR2_x86_i386
 	default "i486"		if BR2_x86_i486
 	default "i586"		if BR2_x86_i586
