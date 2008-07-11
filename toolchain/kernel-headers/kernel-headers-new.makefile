@@ -42,7 +42,9 @@ $(LINUX_HEADERS_UNPACK_DIR)/.unpacked: $(DL_DIR)/$(LINUX_HEADERS_SOURCE)
 	[ -d $(TOOL_BUILD_DIR) ] || $(INSTALL) -d $(TOOL_BUILD_DIR)
 	$(LINUX_HEADERS_CAT) $(DL_DIR)/$(LINUX_HEADERS_SOURCE) | tar -C $(TOOL_BUILD_DIR) $(TAR_OPTIONS) -
 ifeq ($(BR2_USE_UPDATES),y)
-	[ -d $(LINUX_HEADERS_UNPACK_DIR)/.git ] && $(GIT) pull
+	if [ -d $(LINUX_HEADERS_UNPACK_DIR)/.git ] ; then \
+		$(GIT) pull ; \
+	fi
 endif
 	touch $@
 
