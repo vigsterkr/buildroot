@@ -712,6 +712,7 @@ config BR2_GCC_TARGET_TUNE
 	default mips64		if BR2_mips_64
 	default mips64r2	if BR2_mips_64r2
 	default mips16		if BR2_mips_16
+	default common		if BR2_powerpc_generic
 	default 401		if BR2_powerpc_401
 	default 403		if BR2_powerpc_403
 	default 405		if BR2_powerpc_405
