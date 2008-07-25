@@ -43,6 +43,7 @@ sstrip_host-dirclean:
 SSTRIP_TARGET:=$(TARGET_DIR)/usr/bin/sstrip
 
 $(SSTRIP_TARGET): $(SSTRIP_SOURCE_FILE)
+	@[ -d $(@D) ] || $(INSTALL) -D $(@D)
 	$(TARGET_CC) $(TARGET_CFLAGS) $(SSTRIP_SOURCE_FILE) -o $(SSTRIP_TARGET)
 
 sstrip_target: $(SSTRIP_TARGET)
