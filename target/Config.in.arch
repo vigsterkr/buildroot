@@ -829,7 +829,7 @@ config BR2_GCC_TARGET_ABI
 	default apcs-gnu	if BR2_arm_dunno
 	default atpcs		if BR2_arm_dunno
 	default aapcs		if BR2_arm_dunno
-	default aapcs-linux	if BR2_iwmmxt
+	default aapcs-linux	if BR2_iwmmxt && BR2_ARM_EABI
 	#default iwmmxt		if BR2_iwmmxt
 	default 32		if BR2_MIPS_OABI32
 	default n32		if BR2_MIPS_ABI32
