@@ -105,6 +105,8 @@ config BR2_TOOLCHAIN_SYSROOT
 	  This does not work with gcc < 4.2.0 (4.1.2 gets
 	  ORIGINAL_AS_FOR_TARGET wrong)
 
+	  Say Y here.
+
 config BR2_GCC_USE_SJLJ_EXCEPTIONS
 	bool "Enable setjmp/longjmp exceptions?"
 	default n
