@@ -112,8 +112,13 @@ $(LINUX26_KCONFIG):
 ifeq (=$(BR2_KERNEL_LINUX)$(BR2_PACKAGE_LINUX_KCONFIG)=,=y=)
 $(error you do not have a linux kernel configuration)
 endif
+
+# Doesn't make sense to warn about a missing kernel config
+# when we are about to configure.
+ifeq ($(findstring -menuconfig,$(MAKECMDGOALS)),)
 ifeq ($(BR2_KERNEL_LINUX)$(realpath $(LINUX26_KCONFIG)),y)
 $(error you do not have a linux kernel configuration file)
+endif
 endif
 
 
