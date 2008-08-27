@@ -235,13 +235,13 @@ $(TARGET_DIR)/lib/modules/$(LINUX26_VERSION)/modules.dep: $(LINUX26_DIR)/.config
 	$(STAGING_DIR)/bin/$(GNU_TARGET_NAME)-depmod26 -b $(TARGET_DIR) $(LINUX_HEADERS_VERSION)
 	touch -c $@
 
-linux26-menuconfig: $(LINUX26_DIR)/.patched host-sed
-	[ -f $(LINUX26_DIR)/.config ] || cp $(LINUX26_KCONFIG) $(LINUX26_DIR)/.config
+linux26-menuconfig: host-sed dirs $(LINUX26_DIR)/.patched
+	-[ -f $(LINUX26_DIR)/.config ] || cp $(LINUX26_KCONFIG) $(LINUX26_DIR)/.config
 	$(MAKE) $(LINUX26_MAKE_FLAGS) -C $(LINUX26_DIR) menuconfig
 	-[ -f $(LINUX26_DIR)/.config ] && touch $(LINUX26_DIR)/.configured
 
-linux26-xconfig: $(LINUX26_DIR)/.patched host-sed
-	[ -f $(LINUX26_DIR)/.config ] || cp $(LINUX26_KCONFIG) $(LINUX26_DIR)/.config
+linux26-xconfig: host-sed dirs $(LINUX26_DIR)/.patched
+	-[ -f $(LINUX26_DIR)/.config ] || cp $(LINUX26_KCONFIG) $(LINUX26_DIR)/.config
 	$(MAKE) $(LINUX26_MAKE_FLAGS) -C $(LINUX26_DIR) xconfig
 	-[ -f $(LINUX26_DIR)/.config ] && touch $(LINUX26_DIR)/.configured
 
@@ -256,7 +256,7 @@ linux26-source: $(DL_DIR)/$(LINUX26_SOURCE)
 
 linux26-unpacked: $(LINUX26_DIR)/.patched
 
-linux26-config: host-sed $(LINUX26_DIR)/.configured
+linux26-config: host-sed dirs $(LINUX26_DIR)/.configured
 
 linux26-update:
 	cp -dpf $(LINUX26_DIR)/.config $(LINUX26_KCONFIG)
