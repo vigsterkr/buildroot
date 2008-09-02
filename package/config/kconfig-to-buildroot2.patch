@@ -1423,3 +1423,15 @@ diff -rduNp config.new.oorig/zconf.y config.new/zconf.y
  
  #if YYDEBUG
  	if (getenv("ZCONF_DEBUG"))
+diff --git config.new.oorig/mconf.c config.new/mconf.c
+--- config.new.oorig/mconf.c
++++ config.new/mconf.c
+@@ -743,7 +743,7 @@ static void show_help(struct menu *menu)
+ 	if (menu_has_help(menu))
+ 	{
+ 		if (sym->name) {
+-			str_printf(&help, "CONFIG_%s:\n\n", sym->name);
++			str_printf(&help, "%s:\n\n", sym->name);
+ 			str_append(&help, _(menu_get_help(menu)));
+ 			str_append(&help, "\n");
+ 		}
