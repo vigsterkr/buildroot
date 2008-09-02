@@ -123,6 +123,30 @@ config BR2_GCC_USE_SJLJ_EXCEPTIONS
 	  proper stack unwinding during exception handling.  Most people
 	  can leave this set to n.
 
+choice
+	prompt "GCC decimal floating types"
+	default BR2_GCC_DECNUMBER_no
+	help
+	  As an extension, the GNU C Compiler supports decimal float types
+	  as defined in the N1176 draft ISO/IEC WDTR24732.
+
+config BR2_GCC_DECNUMBER_no
+	bool "no"
+config BR2_GCC_DECNUMBER_yes
+	bool "yes"
+config BR2_GCC_DECNUMBER_bid
+	bool "bid"
+config BR2_GCC_DECNUMBER_dpd
+	bool "dpd"
+endchoice
+
+config BR2_GCC_DECNUMBER
+	string
+	default "no"  if BR2_GCC_DECNUMBER_no
+	default "yes" if BR2_GCC_DECNUMBER_yes
+	default "bid" if BR2_GCC_DECNUMBER_bid
+	default "dpd" if BR2_GCC_DECNUMBER_dpd
+
 config BR2_GCC_USE_INTERWORKING
 	bool "Enable interworking support"
 	default n

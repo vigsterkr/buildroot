@@ -10,6 +10,8 @@ TARGET_OPTIMIZATION:=$(strip $(subst ",, $(BR2_TARGET_OPTIMIZATION)))
 #"))
 EXTRA_GCC_CONFIG_OPTIONS:=$(strip $(subst ",, $(BR2_EXTRA_GCC_CONFIG_OPTIONS)))
 #"))
+BR2_GCC_DECNUMBER:=$(strip $(subst ",, $(BR2_GCC_DECNUMBER)))
+#"))
 
 ifeq ($(strip $(subst ",, $(BR2_GCC_IS_SNAP))),y)
 #"))
@@ -98,7 +100,8 @@ TARGET_GCC_FLAGS= CFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)" \
 
 EXTRA_GCC_CONFIG_OPTIONS+=$(BR2_MAYBE_USE_INTERWORKING) \
 	$(GCC_USE_LIBSSP) $(GCC_USE_LIBSSP) $(GCC_USE_LIBMUDFLAP) \
-	$(GCC_USE_LIBGOMP)
+	$(GCC_USE_LIBGOMP) \
+	--enable-decimal-float=$(BR2_GCC_DECNUMBER)
 
 ####################### T A R G E T  s e t t i n g s #######################
 ifeq ($(BR2_PACKAGE_GCC_TARGET),y)
