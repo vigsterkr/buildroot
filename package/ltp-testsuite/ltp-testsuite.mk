@@ -3,7 +3,7 @@
 # ltp-testsuite
 #
 #############################################################
-LTP_TESTSUITE_VERSION:=20080229
+LTP_TESTSUITE_VERSION:=20080831
 LTP_TESTSUITE_SOURCE:=ltp-full-$(LTP_TESTSUITE_VERSION).tgz
 LTP_TESTSUITE_SITE:=http://$(BR2_SOURCEFORGE_MIRROR).dl.sourceforge.net/sourceforge/ltp
 LTP_TESTSUITE_CAT:=$(ZCAT)
@@ -15,7 +15,9 @@ LTP_TESTSUITE_DIR:=$(LTP_TESTSUITE_ROOT)/ltp-full-$(LTP_TESTSUITE_VERSION)
 #
 LTP_PATCHES:=ltp-testsuite-generate-needs-bash.patch \
 	     ltp-testsuite-sh-is-not-C-code.patch \
-	     ltp-testsuite.patch
+	     ltp-testsuite.patch \
+	     ltp-testsuite.asm-page-include.patch \
+	     ltp-testsuite.obsolete-bsd-signal.patch
 
 ifeq ($(BR2_PTHREADS_NATIVE),y)
 LTP_PATCHES+=ltp-testsuite-enable-openposix-for-nptl.patch
@@ -26,6 +28,9 @@ endif
 ifneq ($(BR2_INET_IPV6),y)
 LTP_PATCHES+=ltp-testsuite-disable-ipv6-tests.patch
 endif
+
+LTP_TESTSUITE_ENV:= \
+	UCLIBC_HAS_OBSOLETE_BSD_SIGNAL=$(BR2__UCLIBC_HAS_OBSOLETE_BSD_SIGNAL)
 
 $(DL_DIR)/$(LTP_TESTSUITE_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LTP_TESTSUITE_SITE)/$(LTP_TESTSUITE_SOURCE)
@@ -38,6 +43,7 @@ $(LTP_TESTSUITE_DIR)/Makefile: $(DL_DIR)/$(LTP_TESTSUITE_SOURCE)
 
 $(LTP_TESTSUITE_DIR)/.compiled: $(LTP_TESTSUITE_DIR)/Makefile
 	$(MAKE1) $(TARGET_CONFIGURE_OPTS) CROSS_COMPILER=$(TARGET_CROSS) \
+		$(LTP_TESTSUITE_ENV) \
 		-C $(LTP_TESTSUITE_DIR) all
 	touch $@
 

@@ -1,0 +1,24 @@
+--- ltp-full-20080831.orig/testcases/kernel/fs/ftest/Makefile	2008-08-31 16:33:05.000000000 +0200
++++ ltp-full-20080831/testcases/kernel/fs/ftest/Makefile	2008-09-12 19:14:51.000000000 +0200
+@@ -24,6 +24,9 @@
+ LOADLIBES+=	-L../../../../lib -lltp
+ 
+ SRCS=$(wildcard *.c)
++ifneq ($(UCLIBC_HAS_OBSOLETE_BSD_SIGNAL),y)
++SRCS:=$(filter-out ftest01.c ftest03.c ftest04.c ftest05.c ftest07.c ftest08.c,$(SRCS))
++endif
+ TARGETS=$(patsubst %.c,%,$(SRCS))
+ 
+ all: $(TARGETS)
+--- ltp-full-20080831.orig/testcases/kernel/fs/inode/Makefile	2008-08-31 16:33:05.000000000 +0200
++++ ltp-full-20080831/testcases/kernel/fs/inode/Makefile	2008-09-12 19:30:16.000000000 +0200
+@@ -23,6 +23,9 @@
+ LOADLIBES+=	-L../../../../lib -lltp 
+ 
+ SRCS=$(wildcard *.c)
++ifneq ($(UCLIBC_HAS_OBSOLETE_BSD_SIGNAL),y)
++SRCS:=$(filter-out inode02.c,$(SRCS))
++endif
+ TARGETS=$(patsubst %.c,%,$(SRCS))
+ 
+ all: $(TARGETS)
