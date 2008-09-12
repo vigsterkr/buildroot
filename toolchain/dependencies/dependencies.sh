@@ -188,20 +188,25 @@ if [ -z "$COMPILER" ] ; then
 	exit 1;
 fi;
 
-COMPILER_VERSION=$($COMPILER --version 2>&1 | $XSED -e 's/^.*(.CC) \([0-9\.]\)/\1/g' -e "s/[-\ ].*//g" -e '1q')
+
+COMPILER_VERSION=$($COMPILER --version 2>&1 | $XSED -e 's/^.*(.CC) \([0-9\.]\).*/\1/g' -e "s/[-\ ].*//g" -e '1q')
 if [ -z "$COMPILER_VERSION" ] ; then
 	echo "gcc installed:		    FALSE"
 	/bin/echo -e "\n\nYou must install 'gcc' on your build machine\n";
 	exit 1;
 fi;
+
+if /bin/false; then
+# ignore the version for now
 COMPILER_MAJOR=$(echo $COMPILER_VERSION | $XSED -e "s/\..*//g")
 COMPILER_MINOR=$(echo $COMPILER_VERSION | $XSED -e "s/^$COMPILER_MAJOR\.//g" -e "s/\..*//g")
 if [ $COMPILER_MAJOR -lt 3 -o $COMPILER_MAJOR -eq 2 -a $COMPILER_MINOR -lt 95 ] ; then
 	echo "You have gcc '$COMPILER_VERSION' installed.  gcc >= 2.95 is required"
 	exit 1;
 fi;
+fi
 echo "C compiler '$COMPILER'"
-echo "C compiler version '$COMPILER_VERSION':			Ok"
+#echo "C compiler version '$COMPILER_VERSION':			Ok"
 
 
 # check for host CXX
@@ -222,14 +227,17 @@ if [ ! -z "$CXXCOMPILER" ] ; then
 		#exit 1
 	fi
 
+if /bin/false; then
+# ignore the version for now
 	CXXCOMPILER_MAJOR=$(echo $CXXCOMPILER_VERSION | $XSED -e "s/\..*//g")
 	CXXCOMPILER_MINOR=$(echo $CXXCOMPILER_VERSION | $XSED -e "s/^$CXXCOMPILER_MAJOR\.//g" -e "s/\..*//g")
 	if [ $CXXCOMPILER_MAJOR -lt 3 -o $CXXCOMPILER_MAJOR -eq 2 -a $CXXCOMPILER_MINOR -lt 95 ] ; then
 		echo "You have g++ '$CXXCOMPILER_VERSION' installed.  g++ >= 2.95 is required"
 		exit 1
 	fi
+fi
 	echo "C++ compiler '$CXXCOMPILER'"
-	echo "C++ compiler version '$CXXCOMPILER_VERSION':			Ok"
+#	echo "C++ compiler version '$CXXCOMPILER_VERSION':			Ok"
 fi
 
 #############################################################
