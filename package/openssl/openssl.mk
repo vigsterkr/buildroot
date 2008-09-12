@@ -47,6 +47,13 @@ OPENSSL_CFLAGS+=-DB_ENDIAN
 else
 OPENSSL_CFLAGS+=-DL_ENDIAN
 endif
+ifeq ($(BR2_PACKAGE_ZLIB),y)
+OPENSSL_OPTS+=zlib-dynamic
+OPENSSL_EXT_LIBS+=-lz
+OPENSSL_PREREQ+=zlib
+else
+OPENSSL_OPTS+=no-zlib no-zlib-dynamic
+endif
 
 $(DL_DIR)/$(OPENSSL_SOURCE):
 	$(WGET) -P $(DL_DIR) $(OPENSSL_SITE)/$(OPENSSL_SOURCE)
@@ -63,7 +70,7 @@ $(OPENSSL_DIR)/.unpacked: $(DL_DIR)/$(OPENSSL_SOURCE)
 		$(OPENSSL_DIR)/Configure
 	$(SED) '/linux-uclibc/s,gcc:,$(TARGET_CC) $(TARGET_CFLAGS):,' \
 		-e '/linux-uclibc/s,:ranlib:,:$(TARGET_RANLIB):,' \
-		-e '/linux-uclibc/s,:-ldl:,:$(TARGET_LDFLAGS) -ldl -lz:,' \
+		-e '/linux-uclibc/s,:-ldl:,:$(TARGET_LDFLAGS) -ldl $(OPENSSL_EXT_LIBS):,' \
 		$(OPENSSL_DIR)/Configure
 	touch $@
 
@@ -122,7 +129,7 @@ endif
 
 openssl-headers: $(TARGET_DIR)/usr/lib/libssl.a
 
-openssl: uclibc $(TARGET_DIR)/usr/lib/libcrypto.so.0.9.8
+openssl: uclibc $(OPENSSL_PREREQ) $(TARGET_DIR)/usr/lib/libcrypto.so.0.9.8
 
 openssl-source: $(DL_DIR)/$(OPENSSL_SOURCE)
 
