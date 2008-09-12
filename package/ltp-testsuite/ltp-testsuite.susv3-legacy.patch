@@ -1,0 +1,49 @@
+--- ltp-full-20080831.orig//testcases/kernel/syscalls/ipc/lib/Makefile	2008-08-31 16:33:16.000000000 +0200
++++ ltp-full-20080831/testcases/kernel/syscalls/ipc/lib/Makefile	2008-09-12 19:40:10.000000000 +0200
+@@ -16,6 +16,7 @@
+ #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+ 
++ifeq ($(UCLIBC_SUSV3_LEGACY),y)
+ SRCS   = libipc.c
+ OBJS   = $(SRCS:.c=.o)
+ LIBIPC = ../libipc.a
+@@ -23,6 +24,7 @@
+ 
+ CFLAGS += -I../../../../../include -Wall
+ CFLAGS += -D_USC_LIB_
++endif
+ 
+ all: $(LIBIPC)
+ 
+--- ltp-full-20080831.orig/testcases/kernel/sched/tool/Makefile	2008-08-31 16:33:19.000000000 +0200
++++ ltp-full-20080831/testcases/kernel/sched/tool/Makefile	2008-09-12 19:40:12.000000000 +0200
+@@ -2,6 +2,9 @@
+ LDLIBS := -lpthread
+ 
+ SRCS=$(wildcard *.c)
++ifneq ($(UCLIBC_SUSV3_LEGACY),y)
++SRCS:=$(filter-out trace_sched.c,$(SRCS))
++endif
+ TARGETS=$(patsubst %.c,%,$(SRCS))
+ 
+ all: $(TARGETS)
+--- ltp-full-20080831.orig/testcases/kernel/mem/hugetlb/lib/Makefile	2008-08-31 16:33:03.000000000 +0200
++++ ltp-full-20080831/testcases/kernel/mem/hugetlb/lib/Makefile	2008-09-12 19:40:31.000000000 +0200
+@@ -21,13 +21,15 @@
+ # description	: make(1) description file to build a library for the 	#
+ #		  common routines in the ipc(2) tests.			#
+ #########################################################################
++ifeq ($(UCLIBC_SUSV3_LEGACY),y)
+ SRCS=libipc.c
+ OBJS=$(SRCS:.c=.o)
+ MAINS=libipc.a
+ CFLAGS+=-I../../../../../include -g -Wall
+ CFLAGS+=-D_USC_LIB_
++endif
+ 
+-all: libipc.a
++all: $(MAINS)
+ 
+ libipc.a: $(OBJS)
+ 	$(AR) -rc $@ $(OBJS)

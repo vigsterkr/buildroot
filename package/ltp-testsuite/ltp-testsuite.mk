@@ -17,7 +17,8 @@ LTP_PATCHES:=ltp-testsuite-generate-needs-bash.patch \
 	     ltp-testsuite-sh-is-not-C-code.patch \
 	     ltp-testsuite.patch \
 	     ltp-testsuite.asm-page-include.patch \
-	     ltp-testsuite.obsolete-bsd-signal.patch
+	     ltp-testsuite.obsolete-bsd-signal.patch \
+	     ltp-testsuite.susv3-legacy.patch
 
 ifeq ($(BR2_PTHREADS_NATIVE),y)
 LTP_PATCHES+=ltp-testsuite-enable-openposix-for-nptl.patch
@@ -30,7 +31,8 @@ LTP_PATCHES+=ltp-testsuite-disable-ipv6-tests.patch
 endif
 
 LTP_TESTSUITE_ENV:= \
-	UCLIBC_HAS_OBSOLETE_BSD_SIGNAL=$(BR2__UCLIBC_HAS_OBSOLETE_BSD_SIGNAL)
+	UCLIBC_HAS_OBSOLETE_BSD_SIGNAL=$(BR2__UCLIBC_HAS_OBSOLETE_BSD_SIGNAL) \
+	UCLIBC_SUSV3_LEGACY=$(BR2__UCLIBC_SUSV3_LEGACY)
 
 $(DL_DIR)/$(LTP_TESTSUITE_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(LTP_TESTSUITE_SITE)/$(LTP_TESTSUITE_SOURCE)
