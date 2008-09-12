@@ -33,10 +33,19 @@ ifeq ($(OPENSSL_TARGET_ARCH),)
 OPENSSL_TARGET_ARCH:=$(ARCH)
 endif
 
+OPENSSL_CFLAGS:= -DTERMIO
+OPENSSL_CFLAGS+=-DOPENSSL_NO_KRB5 -DOPENSSL_NO_IDEA -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 
 ifeq ($(BR2_PTHREADS_NONE),y)
 OPENSSL_THREADS=no-threads
 else
 OPENSSL_THREADS=threads
+OPENSSL_CFLAGS+=-D_REENTRANT
+endif
+
+ifeq ($(BR2_ENDIAN),"BIG")
+OPENSSL_CFLAGS+=-DB_ENDIAN
+else
+OPENSSL_CFLAGS+=-DL_ENDIAN
 endif
 
 $(DL_DIR)/$(OPENSSL_SOURCE):
@@ -46,41 +55,47 @@ openssl-unpack: $(OPENSSL_DIR)/.unpacked
 $(OPENSSL_DIR)/.unpacked: $(DL_DIR)/$(OPENSSL_SOURCE)
 	$(OPENSSL_CAT) $(DL_DIR)/$(OPENSSL_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(OPENSSL_DIR) package/openssl/ openssl-$(OPENSSL_VERSION)\*.patch
-	# sigh... we have to resort to this just to set a gcc flag.
+	# sigh... hit perl script with a clue bait
 	# grumble.. and of course make sure to escape any '/' in CFLAGS
 	$(SED) 's,/CFLAG=,/CFLAG= $(TARGET_SOFT_FLOAT) ,g' \
 		$(OPENSSL_DIR)/Configure
-	$(SED) '/CFLAG=/s,/;, $(shell echo '$(TARGET_CFLAGS)' | sed -e 's/\//\\\\\//g')/;,' \
+	$(SED) '/CFLAG=/s,/;, $(shell echo '$(TARGET_CFLAGS) $(OPENSSL_CFLAGS)' | sed -e 's/\//\\\\\//g')/;,' \
+		$(OPENSSL_DIR)/Configure
+	$(SED) '/linux-uclibc/s,gcc:,$(TARGET_CC) $(TARGET_CFLAGS):,' \
+		-e '/linux-uclibc/s,:ranlib:,:$(TARGET_RANLIB):,' \
+		-e '/linux-uclibc/s,:-ldl:,:$(TARGET_LDFLAGS) -ldl -lz:,' \
 		$(OPENSSL_DIR)/Configure
 	touch $@
 
 $(OPENSSL_DIR)/Makefile: $(OPENSSL_DIR)/.unpacked
 	(cd $(OPENSSL_DIR); \
-	CFLAGS="-DOPENSSL_NO_KRB5 -DOPENSSL_NO_IDEA -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 $(TARGET_CFLAGS)" \
+	CFLAGS="$(TARGET_CFLAGS) $(OPENSSL_CFLAGS)" \
+	RANLIB="$(TARGET_RANLIB)" \
 	PATH=$(TARGET_PATH) \
-	./Configure linux-$(OPENSSL_TARGET_ARCH) --prefix=/ \
-		--openssldir=/lib/ssl -L$(STAGING_DIR)/usr/lib -ldl \
-		-I$(STAGING_DIR)/usr/include $(OPENSSL_OPTS) \
+	./Configure linux-uclibc --prefix=/ --openssldir=/lib/ssl \
+		-L$(STAGING_DIR)/usr/lib -ldl \
+		-I$(STAGING_DIR)/usr/include \
+		$(OPENSSL_OPTS) \
 		$(OPENSSL_THREADS) \
 		shared no-idea no-mdc2 no-rc5)
 
 $(OPENSSL_DIR)/apps/openssl: $(OPENSSL_DIR)/Makefile
-	$(MAKE1) CC=$(TARGET_CC) -C $(OPENSSL_DIR) all build-shared
+	$(MAKE1) -C $(OPENSSL_DIR) all build-shared
 	# Work around openssl build bug to link libssl.so with libcrypto.so.
 	-rm $(OPENSSL_DIR)/libssl.so.*.*.*
-	$(MAKE1) CC=$(TARGET_CC) -C $(OPENSSL_DIR) do_linux-shared
+	$(MAKE1) -C $(OPENSSL_DIR) do_linux-shared
 
 $(STAGING_DIR)/usr/lib/libcrypto.a: $(OPENSSL_DIR)/apps/openssl
-	$(MAKE) CC=$(TARGET_CC) INSTALL_PREFIX=$(STAGING_DIR)/usr \
-		INSTALLTOP=/ ENGINESDIR="/lib/ssl/engines" \
+	$(MAKE1) INSTALL_PREFIX="$(STAGING_DIR)/usr" \
+		INSTALLTOP=/ ENGINESDIR=/lib/ssl/engines \
 		-C $(OPENSSL_DIR) install
-	cp -fa $(OPENSSL_DIR)/libcrypto.so* $(STAGING_DIR)/usr/lib/
+	cp -dpf $(OPENSSL_DIR)/libcrypto.so* $(STAGING_DIR)/usr/lib/
 	chmod a-x $(STAGING_DIR)/usr/lib/libcrypto.so.0.9.8
 	(cd $(STAGING_DIR)/usr/lib; \
 	 ln -fs libcrypto.so.0.9.8 libcrypto.so; \
 	 ln -fs libcrypto.so.0.9.8 libcrypto.so.0; \
 	)
-	cp -fa $(OPENSSL_DIR)/libssl.so* $(STAGING_DIR)/usr/lib/
+	cp -dpf $(OPENSSL_DIR)/libssl.so* $(STAGING_DIR)/usr/lib/
 	chmod a-x $(STAGING_DIR)/usr/lib/libssl.so.0.9.8
 	(cd $(STAGING_DIR)/usr/lib; \
 	 ln -fs libssl.so.0.9.8 libssl.so; \
@@ -97,8 +112,10 @@ $(TARGET_DIR)/usr/lib/libcrypto.so.0.9.8: $(STAGING_DIR)/usr/lib/libcrypto.a
 	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libcrypto.so.0.9.8
 
 $(TARGET_DIR)/usr/lib/libssl.a: $(STAGING_DIR)/usr/lib/libcrypto.a
+ifneq ($(BR2_HAVE_HEADERS),y)
 	$(INSTALL) -d $(TARGET_DIR)/usr/include
-	cp -a $(STAGING_DIR)/usr/include/openssl $(TARGET_DIR)/usr/include/
+	cp -rpfR $(STAGING_DIR)/usr/include/openssl $(TARGET_DIR)/usr/include/
+endif
 	$(INSTALL) -D -m 0644 $(STAGING_DIR)/usr/lib/libssl.a $@
 	$(INSTALL) -m 0644 $(STAGING_DIR)/usr/lib/libcrypto.a $(TARGET_DIR)/usr/lib/libcrypto.a
 	touch -c $@
@@ -121,7 +138,8 @@ openssl-clean:
 		$(STAGING_DIR)/usr/lib/pkgconfig/libcrypto.pc
 	rm -f $(TARGET_DIR)/usr/lib/pkgconfig/libssl.pc \
 		$(TARGET_DIR)/usr/lib/pkgconfig/openssl.pc \
-		$(TARGET_DIR)/usr/lib/pkgconfig/libcrypto.pc
+		$(TARGET_DIR)/usr/lib/pkgconfig/libcrypto.pc \
+		$(TARGET_DIR)/usr/include/openssl
 
 openssl-dirclean:
 	rm -rf $(OPENSSL_DIR)
