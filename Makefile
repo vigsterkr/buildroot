@@ -29,7 +29,7 @@ DATE:=$(shell date -u +%Y%m%d)
 
 noconfig_targets:=menuconfig config oldconfig randconfig \
 	defconfig allyesconfig allnoconfig release tags \
-	source-check help
+	silentoldconfig source-check help
 
 # $(shell find . -name *_defconfig |sed 's/.*\///')
 
@@ -422,6 +422,12 @@ oldconfig: $(CONFIG)/conf
 		KCONFIG_AUTOHEADER=$(CONFIG)/buildroot-config/autoconf.h \
 		$(CONFIG)/conf -o $(CONFIG_CONFIG_IN)
 
+silentoldconfig: $(CONFIG)/conf
+	@mkdir -p $(CONFIG)/buildroot-config
+	@KCONFIG_AUTOCONFIG=$(CONFIG)/buildroot-config/auto.conf \
+		KCONFIG_AUTOHEADER=$(CONFIG)/buildroot-config/autoconf.h \
+		$(CONFIG)/conf -s $(CONFIG_CONFIG_IN)
+
 randconfig: $(CONFIG)/conf
 	@mkdir -p $(CONFIG)/buildroot-config
 	@KCONFIG_AUTOCONFIG=$(CONFIG)/buildroot-config/auto.conf \
@@ -485,6 +491,7 @@ help:
 	@echo 'Configuration:'
 	@echo '  menuconfig             - interactive curses-based configurator'
 	@echo '  oldconfig              - resolve any unresolved symbols in .config'
+	@echo '  silentoldconfig        - silently resolve any unresolved symbols in .config'
 	@echo
 	@echo 'Miscellaneous:'
 	@echo '  source                 - download all sources needed for offline-build'
