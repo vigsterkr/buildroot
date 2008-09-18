@@ -5,7 +5,7 @@
 #
 ######################################################################
 
-DEPENDENCIES_HOST_PREREQ:=
+DEPENDENCIES_HOST_PREREQ:= host-libtool
 ifeq ($(BR2_STRIP_sstrip),y)
 DEPENDENCIES_HOST_PREREQ+=sstrip_host
 endif

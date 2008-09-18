@@ -46,7 +46,7 @@ ifneq ($(MPFR_PATCH),)
 endif
 	touch $@
 
-$(MPFR_TARGET_DIR)/.configured: $(MPFR_DIR)/.unpacked $(STAGING_DIR)/usr/lib/$(GMP_BINARY)
+$(MPFR_TARGET_DIR)/.configured: $(MPFR_DIR)/.unpacked $(STAGING_DIR)/usr/lib/$(GMP_BINARY) libtool_cluebait
 	mkdir -p $(MPFR_TARGET_DIR)
 	(cd $(MPFR_TARGET_DIR); rm -rf config.cache; \
 		$(TARGET_CONFIGURE_OPTS) \

@@ -255,7 +255,7 @@ TARGETS_SOURCE:=$(patsubst %,%-source,$(TARGETS) $(BASE_TARGETS))
 TARGETS_DIRCLEAN:=$(patsubst %,%-dirclean,$(TARGETS))
 TARGETS_ALL:=$(patsubst %,__real_tgt_%,$(TARGETS))
 # all targets depend on the crosscompiler and it's prerequisites
-$(TARGETS_ALL): __real_tgt_%: $(BASE_TARGETS) %
+$(TARGETS_ALL): __real_tgt_%: $(BASE_TARGETS) % libtool_cluebait
 
 ifeq ($(BR2__UCLIBC_HAVE_DOT_CONFIG),)
 ifneq ($(findstring uclibc-menuconfig,$(MAKECMDGOALS)),uclibc-menuconfig)
@@ -292,7 +292,12 @@ world: dirs target-host-info $(BASE_TARGETS) $(TARGETS_ALL)
 	$(TARGETS_CLEAN) $(TARGETS_DIRCLEAN) $(TARGETS_SOURCE) \
 	$(DL_DIR) $(TOOL_BUILD_DIR) $(BUILD_DIR) $(STAGING_DIR) $(TARGET_DIR) \
 	$(BR2_DEPENDS_DIR) \
-	$(BINARIES_DIR) $(PROJECT_BUILD_DIR)
+	$(BINARIES_DIR) $(PROJECT_BUILD_DIR) libtool_cluebait
+
+# libtool currently does not play nice with cross-compiling
+libtool_cluebait:
+	$(Q)find $(STAGING_DIR)/lib* -name "*.la" -exec rm -f {} \;
+	$(Q)find $(STAGING_DIR)/usr/lib* -name "*.la" -exec rm -f {} \;
 
 #############################################################
 #
