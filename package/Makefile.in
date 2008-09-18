@@ -14,17 +14,22 @@ MAKE:=$(HOSTMAKE) -j$(BR2_JLEVEL)
 ifeq ($(BR2_TOOLCHAIN_SOURCE),y)
 TARGET_CFLAGS=
 TARGET_LDFLAGS=
+# flags that are inherent part of the tool
+TARGET_CC_FLAGS=
+TARGET_LD_FLAGS=
 
 ifeq ($(BR2_TOOLCHAIN_SYSROOT),y)
-TARGET_CFLAGS+= $(BR2_SYSROOT) $(BR2_ISYSROOT) -I=/usr/include
-TARGET_LDFLAGS+= $(BR2_SYSROOT)
+TARGET_CC_FLAGS+= $(BR2_SYSROOT) $(BR2_ISYSROOT) -I=/usr/include
+TARGET_LD_FLAGS+= $(BR2_SYSROOT)
 else
 # for old gcc's, as fallback
-TARGET_CFLAGS+= -I$(STAGING_DIR)/include
+TARGET_CC_FLAGS+= -I$(STAGING_DIR)/usr/include -I$(STAGING_DIR)/include
 endif
-TARGET_CFLAGS+=$(TARGET_OPTIMIZATION) $(TARGET_DEBUGGING) \
-	-I$(STAGING_DIR)/usr/include
-TARGET_LDFLAGS+=-L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib
+ifeq ($(BR2_ENABLE_MULTILIB),y)
+TARGET_LD_FLAGS+= -L$(STAGING_DIR)/lib64 -L$(STAGING_DIR)/usr/lib64
+endif
+TARGET_LD_FLAGS+= -L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib
+TARGET_CFLAGS += $(TARGET_OPTIMIZATION) $(TARGET_DEBUGGING)
 
 ifeq ($(BR2_bfin),y)
 CC_TARGET_CPU_SUB_:=$(strip $(subst ",,$(BR2_bfin_sirevision)))
@@ -80,13 +85,15 @@ TARGET_CXXFLAGS=$(TARGET_CFLAGS)
 TARGET_FFLAGS=$(TARGET_CFLAGS)
 TARGET_FCFLAGS=$(TARGET_CFLAGS)
 TARGET_F77FLAGS=$(TARGET_CFLAGS)
+TARGET_FC_FLAGS=$(TARGET_CC_FLAGS)
 
 # else it's an external toolchain
 #########################################################################
 else
-TARGET_CFLAGS=$(TARGET_OPTIMIZATION) $(TARGET_DEBUGGING) -I$(STAGING_DIR)/include -I$(STAGING_DIR)/usr/include -I$(TOOLCHAIN_EXTERNAL_PATH)/$(TOOLCHAIN_EXTERNAL_PREFIX)/include
+TARGET_CC_FLAGS=-I$(STAGING_DIR)/include -I$(STAGING_DIR)/usr/include -I$(TOOLCHAIN_EXTERNAL_PATH)/$(TOOLCHAIN_EXTERNAL_PREFIX)/include
+TARGET_CFLAGS=$(TARGET_OPTIMIZATION) $(TARGET_DEBUGGING)
 TARGET_CXXFLAGS=$(TARGET_CFLAGS)
-TARGET_LDFLAGS=-L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib
+TARGET_LD_FLAGS=-L$(STAGING_DIR)/lib -L$(STAGING_DIR)/usr/lib
 endif
 #########################################################################
 
@@ -180,6 +187,7 @@ AUTO_CONFIGURE_TARGET= \
 	$(TARGET_CONFIGURE_ARGS) \
 	$(TARGET_CONFIGURE_ENV) \
 	$(if $(THIS_SRCDIR),$(THIS_SRCDIR)/,./)configure \
+	--cache-file="$(PROJECT_BUILD_DIR)/config.cache" \
 	--target=$(REAL_GNU_TARGET_NAME) \
 	--host=$(REAL_GNU_TARGET_NAME) \
 	--build=$(GNU_HOST_NAME)
@@ -187,13 +195,13 @@ AUTO_CONFIGURE_TARGET= \
 TARGET_CONFIGURE_OPTS=PATH=$(TARGET_PATH) \
 		AR="$(TARGET_AR)" \
 		AS="$(TARGET_AS)" \
-		LD="$(TARGET_LD) $(TARGET_LDFLAGS)" \
+		LD="$(TARGET_LD) $(TARGET_LD_FLAGS)" \
 		NM="$(TARGET_NM)" \
-		CC="$(TARGET_CC) $(TARGET_CFLAGS)" \
-		GCC="$(TARGET_CC) $(TARGET_CFLAGS)" \
-		CPP="$(TARGET_CPP) $(TARGET_CFLAGS)" \
+		CC="$(TARGET_CC) $(TARGET_CC_FLAGS)" \
+		GCC="$(TARGET_CC) $(TARGET_CC_FLAGS)" \
+		CPP="$(TARGET_CPP) $(TARGET_CC_FLAGS)" \
 		CXX="$(if $(BR2_GCC_CROSS_CXX),$(TARGET_CXX) $(TARGET_CXXFLAGS))" \
-		FC="$(TARGET_FC) $(TARGET_FCFLAGS)" \
+		FC="$(TARGET_FC) $(TARGET_FC_FLAGS)" \
 		RANLIB="$(TARGET_RANLIB)" \
 		STRIP="$(TARGET_STRIP)" \
 		OBJCOPY="$(TARGET_OBJCOPY)" \
@@ -321,7 +329,8 @@ TARGET_CONFIGURE_ARGS= \
 	ac_cv_type_mode_t=yes \
 	ac_cv_prog_LEX="$(FLEX)" \
 	ac_cv_prog_YACC="$(BISON) $($(PKG)_BISON_FLAGS)" \
-	$(BR2_AC_CV_C_BIGENDIAN)
+	$(BR2_AC_CV_C_BIGENDIAN) \
+	$(BR2_AC_CV_SUSV3_LEGACY)
 
 #######################################################################
 
