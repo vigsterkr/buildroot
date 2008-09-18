@@ -1,0 +1,11 @@
+--- gdb-6.8/gdb/gdbserver/configure.oorig	2008-02-01 01:08:25.000000000 +0100
++++ gdb-6.8/gdb/gdbserver/configure	2008-09-18 15:24:59.000000000 +0200
+@@ -1239,7 +1239,7 @@
+       ac_cache_corrupted=: ;;
+     ,);;
+     *)
+-      if test "x$ac_old_val" != "x$ac_new_val"; then
++      if test "`echo x$ac_old_val`" != "`echo x$ac_new_val`"; then
+ 	{ echo "$as_me:$LINENO: error: \`$ac_var' has changed since the previous run:" >&5
+ echo "$as_me: error: \`$ac_var' has changed since the previous run:" >&2;}
+ 	{ echo "$as_me:$LINENO:   former value:  $ac_old_val" >&5
