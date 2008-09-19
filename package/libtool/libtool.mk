@@ -128,6 +128,7 @@ ifneq ($(BR2_HAVE_MANPAGES),y)
 	rm -rf $(STAGING_DIR)/usr/share/man
 endif
 	$(INSTALL) -D -m0755 $^ $@
+	$(INSTALL) -D -m0755 $(^)ize $(@)ize
 	touch -c $@
 
 host-libtool: $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY)
@@ -135,6 +136,8 @@ host-libtool: $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY)
 host-libtool-clean:
 	-$(MAKE) -C $(LIBTOOL_HOST_DIR) clean
 	$(MAKE) -C $(LIBTOOL_HOST_DIR) uninstall
+	rm -f $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY) \
+		  $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY)ize
 
 host-libtool-dirclean:
 	rm -rf $(LIBTOOL_HOST_DIR) $(LIBTOOL_SRC_DIR)
