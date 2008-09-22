@@ -303,6 +303,20 @@ RUBY=$(which ruby 2> /dev/null)
 	exit 1
   fi
 fi
+
+#############################################################
+#
+# check build system 'help2man'
+#
+#############################################################
+if ! which help2man > /dev/null ; then
+	echo "help2man installed:		    FALSE"
+	/bin/echo -e "\n\nYou should install 'help2man' on your build machine\n";
+	#exit 1;
+fi;
+echo "help2man installed:					Ok"
+
+
 #############################################################
 #
 # All done
