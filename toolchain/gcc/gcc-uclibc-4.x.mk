@@ -193,7 +193,7 @@ GCC_BUILD_DIR1:=$(TOOL_BUILD_DIR)/gcc-$(GCC_VERSION)-initial
 $(GCC_BUILD_DIR1)/.configured: $(GCC_DIR)/.patched $(wildcard $(BR2_DEPENDS_DIR)/br2/use/*updates*)
 	mkdir -p $(GCC_BUILD_DIR1)
 ifeq ($(BR2_USE_UPDATES),y)
-	(cd $(GCC_DIR) && $(SVN_UP))
+	(cd $(GCC_DIR) && ./contrib/gcc_update)
 endif
 	(cd $(GCC_BUILD_DIR1); rm -rf config.cache; \
 		$(HOST_CONFIGURE_OPTS) \
