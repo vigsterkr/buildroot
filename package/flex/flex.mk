@@ -43,7 +43,7 @@ $(FLEX_DIR)/.configured: $(FLEX_DIR)/.unpacked
 	touch $@
 
 $(FLEX_DIR)/$(FLEX_BINARY): $(FLEX_DIR)/.configured
-	$(MAKE) -C $(FLEX_DIR)
+	$(MAKE1) -C $(FLEX_DIR)
 
 $(TARGET_DIR)/$(FLEX_TARGET_BINARY): $(FLEX_DIR)/$(FLEX_BINARY)
 	$(MAKE1) -C $(FLEX_DIR) \
