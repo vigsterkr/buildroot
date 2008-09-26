@@ -19,7 +19,8 @@ LTP_PATCHES:=\
 	ltp-testsuite.asm-page-include.patch \
 	ltp-testsuite.obsolete-bsd-signal.patch \
 	ltp-testsuite.susv3-legacy.patch \
-	ltp-testsuite.conflicting-lseek-decl.patch
+	ltp-testsuite.conflicting-lseek-decl.patch \
+	ltp-testsuite.ignore-missing-proc.patch
 
 ifeq ($(BR2_PTHREADS_NATIVE),y)
 LTP_PATCHES+=ltp-testsuite-enable-openposix-for-nptl.patch

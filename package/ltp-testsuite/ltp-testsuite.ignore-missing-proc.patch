@@ -1,0 +1,7 @@
+--- ltp-full-20080831.oorig/ver_linux	2008-08-31 16:32:57.000000000 +0200
++++ ltp-full-20080831/ver_linux	2008-09-26 18:47:58.000000000 +0200
+@@ -84,3 +84,4 @@
+ echo
+ echo '/proc/cpuinfo'
+ cat /proc/cpuinfo
++true
