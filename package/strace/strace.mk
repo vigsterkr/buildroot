@@ -3,7 +3,7 @@
 # strace
 #
 #############################################################
-STRACE_VERSION:=4.5.15
+STRACE_VERSION:=4.5.18
 STRACE_SOURCE:=strace-$(STRACE_VERSION).tar.bz2
 STRACE_SITE:=http://$(BR2_SOURCEFORGE_MIRROR).dl.sourceforge.net/sourceforge/strace
 STRACE_CAT:=$(BZCAT)
@@ -21,26 +21,13 @@ strace-source: $(DL_DIR)/$(STRACE_SOURCE)
 
 $(STRACE_DIR)/.unpacked: $(DL_DIR)/$(STRACE_SOURCE)
 	$(STRACE_CAT) $(DL_DIR)/$(STRACE_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	toolchain/patch-kernel.sh $(STRACE_DIR) package/strace strace\*.patch
+	toolchain/patch-kernel.sh $(STRACE_DIR) package/strace strace-$(STRACE_VERSION)\*.patch
 	$(CONFIG_UPDATE) $(@D)
 	touch $@
 
 $(STRACE_DIR)/.configured: $(STRACE_DIR)/.unpacked
 	(cd $(STRACE_DIR); rm -rf config.cache; \
-		$(if $(BR_LARGEFILE),ac_cv_type_stat64=yes,ac_cv_type_stat64=no) \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		CFLAGS="$(TARGET_CFLAGS) $(BR2_STRACE_CFLAGS)" \
-		ac_cv_header_linux_icmp_h=yes \
-		ac_cv_header_linux_if_packet_h=yes \
-		ac_cv_header_linux_netlink_h=yes \
-		ac_cv_header_linux_in6_h=yes \
-		$(if $(BR2__UCLIBC_UCLIBC_HAS_SYS_ERRLIST),ac_cv_have_decl_sys_errlist=yes,ac_cv_have_decl_sys_errlist=no) \
-		$(if $(BR2__UCLIBC_UCLIBC_HAS_SYS_SIGLIST),ac_cv_have_decl_sys_siglist=yes,ac_cv_have_decl_sys_siglist=no) \
-		./configure \
-		--target=$(REAL_GNU_TARGET_NAME) \
-		--host=$(REAL_GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -56,11 +43,12 @@ $(STRACE_DIR)/.configured: $(STRACE_DIR)/.unpacked
 	touch $@
 
 $(STRACE_DIR)/strace: $(STRACE_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) -C $(STRACE_DIR)
+	$(MAKE) -C $(STRACE_DIR)
+	touch -c $@
 
 $(TARGET_DIR)/usr/bin/strace: $(STRACE_DIR)/strace
-	$(INSTALL) -D $(STRACE_DIR)/strace $(TARGET_DIR)/usr/bin/strace
-	$(STRIPCMD) $(STRIP_STRIP_ALL) $(TARGET_DIR)/usr/bin/strace
+	$(INSTALL) -D $< $@
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 ifeq ($(BR2_CROSS_TOOLCHAIN_TARGET_UTILS),y)
 	$(INSTALL) -D $(TARGET_DIR)/usr/bin/strace \
 		$(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils/strace
