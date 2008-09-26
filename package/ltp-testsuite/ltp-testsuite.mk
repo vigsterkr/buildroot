@@ -13,11 +13,13 @@ LTP_TESTSUITE_DIR:=$(LTP_TESTSUITE_ROOT)/ltp-full-$(LTP_TESTSUITE_VERSION)
 #
 # Enable patches based upon different toolchain configuration options.
 #
-LTP_PATCHES:=ltp-testsuite-generate-needs-bash.patch \
-	     ltp-testsuite.patch \
-	     ltp-testsuite.asm-page-include.patch \
-	     ltp-testsuite.obsolete-bsd-signal.patch \
-	     ltp-testsuite.susv3-legacy.patch
+LTP_PATCHES:=\
+	ltp-testsuite-generate-needs-bash.patch \
+	ltp-testsuite.patch \
+	ltp-testsuite.asm-page-include.patch \
+	ltp-testsuite.obsolete-bsd-signal.patch \
+	ltp-testsuite.susv3-legacy.patch \
+	ltp-testsuite.conflicting-lseek-decl.patch
 
 ifeq ($(BR2_PTHREADS_NATIVE),y)
 LTP_PATCHES+=ltp-testsuite-enable-openposix-for-nptl.patch

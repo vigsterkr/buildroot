@@ -1,0 +1,27 @@
+--- ltp-full-20080831.oorig/testcases/kernel/syscalls/fork/fork10.c	2008-08-31 16:33:17.000000000 +0200
++++ ltp-full-20080831/testcases/kernel/syscalls/fork/fork10.c	2008-09-26 17:43:36.000000000 +0200
+@@ -42,6 +42,7 @@
+ #include <sys/types.h>
+ #include <sys/wait.h>
+ #include <sys/stat.h>
++#include <unistd.h>
+ #include <fcntl.h>
+ #include <stdio.h>
+ #include <errno.h>
+@@ -63,7 +64,6 @@ int main(int ac, char **av)
+ 	int status, pid, fildes;
+ 	char parchar[2];
+ 	char chilchar[2];
+-	long lseek();
+ 
+ 	int lc;			/* loop counter */
+ 	char *msg;		/* message returned from parse_opts */
+@@ -191,7 +191,7 @@ setup()
+ 	 * make a temp directory and cd to it
+ 	 */
+ 	tst_tmpdir();
+-	
++
+ 	strcpy(fnamebuf, "fork10.");
+ 	sprintf(pidbuf, "%d", getpid());
+ 	strcat(fnamebuf, pidbuf);
