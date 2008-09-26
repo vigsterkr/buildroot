@@ -3,7 +3,7 @@
 # autoconf
 #
 #############################################################
-AUTOCONF_VERSION:=2.61
+AUTOCONF_VERSION:=2.63
 AUTOCONF_SOURCE:=autoconf-$(AUTOCONF_VERSION).tar.bz2
 AUTOCONF_SITE:=$(BR2_GNU_MIRROR)/autoconf
 AUTOCONF_CAT:=$(BZCAT)
@@ -22,6 +22,7 @@ $(DL_DIR)/$(AUTOCONF_SOURCE):
 
 $(AUTOCONF_SRC_DIR)/.unpacked: $(DL_DIR)/$(AUTOCONF_SOURCE)
 	$(AUTOCONF_CAT) $(DL_DIR)/$(AUTOCONF_SOURCE) | tar -C $(TOOL_BUILD_DIR) $(TAR_OPTIONS) -
+	$(CONFIG_UPDATE) $(@D)/build-aux
 	touch $@
 
 #############################################################
@@ -30,16 +31,11 @@ $(AUTOCONF_SRC_DIR)/.unpacked: $(DL_DIR)/$(AUTOCONF_SOURCE)
 #
 #############################################################
 
+$(AUTOCONF_DIR)/.configured: THIS_SRCDIR=$(AUTOCONF_SRC_DIR)
 $(AUTOCONF_DIR)/.configured: $(AUTOCONF_SRC_DIR)/.unpacked
 	mkdir -p $(AUTOCONF_DIR)
 	(cd $(AUTOCONF_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		EMACS="no" \
-		$(AUTOCONF_SRC_DIR)/configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/usr/bin \
@@ -55,7 +51,7 @@ $(AUTOCONF_DIR)/.configured: $(AUTOCONF_SRC_DIR)/.unpacked
 	touch $@
 
 $(AUTOCONF_DIR)/bin/$(AUTOCONF_BINARY): $(AUTOCONF_DIR)/.configured
-	$(MAKE1) -C $(AUTOCONF_DIR)
+	$(MAKE) -C $(AUTOCONF_DIR)
 
 $(TARGET_DIR)/$(AUTOCONF_TARGET_BINARY): $(AUTOCONF_DIR)/bin/$(AUTOCONF_BINARY)
 	$(MAKE) \
@@ -87,7 +83,7 @@ autoconf: uclibc $(TARGET_DIR)/$(AUTOCONF_TARGET_BINARY)
 autoconf-source: $(DL_DIR)/$(AUTOCONF_SOURCE)
 
 autoconf-clean:
-	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(AUTOCONF_DIR) uninstall
+	-$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(AUTOCONF_DIR) uninstall
 	-$(MAKE) -C $(AUTOCONF_DIR) clean
 
 autoconf-dirclean:
@@ -112,7 +108,7 @@ $(AUTOCONF_HOST_DIR)/.configured: $(AUTOCONF_SRC_DIR)/.unpacked
 	touch $@
 
 $(AUTOCONF_HOST_DIR)/bin/$(AUTOCONF_BINARY): $(AUTOCONF_HOST_DIR)/.configured
-	$(MAKE1) -C $(AUTOCONF_HOST_DIR)
+	$(MAKE) -C $(AUTOCONF_HOST_DIR)
 
 $(AUTOCONF): $(AUTOCONF_HOST_DIR)/bin/$(AUTOCONF_BINARY)
 	$(MAKE) -C $(AUTOCONF_HOST_DIR) install
@@ -120,7 +116,7 @@ $(AUTOCONF): $(AUTOCONF_HOST_DIR)/bin/$(AUTOCONF_BINARY)
 host-autoconf: host-m4 host-libtool $(AUTOCONF)
 
 host-autoconf-clean:
-	$(MAKE) CC=$(HOST_CC) -C $(AUTOCONF_HOST_DIR) uninstall
+	-$(MAKE) CC=$(HOST_CC) -C $(AUTOCONF_HOST_DIR) uninstall
 	-$(MAKE) -C $(AUTOCONF_HOST_DIR) clean
 
 host-autoconf-dirclean:
