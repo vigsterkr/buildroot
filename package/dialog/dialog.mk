@@ -3,7 +3,7 @@
 # dialog
 #
 #############################################################
-DIALOG_VERSION:=1.1-20071028
+DIALOG_VERSION:=1.1-20080819
 DIALOG_SOURCE:=dialog-$(DIALOG_VERSION).tgz
 DIALOG_SITE:=ftp://invisible-island.net/dialog
 DIALOG_DIR:=$(BUILD_DIR)/dialog-$(DIALOG_VERSION)
