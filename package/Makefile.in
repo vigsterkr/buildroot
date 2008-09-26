@@ -320,6 +320,21 @@ BR2_AC_CV_FUNC_MALLOC_0_NONNULL=ac_cv_func_malloc_0_nonnull=no \
 				gl_cv_func_malloc_0_nonnull=no \
 				ac_cv_func_realloc_0_nonnull=no
 endif
+ifeq ($(BR2__UCLIBC_UCLIBC_HAS_SYS_ERRLIST),y)
+BR2_AC_CV_HAVE_DECL_ERRLIST=ac_cv_have_decl_sys_errlist=yes
+else
+BR2_AC_CV_HAVE_DECL_ERRLIST=ac_cv_have_decl_sys_errlist=no
+endif
+ifeq ($(BR2__UCLIBC_UCLIBC_HAS_SYS_SIGLIST),y)
+BR2_AC_CV_HAVE_DECL_SIGLIST=ac_cv_have_decl_sys_siglist=yes
+else
+BR2_AC_CV_HAVE_DECL_SIGLIST=ac_cv_have_decl_sys_siglist=no
+endif
+ifeq ($(BR_LARGEFILE),y)
+BR2_AC_CV_TYPE_STAT64=ac_cv_type_stat64=yes
+else
+BR2_AC_CV_TYPE_STAT64=ac_cv_type_stat64=no
+endif
 
 ifeq ($(findstring y,$(BR2__UCLIBC_UCLIBC_SUSV3_LEGACY)$(BR2__UCLIBC_UCLIBC_SUSV3_LEGACY_MACROS)),y)
 BR2_AC_CV_SUSV3_LEGACY=
@@ -330,6 +345,9 @@ TARGET_CONFIGURE_ARGS= \
 	ac_cv_func_mmap_fixed_mapped=yes \
 	ac_cv_func_memcmp_working=yes \
 	$(BR2_AC_CV_FUNC_MALLOC_0_NONNULL) \
+	$(BR2_AC_CV_HAVE_DECL_ERRLIST) \
+	$(BR2_AC_CV_HAVE_DECL_SIGLIST) \
+	$(BR2_AC_CV_TYPE_STAT64) \
 	ac_cv_type_mode_t=yes \
 	ac_cv_prog_LEX="$(FLEX)" \
 	ac_cv_prog_YACC="$(BISON) $($(PKG)_BISON_FLAGS)" \
