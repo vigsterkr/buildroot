@@ -482,7 +482,7 @@ else
 		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
 		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS) $(__UCLIBC_EXTRA_TARGET_CFLAGS)" \
-		install_dev
+		install_headers
 endif
 	# Install the kernel headers to the first stage gcc include dir
 ifeq ($(LINUX_HEADERS_IS_KERNEL),y)
