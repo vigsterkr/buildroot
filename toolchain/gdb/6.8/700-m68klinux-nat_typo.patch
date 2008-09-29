@@ -1,0 +1,12 @@
+diff -rdup gdb-6.8.oorig/gdb/m68klinux-nat.c gdb-6.8/gdb/m68klinux-nat.c
+--- gdb-6.8.oorig/gdb/m68klinux-nat.c	2008-02-18 20:58:27.000000000 +0100
++++ gdb-6.8/gdb/m68klinux-nat.c	2008-09-29 21:53:44.000000000 +0200
+@@ -179,7 +179,7 @@ old_fetch_inferior_registers (struct reg
+ static void
+ store_register (const struct regcache *regcache, int regno)
+ {
+-  struct gdbarch *gdbarch = reg_regcache_arch (regcache);
++  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+   /* This isn't really an address.  But ptrace thinks of it as one.  */
+   CORE_ADDR regaddr;
+   char mess[128];		/* For messages */
