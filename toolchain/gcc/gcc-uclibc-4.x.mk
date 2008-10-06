@@ -392,11 +392,13 @@ gcc-clean:
 	for prog in cpp gcc gcc-[0-9]* cc gfortran \
 		protoize unprotoize gcov gccbug g++; do \
 		rm -f $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-$$prog \
+		      $(STAGING_DIR)/usr/$(REAL_GNU_TARGET_NAME)/bin/$$prog \
 			$(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-$$prog; \
 	done
 	for lib in libgcc_s.* libgcc_eh.* libgcc.*; do \
-	  rm -f $(STAGING_DIR)/usr/$(REAL_GNU_TARGET_NAME)/lib/$$lib \
-	   $(STAGING_DIR)/usr/lib/gcc/$(REAL_GNU_TARGET_NAME)/$(GCC_VERSION)/$$lib; \
+	  rm -rf $(STAGING_DIR)/usr/$(REAL_GNU_TARGET_NAME)/lib/$$lib \
+	   $(STAGING_DIR)/usr/lib/gcc/$(REAL_GNU_TARGET_NAME)/$(GCC_VERSION) \
+	   $(STAGING_DIR)/usr/libexec/gcc/$(REAL_GNU_TARGET_NAME)/$(GCC_VERSION); \
 	done
 	rm -f $(STAGING_DIR)/usr/bin/cc
 
@@ -527,12 +529,14 @@ gcc_target-clean:
 	for prog in cpp gcc gcc-[0-9]* cc gfortran \
 		protoize unprotoize gcov gccbug g++; do \
 		rm -f $(TARGET_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-$$prog \
+		      $(TARGET_DIR)/usr/$(REAL_GNU_TARGET_NAME)/bin/$$prog \
 			$(TARGET_DIR)/usr/bin/$(GNU_TARGET_NAME)-$$prog \
 			$(TARGET_DIR)/usr/bin/$$prog; \
 	done
 	for lib in libgcc_s.* libgcc_eh.* libgcc.*; do \
-	  rm -f $(TARGET_DIR)/usr/$(REAL_GNU_TARGET_NAME)/lib/$$lib \
-	   $(TARGET_DIR)/usr/lib/gcc/$(REAL_GNU_TARGET_NAME)/$(GCC_VERSION)/$$lib; \
+	  rm -rf $(TARGET_DIR)/usr/$(REAL_GNU_TARGET_NAME)/lib/$$lib \
+	   $(TARGET_DIR)/usr/lib/gcc/$(REAL_GNU_TARGET_NAME)/$(GCC_VERSION) \
+	   $(TARGET_DIR)/usr/libexec/gcc/$(REAL_GNU_TARGET_NAME)/$(GCC_VERSION); \
 	done
 	rm -f $(TARGET_DIR)/usr/bin/cc
 
