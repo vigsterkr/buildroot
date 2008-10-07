@@ -1,71 +1,101 @@
-Index: gcc-4.4.0/libgcc/shared-object.mk
-===================================================================
---- gcc-4.4.0/libgcc/shared-object.mk	(revision 136612)
-+++ gcc-4.4.0/libgcc/shared-object.mk	(working copy)
-@@ -8,11 +8,22 @@ base := $(basename $(notdir $o))
+diff -rdup gcc-4.4.0.old/gcc/gbl-ctors.h gcc-4.4.0/gcc/gbl-ctors.h
+--- gcc-4.4.0.old/gcc/gbl-ctors.h	2005-10-31 18:03:18.000000000 +0100
++++ gcc-4.4.0/gcc/gbl-ctors.h	2008-10-07 09:20:26.000000000 +0200
+@@ -38,6 +38,8 @@ Software Foundation, 51 Franklin Street,
+ 	Note that this file should only be compiled with GCC.
+ */
  
- ifeq ($(suffix $o),.c)
++#ifndef GCC_GBL_CTORS_H
++#define GCC_GBL_CTORS_H
+ /*  Declare a pointer to void function type.  */
  
-+ifeq ($(onestep),)
- $(base)$(objext): $o
- 	$(gcc_compile) $(c_flags) -c $< $(vis_hide)
+ typedef void (*func_ptr) (void);
+@@ -84,3 +86,4 @@ do {									\
+ } while (0)
+ #endif
  
- $(base)_s$(objext): $o
- 	$(gcc_s_compile) $(c_flags) -c $<
-+else
-+$(iter-item-onestep)_onestep$(objext): $o
-+$(iter-item-onestep)_s_onestep$(objext): $o
-+ifeq ($(iter-items),)
-+$(iter-item-onestep)_onestep$(objext):
-+	$(gcc_compile) $(c_flags) $^ $(vis_hide) -c -combine
-+$(iter-item-onestep)_s_onestep$(objext):
-+	$(gcc_s_compile) $(c_flags) $^ -c -combine
-+endif
-+endif
++#endif /* GCC_GBL_CTORS_H */
+diff -rdup gcc-4.4.0.old/gcc/libgcc2.c gcc-4.4.0/gcc/libgcc2.c
+--- gcc-4.4.0.old/gcc/libgcc2.c	2008-06-09 19:58:55.000000000 +0200
++++ gcc-4.4.0/gcc/libgcc2.c	2008-10-07 09:20:26.000000000 +0200
+@@ -1538,17 +1538,17 @@ FUNC (DWtype u)
+    && SIZE > (DI_SIZE - SIZE + FSSIZE)					\
+    && !AVOID_FP_TYPE_CONVERSION(SIZE))
+ #if defined(L_floatundisf)
+-#define FUNC __floatundisf
++#define FUNCU __floatundisf
+ #define FSTYPE SFtype
+ #define FSSIZE SF_SIZE
+ #else
+-#define FUNC __floatundidf
++#define FUNCU __floatundidf
+ #define FSTYPE DFtype
+ #define FSSIZE DF_SIZE
+ #endif
  
- else
+ FSTYPE
+-FUNC (UDWtype u)
++FUNCU (UDWtype u)
+ {
+ #if FSSIZE >= W_TYPE_SIZE
+   /* When the word size is small, we never get any rounding error.  */
+diff -rdup gcc-4.4.0.old/libgcc/config/libbid/bid128_div.c gcc-4.4.0/libgcc/config/libbid/bid128_div.c
+--- gcc-4.4.0.old/libgcc/config/libbid/bid128_div.c	2007-10-12 10:14:39.000000000 +0200
++++ gcc-4.4.0/libgcc/config/libbid/bid128_div.c	2008-10-07 09:20:26.000000000 +0200
+@@ -34,9 +34,9 @@ Software Foundation, 51 Franklin Street,
+ #define FE_ALL_FLAGS FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW|FE_UNDERFLOW|FE_INEXACT
+ #endif
  
-@@ -22,6 +33,7 @@ $(error Unsupported file type: $o)
- endif
- endif
+-extern UINT32 convert_table[5][128][2];
+-extern SINT8 factors[][2];
+-extern UINT8 packed_10000_zeros[];
++extern const UINT32 convert_table[5][128][2];
++extern const SINT8 factors[][2];
++extern const UINT8 packed_10000_zeros[];
  
-+ifeq ($(onestep),)
- $(base)$(objext): $o $(base).vis
- 	$(gcc_compile) -c -xassembler-with-cpp -include $*.vis $<
+ BID128_FUNCTION_ARG2 (bid128_div, x, y)
  
-@@ -30,5 +42,18 @@ $(base).vis: $(base)_s$(objext)
+diff -rdup gcc-4.4.0.old/libgcc/config/libbid/bid64_div.c gcc-4.4.0/libgcc/config/libbid/bid64_div.c
+--- gcc-4.4.0.old/libgcc/config/libbid/bid64_div.c	2007-10-12 10:14:39.000000000 +0200
++++ gcc-4.4.0/libgcc/config/libbid/bid64_div.c	2008-10-07 09:20:26.000000000 +0200
+@@ -66,9 +66,9 @@ Software Foundation, 51 Franklin Street,
+ #define FE_ALL_FLAGS FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW|FE_UNDERFLOW|FE_INEXACT
+ #endif
  
- $(base)_s$(objext): $o
- 	$(gcc_s_compile) -c -xassembler-with-cpp $<
-+else
-+$(iter-item-onestep)_onestep$(objext): $o
-+$(iter-item-onestep)_s_onestep$(objext): $o
-+ifeq ($(iter-items),)
-+$(iter-item-onestep)_onestep$(objext): $(iter-item-onestep).vis
-+	$(gcc_compile) -xassembler-with-cpp -include $*.vis \
-+		$(filter-out $(iter-item-onestep).vis,$^) -c -combine
-+$(iter-item-onestep).vis: $(iter-item-onestep)_s_onestep$(objext)
-+	$(gen-hide-list)
-+$(iter-item-onestep)_s_onestep$(objext):
-+	$(gcc_s compile) -xassembler-with-cpp $^ -c -combine
-+endif
-+endif
+-extern UINT32 convert_table[5][128][2];
+-extern SINT8 factors[][2];
+-extern UINT8 packed_10000_zeros[];
++extern const UINT32 convert_table[5][128][2];
++extern const SINT8 factors[][2];
++extern const UINT8 packed_10000_zeros[];
  
- endif
-Index: gcc-4.4.0/libgcc/configure
-===================================================================
---- gcc-4.4.0/libgcc/configure	(revision 136612)
-+++ gcc-4.4.0/libgcc/configure	(working copy)
+ 
+ #if DECIMAL_CALL_BY_REFERENCE
+@@ -1366,11 +1366,6 @@ if (!done) {
+ 
+ //#define LEAVE_TRAILING_ZEROS
+ 
+-extern UINT32 convert_table[5][128][2];
+-extern SINT8 factors[][2];
+-extern UINT8 packed_10000_zeros[];
+-
+-
+ //UINT64* bid64_div128x128(UINT64 res, UINT128 *px, UINT128 *py, unsigned rnd_mode, unsigned *pfpsf) 
+ 
+ TYPE0_FUNCTION_ARG128_ARG128 (UINT64, bid64qq_div, x, y)
+diff -rdup gcc-4.4.0.old/libgcc/configure gcc-4.4.0/libgcc/configure
+--- gcc-4.4.0.old/libgcc/configure	2008-10-07 09:00:09.000000000 +0200
++++ gcc-4.4.0/libgcc/configure	2008-10-07 09:20:42.000000000 +0200
 @@ -272,7 +272,7 @@ PACKAGE_STRING='GNU C Runtime Library 1.
  PACKAGE_BUGREPORT=''
  
  ac_unique_file="static-object.mk"
--ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS libgcc_topdir enable_shared slibdir INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AWK build build_cpu build_vendor build_os host host_cpu host_vendor host_os host_noncanonical build_libsubdir build_subdir host_subdir target_subdir AR ac_ct_AR LIPO ac_ct_LIPO NM ac_ct_NM RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP LN_S CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP decimal_float enable_decimal_float fixed_point vis_hide set_have_cc_tls tmake_file extra_parts asm_hidden_op LIBOBJS LTLIBOBJS'
-+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS libgcc_topdir enable_shared slibdir onestep INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AWK build build_cpu build_vendor build_os host host_cpu host_vendor host_os host_noncanonical build_libsubdir build_subdir host_subdir target_subdir AR ac_ct_AR LIPO ac_ct_LIPO NM ac_ct_NM RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP LN_S CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP decimal_float enable_decimal_float fixed_point vis_hide set_have_cc_tls tmake_file extra_parts asm_hidden_op LIBOBJS LTLIBOBJS'
+-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS libgcc_topdir enable_shared slibdir INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AWK build build_cpu build_vendor build_os host host_cpu host_vendor host_os host_noncanonical build_libsubdir build_subdir host_subdir target_subdir AR ac_ct_AR LIPO ac_ct_LIPO NM ac_ct_NM RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP LN_S CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP decimal_float enable_decimal_float fixed_point vis_hide set_have_cc_tls LIBGCC_LIBM tmake_file extra_parts asm_hidden_op LIBOBJS LTLIBOBJS'
++ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS libgcc_topdir enable_shared slibdir onestep INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA AWK build build_cpu build_vendor build_os host host_cpu host_vendor host_os host_noncanonical build_libsubdir build_subdir host_subdir target_subdir AR ac_ct_AR LIPO ac_ct_LIPO NM ac_ct_NM RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP LN_S CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP decimal_float enable_decimal_float fixed_point vis_hide set_have_cc_tls LIBGCC_LIBM tmake_file extra_parts asm_hidden_op LIBOBJS LTLIBOBJS'
  ac_subst_files=''
+ ac_pwd=`pwd`
  
- # Initialize some variables set by options.
-@@ -811,6 +811,7 @@ Optional Features:
+@@ -812,6 +812,7 @@ Optional Features:
    --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
    --disable-shared        don't provide a shared libgcc
    --enable-version-specific-runtime-libs    Specify that runtime libraries should be installed in a compiler-specific directory
@@ -73,7 +103,7 @@ Index: gcc-4.4.0/libgcc/configure
    --enable-decimal-float={no,yes,bid,dpd}
  			enable decimal float extension to C.  Selecting 'bid'
  			or 'dpd' choses which decimal floating point format
-@@ -1404,6 +1405,23 @@ fi
+@@ -1419,6 +1420,23 @@ fi
  fi;
  
  
@@ -97,7 +127,7 @@ Index: gcc-4.4.0/libgcc/configure
  # Find a good install program.  We prefer a C program (faster),
  # so one script is as good as another.  But avoid the broken or
  # incompatible versions:
-@@ -4159,6 +4177,7 @@ s,@LIBS@,$LIBS,;t t
+@@ -4241,6 +4259,7 @@ s,@LIBS@,$LIBS,;t t
  s,@libgcc_topdir@,$libgcc_topdir,;t t
  s,@enable_shared@,$enable_shared,;t t
  s,@slibdir@,$slibdir,;t t
@@ -105,11 +135,32 @@ Index: gcc-4.4.0/libgcc/configure
  s,@INSTALL_PROGRAM@,$INSTALL_PROGRAM,;t t
  s,@INSTALL_SCRIPT@,$INSTALL_SCRIPT,;t t
  s,@INSTALL_DATA@,$INSTALL_DATA,;t t
-Index: gcc-4.4.0/libgcc/Makefile.in
-===================================================================
---- gcc-4.4.0/libgcc/Makefile.in	(revision 136612)
-+++ gcc-4.4.0/libgcc/Makefile.in	(working copy)
-@@ -164,6 +164,8 @@ STRIP_FOR_TARGET = $(STRIP)
+diff -rdup gcc-4.4.0.old/libgcc/configure.ac gcc-4.4.0/libgcc/configure.ac
+--- gcc-4.4.0.old/libgcc/configure.ac	2008-10-07 08:59:50.000000000 +0200
++++ gcc-4.4.0/libgcc/configure.ac	2008-10-07 09:20:26.000000000 +0200
+@@ -78,6 +78,18 @@ else
+ fi)
+ AC_SUBST(slibdir)
+ 
++# Build with intermodule optimisations
++AC_MSG_CHECKING([for --enable-intermodule])
++AC_ARG_ENABLE(intermodule,
++[  --enable-intermodule    build the library in one step],
++[case "$enable_intermodule" in
++  yes) onestep="-onestep";;
++    *) onestep="";;
++esac],
++[onestep=""])
++AC_MSG_RESULT($enable_intermodule)
++AC_SUBST(onestep)
++
+ AC_PROG_INSTALL
+ 
+ AC_PROG_AWK
+diff -rdup gcc-4.4.0.old/libgcc/Makefile.in gcc-4.4.0/libgcc/Makefile.in
+--- gcc-4.4.0.old/libgcc/Makefile.in	2008-10-07 08:59:50.000000000 +0200
++++ gcc-4.4.0/libgcc/Makefile.in	2008-10-07 09:20:26.000000000 +0200
+@@ -165,6 +165,8 @@ STRIP_FOR_TARGET = $(STRIP)
  libsubdir = $(libdir)/gcc/$(host_noncanonical)/$(version)
  # Used to install the shared libgcc.
  slibdir = @slibdir@
@@ -313,7 +364,7 @@ Index: gcc-4.4.0/libgcc/Makefile.in
  endif
  
  endif
-@@ -645,8 +705,11 @@ c_flags := -fexceptions
+@@ -693,8 +753,11 @@ c_flags := -fexceptions
  ifeq ($(enable_shared),yes)
  
  libgcc-eh-objects += $(addsuffix $(objext),$(basename $(notdir $(LIB2ADDEHSTATIC))))
@@ -325,7 +376,7 @@ Index: gcc-4.4.0/libgcc/Makefile.in
  iter-items := $(sort $(LIB2ADDEHSTATIC) $(LIB2ADDEHSHARED))
  include $(iterator)
  
-@@ -654,6 +717,7 @@ else
+@@ -702,6 +765,7 @@ else
  # Not shared.  LIB2ADDEH are added to libgcc.a.
  
  libgcc-objects += $(addsuffix $(objext),$(basename $(notdir $(LIB2ADDEH))))
@@ -333,7 +384,7 @@ Index: gcc-4.4.0/libgcc/Makefile.in
  
  iter-items := $(LIB2ADDEH)
  include $(iterator)
-@@ -665,11 +729,14 @@ endif
+@@ -713,11 +777,14 @@ endif
  c_flags := -fexceptions
  
  libunwind-objects += $(addsuffix $(objext),$(basename $(notdir $(LIBUNWIND))))
@@ -348,7 +399,7 @@ Index: gcc-4.4.0/libgcc/Makefile.in
  iter-items := $(LIBUNWIND)
  include $(iterator)
  
-@@ -678,12 +745,37 @@ libgcov-objects = $(patsubst %,%$(objext
+@@ -726,12 +793,37 @@ libgcov-objects = $(patsubst %,%$(objext
  $(libgcov-objects): %$(objext): $(gcc_srcdir)/libgcov.c
  	$(gcc_compile) -DL$* -c $(gcc_srcdir)/libgcov.c
  
@@ -390,7 +441,7 @@ Index: gcc-4.4.0/libgcc/Makefile.in
  
  libgcc.a libgcov.a libunwind.a libgcc_eh.a:
  	-rm -f $@
-@@ -717,8 +809,8 @@ ifeq ($(enable_shared),yes)
+@@ -765,8 +857,8 @@ ifeq ($(enable_shared),yes)
  
  # Map-file generation.
  ifneq ($(SHLIB_MKMAP),)
@@ -401,7 +452,7 @@ Index: gcc-4.4.0/libgcc/Makefile.in
  	  cat $(SHLIB_MAPFILES) \
  	    | sed -e '/^[ 	]*#/d' \
  		  -e 's/^%\(if\|else\|elif\|endif\|define\)/#\1/' \
-@@ -729,7 +821,7 @@ libgcc_s$(SHLIB_EXT): libgcc.map
+@@ -777,7 +869,7 @@ libgcc_s$(SHLIB_EXT): libgcc.map
  mapfile = libgcc.map
  endif
  
@@ -410,131 +461,71 @@ Index: gcc-4.4.0/libgcc/Makefile.in
  	# @multilib_flags@ is still needed because this may use
  	# $(GCC_FOR_TARGET) and $(LIBGCC2_CFLAGS) directly.
  	# @multilib_dir@ is not really necessary, but sometimes it has
-@@ -743,7 +835,7 @@ libgcc_s$(SHLIB_EXT): $(libgcc-s-objects
+@@ -792,7 +884,7 @@ libgcc_s$(SHLIB_EXT): $(libgcc-s-objects
  		@shlib_slibdir_qual@,$(MULTIOSSUBDIR),$(subst \
- 		@shlib_slibdir@,$(shlib_slibdir),$(SHLIB_LINK))))))))
+ 		@shlib_slibdir@,$(shlib_slibdir),$(SHLIB_LINK)))))))))
  
 -libunwind$(SHLIB_EXT): $(libunwind-s-objects) $(extra-parts)
 +libunwind$(SHLIB_EXT): $(libunwind-s-objects@onestep@) $(extra-parts)
  	# @multilib_flags@ is still needed because this may use
  	# $(GCC_FOR_TARGET) and $(LIBGCC2_CFLAGS) directly.
  	# @multilib_dir@ is not really necessary, but sometimes it has
-Index: gcc-4.4.0/libgcc/configure.ac
-===================================================================
---- gcc-4.4.0/libgcc/configure.ac	(revision 136612)
-+++ gcc-4.4.0/libgcc/configure.ac	(working copy)
-@@ -77,6 +77,18 @@ else
- fi)
- AC_SUBST(slibdir)
+diff -rdup gcc-4.4.0.old/libgcc/shared-object.mk gcc-4.4.0/libgcc/shared-object.mk
+--- gcc-4.4.0.old/libgcc/shared-object.mk	2008-07-17 10:40:53.000000000 +0200
++++ gcc-4.4.0/libgcc/shared-object.mk	2008-10-07 09:20:26.000000000 +0200
+@@ -8,11 +8,22 @@ base := $(basename $(notdir $o))
  
-+# Build with intermodule optimisations
-+AC_MSG_CHECKING([for --enable-intermodule])
-+AC_ARG_ENABLE(intermodule,
-+[  --enable-intermodule    build the library in one step],
-+[case "$enable_intermodule" in
-+  yes) onestep="-onestep";;
-+    *) onestep="";;
-+esac],
-+[onestep=""])
-+AC_MSG_RESULT($enable_intermodule)
-+AC_SUBST(onestep)
-+
- AC_PROG_INSTALL
+ ifeq ($(suffix $o),.c)
  
- AC_PROG_AWK
-Index: gcc-4.4.0/libgcc/config/libbid/bid128_div.c
-===================================================================
---- gcc-4.4.0/libgcc/config/libbid/bid128_div.c	(revision 136612)
-+++ gcc-4.4.0/libgcc/config/libbid/bid128_div.c	(working copy)
-@@ -34,9 +34,9 @@ Software Foundation, 51 Franklin Street,
- #define FE_ALL_FLAGS FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW|FE_UNDERFLOW|FE_INEXACT
- #endif
++ifeq ($(onestep),)
+ $(base)$(objext): $o
+ 	$(gcc_compile) $(c_flags) -c $< $(vis_hide)
  
--extern UINT32 convert_table[5][128][2];
--extern SINT8 factors[][2];
--extern UINT8 packed_10000_zeros[];
-+extern const UINT32 convert_table[5][128][2];
-+extern const SINT8 factors[][2];
-+extern const UINT8 packed_10000_zeros[];
+ $(base)_s$(objext): $o
+ 	$(gcc_s_compile) $(c_flags) -c $<
++else
++$(iter-item-onestep)_onestep$(objext): $o
++$(iter-item-onestep)_s_onestep$(objext): $o
++ifeq ($(iter-items),)
++$(iter-item-onestep)_onestep$(objext):
++	$(gcc_compile) $(c_flags) $^ $(vis_hide) -c -combine
++$(iter-item-onestep)_s_onestep$(objext):
++	$(gcc_s_compile) $(c_flags) $^ -c -combine
++endif
++endif
  
- BID128_FUNCTION_ARG2 (bid128_div, x, y)
+ else
  
-Index: gcc-4.4.0/libgcc/config/libbid/bid64_div.c
-===================================================================
---- gcc-4.4.0/libgcc/config/libbid/bid64_div.c	(revision 136612)
-+++ gcc-4.4.0/libgcc/config/libbid/bid64_div.c	(working copy)
-@@ -66,9 +66,9 @@ Software Foundation, 51 Franklin Street,
- #define FE_ALL_FLAGS FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW|FE_UNDERFLOW|FE_INEXACT
- #endif
+@@ -22,6 +33,7 @@ $(error Unsupported file type: $o)
+ endif
+ endif
  
--extern UINT32 convert_table[5][128][2];
--extern SINT8 factors[][2];
--extern UINT8 packed_10000_zeros[];
-+extern const UINT32 convert_table[5][128][2];
-+extern const SINT8 factors[][2];
-+extern const UINT8 packed_10000_zeros[];
++ifeq ($(onestep),)
+ $(base)$(objext): $o $(base).vis
+ 	$(gcc_compile) -c -xassembler-with-cpp -include $*.vis $<
  
+@@ -30,5 +42,18 @@ $(base).vis: $(base)_s$(objext)
  
- #if DECIMAL_CALL_BY_REFERENCE
-@@ -1366,11 +1366,6 @@ if (!done) {
+ $(base)_s$(objext): $o
+ 	$(gcc_s_compile) -c -xassembler-with-cpp $<
++else
++$(iter-item-onestep)_onestep$(objext): $o
++$(iter-item-onestep)_s_onestep$(objext): $o
++ifeq ($(iter-items),)
++$(iter-item-onestep)_onestep$(objext): $(iter-item-onestep).vis
++	$(gcc_compile) -xassembler-with-cpp -include $*.vis \
++		$(filter-out $(iter-item-onestep).vis,$^) -c -combine
++$(iter-item-onestep).vis: $(iter-item-onestep)_s_onestep$(objext)
++	$(gen-hide-list)
++$(iter-item-onestep)_s_onestep$(objext):
++	$(gcc_s compile) -xassembler-with-cpp $^ -c -combine
++endif
++endif
  
- //#define LEAVE_TRAILING_ZEROS
- 
--extern UINT32 convert_table[5][128][2];
--extern SINT8 factors[][2];
--extern UINT8 packed_10000_zeros[];
--
--
- //UINT64* bid64_div128x128(UINT64 res, UINT128 *px, UINT128 *py, unsigned rnd_mode, unsigned *pfpsf) 
- 
- TYPE0_FUNCTION_ARG128_ARG128 (UINT64, bid64qq_div, x, y)
-Index: gcc-4.3.0/gcc/gbl-ctors.h
-===================================================================
---- gcc-4.3.0/gcc/gbl-ctors.h	(revision 131778)
-+++ gcc-4.3.0/gcc/gbl-ctors.h	(working copy)
-@@ -38,6 +38,8 @@ Software Foundation, 51 Franklin Street,
- 	Note that this file should only be compiled with GCC.
- */
- 
-+#ifndef GCC_GBL_CTORS_H
-+#define GCC_GBL_CTORS_H
- /*  Declare a pointer to void function type.  */
- 
- typedef void (*func_ptr) (void);
-@@ -84,3 +86,4 @@ do {									\
- } while (0)
- #endif
- 
-+#endif /* GCC_GBL_CTORS_H */
-Index: gcc-4.3.0/gcc/libgcc2.c
-===================================================================
---- gcc-4.3.0/gcc/libgcc2.c	(revision 131778)
-+++ gcc-4.3.0/gcc/libgcc2.c	(working copy)
-@@ -1538,17 +1538,17 @@ FUNC (DWtype u)
-    && SIZE > (DI_SIZE - SIZE + FSSIZE)					\
-    && !AVOID_FP_TYPE_CONVERSION(SIZE))
- #if defined(L_floatundisf)
--#define FUNC __floatundisf
-+#define FUNCU __floatundisf
- #define FSTYPE SFtype
- #define FSSIZE SF_SIZE
- #else
--#define FUNC __floatundidf
-+#define FUNCU __floatundidf
- #define FSTYPE DFtype
- #define FSSIZE DF_SIZE
- #endif
- 
- FSTYPE
--FUNC (UDWtype u)
-+FUNCU (UDWtype u)
- {
- #if FSSIZE >= W_TYPE_SIZE
-   /* When the word size is small, we never get any rounding error.  */
-Index: gcc-4.4.0/libgcc/static-object.mk
-===================================================================
---- gcc-4.4.0/libgcc/static-object.mk	(revision 136638)
-+++ gcc-4.4.0/libgcc/static-object.mk	(working copy)
+ endif
+diff -rdup gcc-4.4.0.old/libgcc/static-object.mk gcc-4.4.0/libgcc/static-object.mk
+--- gcc-4.4.0.old/libgcc/static-object.mk	2007-01-08 09:14:48.000000000 +0100
++++ gcc-4.4.0/libgcc/static-object.mk	2008-10-07 09:20:26.000000000 +0200
 @@ -8,8 +8,16 @@ base := $(basename $(notdir $o))
  
  ifeq ($(suffix $o),.c)
