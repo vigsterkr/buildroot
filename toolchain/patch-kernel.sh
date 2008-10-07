@@ -39,7 +39,8 @@ for i in `cd ${patchdir}; ls -d ${patchpattern} 2> /dev/null` ; do
     echo "Applying ${i} using ${type}: " 
     ${uncomp} ${patchdir}/${i} | patch -p1 -E -d ${targetdir} 
     if [ $? != 0 ] ; then
-        echo "Patch failed!  Please fix ${patchdir}/$i!"
+	echo "ERROR: Patch failed!"
+	echo "Please fix ${patchdir}/$i"
 	exit 1
     fi
 done
