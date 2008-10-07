@@ -61,7 +61,7 @@ $(LIBTOOL_DIR)/$(LIBTOOL_BINARY): $(LIBTOOL_DIR)/.configured
 	touch -c $@
 
 $(TARGET_DIR)/$(LIBTOOL_TARGET_BINARY): $(LIBTOOL_DIR)/$(LIBTOOL_BINARY)
-	$(MAKE)  DESTDIR=$(TARGET_DIR) -C $(LIBTOOL_DIR) install
+	$(MAKE)  DESTDIR=$(TARGET_DIR) -C $(LIBTOOL_DIR) install-exec
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) \
 		$(TARGET_DIR)/usr/lib/libltdl.so.*.*.* > /dev/null 2>&1
 	$(SED) "s,^CC.*,CC=\"/usr/bin/gcc\"," $(TARGET_DIR)/usr/bin/libtool
@@ -82,7 +82,7 @@ libtool-source: $(DL_DIR)/$(LIBTOOL_SOURCE)
 
 libtool-clean:
 	-$(MAKE) -C $(LIBTOOL_DIR) clean
-	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(LIBTOOL_DIR) uninstall
+	-$(MAKE) DESTDIR=$(TARGET_DIR) -C $(LIBTOOL_DIR) uninstall
 
 libtool-cross: uclibc $(LIBTOOL_DIR)/$(LIBTOOL_BINARY)
 
@@ -118,7 +118,7 @@ $(LIBTOOL_HOST_DIR)/$(LIBTOOL_BINARY): $(LIBTOOL_HOST_DIR)/.configured
 	touch -c $@
 
 $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY): $(LIBTOOL_HOST_DIR)/$(LIBTOOL_BINARY)
-	$(MAKE) -C $(LIBTOOL_HOST_DIR) install
+	$(MAKE) -C $(LIBTOOL_HOST_DIR) install-exec
 	rm -rf $(STAGING_DIR)/share/locale
 	rm -rf $(STAGING_DIR)/usr/share/doc
 ifneq ($(BR2_HAVE_INFOPAGES),y)
@@ -135,7 +135,7 @@ host-libtool: $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY)
 
 host-libtool-clean:
 	-$(MAKE) -C $(LIBTOOL_HOST_DIR) clean
-	$(MAKE) -C $(LIBTOOL_HOST_DIR) uninstall
+	-$(MAKE) -C $(LIBTOOL_HOST_DIR) uninstall
 	rm -f $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY) \
 		  $(TOOL_BUILD_DIR)/bin/$(LIBTOOL_BINARY)ize
 
