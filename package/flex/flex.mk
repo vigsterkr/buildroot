@@ -32,7 +32,6 @@ endif
 
 $(FLEX_DIR)/.configured: $(FLEX_DIR)/.unpacked
 	(cd $(FLEX_DIR); rm -rf config.cache; \
-		HELP2MAN=/bin/false \
 		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
 		--sysconfdir=/etc \
@@ -47,7 +46,7 @@ $(FLEX_DIR)/$(FLEX_BINARY): $(FLEX_DIR)/.configured
 
 $(TARGET_DIR)/$(FLEX_TARGET_BINARY): $(FLEX_DIR)/$(FLEX_BINARY)
 	$(MAKE1) -C $(FLEX_DIR) \
-		DESTDIR=$(STAGING_DIR) includedir=/usr/include install
+		DESTDIR=$(STAGING_DIR) includedir=/usr/include install-exec
 	$(INSTALL) -D -m 0755 $(STAGING_DIR)/$(FLEX_TARGET_BINARY) \
 		$(TARGET_DIR)/$(FLEX_TARGET_BINARY)
 ifeq ($(BR2_PACKAGE_FLEX_LIBFL),y)
