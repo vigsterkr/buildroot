@@ -167,10 +167,11 @@ config BR2_THUMB_BINARIES
 	  Compile binaries in Thumb mode.
 
 config BR2_EXTRA_GCC_CONFIG_OPTIONS
-	string "Additional gcc options"
+	string "Additional cross-gcc configure options"
 	default ""
 	help
-	  Any additional gcc configure options you may want to include....
+	  Any additional gcc configure options you may want to use to
+	  build your cross-compiler.
 
 config BR2_GCC_CROSS_CXX
 	bool "C++ cross-compiler support"
