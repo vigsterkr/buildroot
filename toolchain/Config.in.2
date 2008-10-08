@@ -72,6 +72,13 @@ config BR2_USE_WCHAR
 	help
 	  Enable WCHAR. WCHAR support is needed for several packages
 
+config BR2_SOFT_FLOAT_FORCE
+	def_bool n
+	select BR2_SOFT_FLOAT
+#	help
+#	  Architectures which do not support hardware floating point
+#	  select this symbol.
+
 config BR2_SOFT_FLOAT
 	bool "Use software floating point by default"
 	default n
