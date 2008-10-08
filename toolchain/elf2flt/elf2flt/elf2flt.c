@@ -54,6 +54,7 @@
 
 /* from $(INSTALLDIR)/include       */
 #include <bfd.h>      /* Main header file for the BFD library                */
+#include <libiberty.h>
 
 #if defined(TARGET_h8300)
 #include <elf/h8.h>      /* TARGET_* ELF support for the BFD library            */
@@ -73,6 +74,7 @@
 
 /* from uClinux-x.x.x/include/linux */
 #include "flat.h"     /* Binary flat header description                      */
+#include "compress.h"
 
 #ifdef TARGET_e1
 #include <e1.h>
@@ -142,7 +144,7 @@ int verbose = 0;      /* extra output when running */
 int pic_with_got = 0; /* do elf/got processing with PIC code */
 int load_to_ram = 0;  /* instruct loader to allocate everything into RAM */
 int ktrace = 0;       /* instruct loader output kernel trace on load */
-int compress = 0;     /* 1 = compress everything, 2 = compress data only */
+int docompress = 0;   /* 1 = compress everything, 2 = compress data only */
 int use_resolved = 0; /* If true, get the value of symbol references from */
 		      /* the program contents, not from the relocation table. */
 		      /* In this case, the input ELF file must be already */
@@ -235,7 +237,7 @@ get_symbols (bfd *abfd, long *num)
   if (storage_needed == 0)
     return NULL;
 
-  symbol_table = (asymbol **) malloc (storage_needed);
+  symbol_table = xmalloc (storage_needed);
 
   number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table);
   
@@ -492,7 +494,8 @@ dump_symbols(symbols, number_of_symbols);
 	}
 
 	symb = get_symbols(rel_bfd, &nsymb);
-	relpp = (arelent **) xmalloc(relsize);
+	relpp = xmalloc(relsize);
+
 	relcount = bfd_canonicalize_reloc(rel_bfd, r, relpp, symb);
 	if (relcount <= 0) {
 		if (verbose)
@@ -1766,7 +1769,7 @@ static void usage(void)
 
 
 /* Write NUM zeroes to STREAM.  */
-static void write_zeroes (unsigned long num, FILE *stream)
+static void write_zeroes (unsigned long num, stream *stream)
 {
   char zeroes[1024];
   if (num > 0) {
@@ -1774,11 +1777,11 @@ static void write_zeroes (unsigned long num, FILE *stream)
        work for stdio output files.  */
     memset(zeroes, 0x00, 1024);
     while (num > sizeof(zeroes)) {
-      fwrite(zeroes, sizeof(zeroes), 1, stream);
+      fwrite_stream(zeroes, sizeof(zeroes), 1, stream);
       num -= sizeof(zeroes);
     }
     if (num > 0)
-      fwrite(zeroes, num, 1, stream);
+      fwrite_stream(zeroes, num, 1, stream);
   }
 }
 
@@ -1793,8 +1796,7 @@ int main(int argc, char *argv[])
   int opt;
   int i;
   int stack;
-  char  cmd[1024];
-  FILE *gf = NULL;
+  stream gf;
 
   asymbol **symbol_table;
   long number_of_symbols;
@@ -1816,10 +1818,9 @@ int main(int argc, char *argv[])
   
   struct flat_hdr hdr;
 
-  int gf_is_pipe = 0;
-
   program = argv[0];
   progname = argv[0];
+  xmalloc_set_program_name(program);
 
   if (argc < 2)
   	usage();
@@ -1850,10 +1851,10 @@ int main(int argc, char *argv[])
       ktrace++;
       break;
     case 'z':
-      compress = 1;
+      docompress = 1;
       break;
     case 'd':
-      compress = 2;
+      docompress = 2;
       break;
     case 'p':
       pfile = optarg;
@@ -1865,7 +1866,10 @@ int main(int argc, char *argv[])
       use_resolved = 1;
       break;
     case 's':
-      stack = atoi(optarg);
+      if (sscanf(optarg, "%i", &stack) != 1) {
+        fprintf(stderr, "%s invalid stack size %s\n", argv[0], optarg);
+        usage();
+      }
       break;
     case 'R':
       rel_file = optarg;
@@ -1971,7 +1975,7 @@ int main(int argc, char *argv[])
     exit (2);
   }
 
-  text = malloc(text_len);
+  text = xmalloc(text_len);
 
   if (verbose)
     printf("TEXT -> vma=0x%x len=0x%x\n", text_vma, text_len);
@@ -1991,7 +1995,7 @@ int main(int argc, char *argv[])
     fprintf (stderr, "%s: no .data section", abs_file);
     exit (2);
   }
-  data = malloc(data_len);
+  data = xmalloc(data_len);
 
   if (verbose)
     printf("DATA -> vma=0x%x len=0x%x\n", data_vma, data_len);
@@ -2059,7 +2063,7 @@ int main(int argc, char *argv[])
 	  | (load_to_ram ? FLAT_FLAG_RAM : 0)
 	  | (ktrace ? FLAT_FLAG_KTRACE : 0)
 	  | (pic_with_got ? FLAT_FLAG_GOTPIC : 0)
-	  | (compress ? (compress == 2 ? FLAT_FLAG_GZDATA : FLAT_FLAG_GZIP) : 0)
+	  | (docompress ? (docompress == 2 ? FLAT_FLAG_GZDATA : FLAT_FLAG_GZIP) : 0)
 	  );
   hdr.build_date = htonl((unsigned long)time(NULL));
   memset(hdr.filler, 0x00, sizeof(hdr.filler));
@@ -2075,7 +2079,7 @@ int main(int argc, char *argv[])
   }
   
   if (!ofile) {
-    ofile = malloc(strlen(fname) + 5 + 1); /* 5 to add suffix */
+    ofile = xmalloc(strlen(fname) + 5 + 1); /* 5 to add suffix */
     strcpy(ofile, fname);
     strcat(ofile, ".bflt");
   }
@@ -2088,54 +2092,32 @@ int main(int argc, char *argv[])
   write(fd, &hdr, sizeof(hdr));
   close(fd);
 
-  /*
-   * get the compression command ready
-   */
-  sprintf(cmd, "gzip -f -9 >> %s", ofile);
-
-#define	START_COMPRESSOR do { \
-		if (gf) \
-			if (gf_is_pipe) \
-				pclose(gf); \
-			else \
-				fclose(gf); \
-		if (!(gf = popen(cmd, "w" BINARY_FILE_OPTS))) { \
-			fprintf(stderr, "Can't run cmd %s\n", cmd); \
-			exit(4); \
-		} \
-		gf_is_pipe = 1; \
-	} while (0)
-
-  gf = fopen(ofile, "ab");	/* Add 'b' to support non-posix (ie windows) */
-  if (!gf) {
-  	fprintf(stderr, "Can't open file %s for writing\n", ofile); \
-	exit(4);
+  if (fopen_stream_u(&gf, ofile, "a" BINARY_FILE_OPTS)) {
+    fprintf(stderr, "Can't open file %s for writing\n", ofile);
+    exit(4);
   }
 
-  if (compress == 1)
-  	START_COMPRESSOR;
+  if (docompress == 1)
+    reopen_stream_compressed(&gf);
 
   /* Fill in any hole at the beginning of the text segment.  */
   if (verbose)
-	  printf("ZERO before text len=0x%x\n", text_offs);
-  write_zeroes(text_offs, gf);
+    printf("ZERO before text len=0x%x\n", text_offs);
+  write_zeroes(text_offs, &gf);
 
   /* Write the text segment.  */
-  fwrite(text, text_len, 1, gf);
+  fwrite_stream(text, text_len, 1, &gf);
 
-  if (compress == 2)
-  	START_COMPRESSOR;
+  if (docompress == 2)
+    reopen_stream_compressed(&gf);
 
   /* Write the data segment.  */
-  fwrite(data, data_len, 1, gf);
+  fwrite_stream(data, data_len, 1, &gf);
 
   if (reloc)
-    fwrite(reloc, reloc_len * 4, 1, gf);
+    fwrite_stream(reloc, reloc_len * 4, 1, &gf);
 
-  if(gf_is_pipe)
-    pclose(gf);
-  else
-  fclose(gf);
+  fclose_stream(&gf);
 
   exit(0);
 }

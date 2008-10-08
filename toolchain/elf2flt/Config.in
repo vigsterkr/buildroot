@@ -11,3 +11,8 @@ config BR2_ELF2FLT
 
 	  This option compiles the required tools and makes the required
 	  modifications on your toolchain (linker).
+
+config BR2_ELF2FLT_ZLIB
+	bool "zlib support"
+	depends on BR2_ELF2FLT
+	default n

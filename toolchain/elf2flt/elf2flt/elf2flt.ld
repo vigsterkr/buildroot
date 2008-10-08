@@ -59,7 +59,7 @@ R_RODAT		*(.gnu.linkonce.r*)
 		*(.data1)
 		*(.data.*)
 		*(.gnu.linkonce.d*)
-		*(.data1)
+		*(.eh_frame_hdr)
 		*(.eh_frame)
 		*(.gcc_except_table)
 
@@ -69,6 +69,7 @@ R_RODAT		*(.gnu.linkonce.r*)
 		*(.sdata) 
 		*(.sdata.*)
 		*(.sbss)			/* Don't move this! */
+		*(.gnu.linkonce.sb*)
 		_essrw = . ;
 
 		_ssrw_size = _essrw - _ssrw;
@@ -176,4 +177,6 @@ SINGLE_LINK:	KEEP (*(SORT(.dtors.*)))
 	.debug_line 0 : { *(.debug_line) }
 	.debug_pubnames 0 : { *(.debug_pubnames) }
 	.debug_aranges 0 : { *(.debug_aranges) }
+	.debug_frame    0 : { *(.debug_frame) }
+	.debug_str      0 : { *(.debug_str) }
 }

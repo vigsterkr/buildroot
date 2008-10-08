@@ -1,17 +1,19 @@
-/LICENSE.TXT/1.1/Tue Jan 10 04:34:09 2006//
-/README/1.5/Tue Jan 10 04:34:09 2006/-ko/
-/config.guess/1.2/Tue Jan 10 04:34:08 2006/-ko/
-/e1-elf2flt.ld/1.1/Tue Jan 10 04:34:09 2006//
-/flat.h/1.6/Tue Jan 10 04:34:08 2006/-ko/
-/install-sh/1.1.1.1/Tue Jan 10 04:34:08 2006/-ko/
-/stubs.c/1.1/Tue Jan 10 04:34:08 2006//
-/config.sub/1.8/Wed Jan 11 13:36:39 2006/-ko/
-/cygwin-elf.h/1.4/Wed Jan 11 13:36:39 2006//
-/Makefile.in/1.17/Result of merge/-ko/
-/configure/1.12/Sun Jan 28 05:27:28 2007/-ko/
-/configure.in/1.10/Sun Jan 28 05:27:28 2007/-ko/
-/elf2flt.c/1.46/Result of merge/-ko/
-/elf2flt.ld/1.15/Sun Jan 28 05:27:28 2007/-ko/
-/flthdr.c/1.10/Sun Jan 28 05:27:28 2007/-ko/
-/ld-elf2flt.in/1.15/Sun Jan 28 05:27:28 2007//
+/LICENSE.TXT/1.1/Mon Apr 18 22:00:48 2005//
+/Makefile.in/1.18/Wed Feb 27 11:41:32 2008/-ko/
+/README/1.5/Wed Jul  6 23:00:20 2005/-ko/
+/compress.c/1.1/Wed Feb 27 11:41:32 2008//
+/compress.h/1.1/Wed Feb 27 11:41:32 2008//
+/config.guess/1.2/Mon Jan  5 23:41:50 2004/-ko/
+/config.sub/1.8/Wed Jan 11 03:39:16 2006/-ko/
+/configure/1.14/Wed Jun 11 13:24:51 2008/-ko/
+/configure.in/1.13/Thu Mar 13 04:38:28 2008/-ko/
+/cygwin-elf.h/1.4/Wed Jan 11 03:39:16 2006//
+/e1-elf2flt.ld/1.1/Tue Nov 11 07:23:04 2003//
+/elf2flt.c/1.52/Wed Feb 27 11:41:32 2008/-ko/
+/elf2flt.ld/1.17/Tue Nov 27 22:53:00 2007/-ko/
+/flat.h/1.6/Mon Aug  1 00:02:33 2005/-ko/
+/flthdr.c/1.13/Wed Feb 27 11:41:32 2008/-ko/
+/install-sh/1.1.1.1/Thu Feb 14 01:40:55 2002/-ko/
+/ld-elf2flt.in/1.15/Wed Sep 13 00:10:30 2006//
+/stubs.c/1.2/Thu Oct 11 03:50:51 2007//
 D
