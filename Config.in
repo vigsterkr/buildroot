@@ -28,8 +28,11 @@ config BR2_SVN_UP
 	default "svn up"
 
 config BR2_GIT
-	string "Git command to download source tree"
+	string "Git binary"
 	default "git"
+	help
+	  git is a stupid content tracker. Here you can specify the
+	  path to your git binary that may be used to checkout sources.
 
 config BR2_ZCAT
 	string "zcat command"
