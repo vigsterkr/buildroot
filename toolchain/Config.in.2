@@ -95,6 +95,12 @@ config BR2_SOFT_FLOAT
 #	bool "Use softfp"
 #	default n
 
+config BR2_USE_MMU
+	bool "Use MMU"
+	default y
+	help
+	  If your target has an MMU and you want to use it then say Y here.
+
 config BR2_TARGET_OPTIMIZATION
 	string "Target Optimizations"
 	default "-Os -pipe"

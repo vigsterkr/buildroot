@@ -288,6 +288,10 @@ ifneq ($(UCLIBC_TARGET_ENDIAN),)
 		-e 's/.*\(ARCH_WANTS_$(UCLIBC_TARGET_ENDIAN)_ENDIAN\).*/\1=y/g' \
 		$(UCLIBC_DIR)/.oldconfig
 endif
+	$(SED) '/ARCH_USE_MMU/d' $(UCLIBC_DIR)/.oldconfig
+ifeq ($(BR2_USE_MMU),y)
+	echo 'ARCH_USE_MMU=y' >> $(UCLIBC_DIR)/.oldconfig
+endif
 ifeq ($(BR2_ENABLE_SHARED),y)
 	$(SED) 's/.*\(HAVE_SHARED\).*/\1=y/g' $(UCLIBC_DIR)/.oldconfig
 else
