@@ -13,7 +13,7 @@
 
 # BUG: In "OpenSuSE 10.2", dbus.h is at dbus-1.0/dbus/dbus.h
 # instead of at "dbus/dbus.h"
-# (cd /usr/include; sudo ln -s dbus-1.0/dbus dbus) 
+# (cd /usr/include; sudo ln -s dbus-1.0/dbus dbus)
 # to fix
 
 QTOPIA4_VERSION:=4.3.2

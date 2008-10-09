@@ -507,4 +507,4 @@ help:
 
 .PHONY: dummy subdirs release distclean clean config oldconfig \
 	menuconfig tags check test depend defconfig help
-	
+
