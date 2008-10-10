@@ -15,6 +15,7 @@ $(ELF2FLT_DIR)/.unpacked:
 	touch $@
 
 $(ELF2FLT_DIR)/.patched: $(ELF2FLT_DIR)/.unpacked
+	toolchain/patch-kernel.sh $(ELF2FLT_DIR) toolchain/elf2flt elf2flt.\*.patch
 ifeq ($(ARCH),nios2)
 	$(SED) "s,STAGING_DIR,$(STAGING_DIR),g;" toolchain/elf2flt/elf2flt.nios2.conditional
 	$(SED) "s,CROSS_COMPILE_PREFIX,$(REAL_GNU_TARGET_NAME),g;" toolchain/elf2flt/elf2flt.nios2.conditional
@@ -25,9 +26,10 @@ endif
 
 $(ELF2FLT_DIR)/.configured: $(ELF2FLT_DIR)/.patched
 	(cd $(ELF2FLT_DIR); rm -rf config.cache; \
+		$(HOST_CONFIGURE_OPTS) \
 		$(ELF2FLT_DIR)/configure \
 		--target=$(REAL_GNU_TARGET_NAME) \
-		--prefix=$(STAGING_DIR) \
+		--prefix=$(STAGING_DIR)/usr \
 		--with-binutils-build-dir=$(BINUTILS_DIR1)/ \
 		--with-binutils-include-dir=$(BINUTILS_DIR)/include/ \
 		--with-bfd-include-dir=$(BINUTILS_DIR1)/bfd/ \
@@ -49,7 +51,7 @@ elf2flt-clean:
 	rm -f $(ELF2FLT_DIR)/$(ELF2FLT_BINARY)
 
 elf2flt-dirclean:
-	rm -rf $(ELF2FLT_SOURCE)
+	rm -rf $(ELF2FLT_SOURCE) $(ELF2FLT_DIR)
 
 ifeq ($(BR2_ELF2FLT),y)
 TARGETS+=elf2flt

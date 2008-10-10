@@ -15,4 +15,5 @@ config BR2_ELF2FLT
 config BR2_ELF2FLT_ZLIB
 	bool "zlib support"
 	depends on BR2_ELF2FLT
+	select BR2_PACKAGE_ZLIB
 	default n

@@ -1,0 +1,24 @@
+diff -rdup elf2flt.old/configure elf2flt/configure
+--- elf2flt.old/configure	2008-10-09 00:34:29.000000000 +0200
++++ elf2flt/configure	2008-10-09 21:18:55.000000000 +0200
+@@ -2827,6 +2827,8 @@ Run configure again specifying these opt
+    { (exit 1); exit 1; }; }
+ fi
+ 
++CPPFLAGS="$CPPFLAGS $bfd_include_dir $binutils_include_dir $zlib_include_dir"
++
+ ac_ext=c
+ ac_cpp='$CPP $CPPFLAGS'
+ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+diff -rdup elf2flt.old/configure.in elf2flt/configure.in
+--- elf2flt.old/configure.in	2008-10-09 00:34:29.000000000 +0200
++++ elf2flt/configure.in	2008-10-09 21:18:47.000000000 +0200
+@@ -135,6 +135,8 @@ Run configure again specifying these opt
+ ])
+ fi
+ 
++CPPFLAGS="$CPPFLAGS $bfd_include_dir $binutils_include_dir $zlib_include_dir"
++
+ dnl Checks for header files.
+ AC_HEADER_STDC
+ AC_CHECK_HEADERS(fcntl.h unistd.h bfd.h)
