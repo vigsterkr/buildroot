@@ -449,10 +449,10 @@ endif
 
 
 $(UCLIBC_DIR)/.config: $(UCLIBC_DIR)/.oldconfig
-	cp -f $(UCLIBC_DIR)/.oldconfig $(UCLIBC_DIR)/.config
-	mkdir -p $(TOOL_BUILD_DIR)/uClibc_dev/usr/include
-	mkdir -p $(TOOL_BUILD_DIR)/uClibc_dev/usr/lib
-	mkdir -p $(TOOL_BUILD_DIR)/uClibc_dev/lib
+	cp -dpf $(UCLIBC_DIR)/.oldconfig $(UCLIBC_DIR)/.config
+	$(INSTALL) -d $(TOOL_BUILD_DIR)/uClibc_dev/usr/include \
+		$(TOOL_BUILD_DIR)/uClibc_dev/usr/lib \
+		$(TOOL_BUILD_DIR)/uClibc_dev/lib
 	$(MAKE1) -C $(UCLIBC_DIR) \
 		PREFIX=$(TOOL_BUILD_DIR)/uClibc_dev/ \
 		DEVEL_PREFIX=/usr/ \
@@ -461,7 +461,7 @@ $(UCLIBC_DIR)/.config: $(UCLIBC_DIR)/.oldconfig
 		BUILD_CFLAGS="$(HOST_CFLAGS)" \
 		BUILD_LDFLAGS="$(HOST_LDFLAGS)" \
 		oldconfig
-	touch $@
+	touch -c $@
 
 $(UCLIBC_DIR)/.configured: $(LINUX_HEADERS_DIR)/.configured $(UCLIBC_DIR)/.config
 ifeq ($(findstring y,$(BR2_UCLIBC_VERSION_0_9_27)$(BR2_UCLIBC_VERSION_0_9_28_3)$(BR2_UCLIBC_VERSION_0_9_29)),y)
@@ -532,7 +532,6 @@ uclibc-menuconfig: host-sed $(UCLIBC_DIR)/.config
 		menuconfig && \
 	touch -c $(UCLIBC_DIR)/.config
 
-
 $(STAGING_DIR)/usr/lib/libc.a: $(UCLIBC_DIR)/lib/libc.a
 ifneq ($(BR2_TOOLCHAIN_SYSROOT),y)
 	$(MAKE1) -C $(UCLIBC_DIR) \
@@ -576,22 +575,22 @@ endif
 		HOSTCC="$(HOSTCC)" \
 		hostutils
 	# install readelf and eventually other host-utils
-	install -c $(UCLIBC_DIR)/utils/readelf.host $(STAGING_DIR)/usr/bin/readelf
+	$(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/readelf.host $(STAGING_DIR)/usr/bin/readelf
 	ln -sf readelf $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-readelf
 	ln -sf readelf $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-readelf
 ifeq ($(BR2__UCLIBC_HAVE_SHARED),y)
-	install -c $(UCLIBC_DIR)/utils/ldd.host $(STAGING_DIR)/usr/bin/ldd
+	$(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/ldd.host $(STAGING_DIR)/usr/bin/ldd
 	ln -sf ldd $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-ldd
 	ln -sf ldd $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-ldd
-	install -c $(UCLIBC_DIR)/utils/ldconfig.host $(STAGING_DIR)/usr/sbin/ldconfig
+	$(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/ldconfig.host $(STAGING_DIR)/usr/sbin/ldconfig
 	ln -sf ldconfig $(STAGING_DIR)/usr/sbin/$(REAL_GNU_TARGET_NAME)-ldconfig
 	ln -sf ldconfig $(STAGING_DIR)/usr/sbin/$(GNU_TARGET_NAME)-ldconfig
 endif
 ifeq ($(BR2__UCLIBC_UCLIBC_HAS_LOCALE),y)
-	install -c $(UCLIBC_DIR)/utils/iconv.host $(STAGING_DIR)/usr/bin/iconv
+	$(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/iconv.host $(STAGING_DIR)/usr/bin/iconv
 	ln -sf iconv $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-iconv
 	ln -sf iconv $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-iconv
-	install -c $(UCLIBC_DIR)/utils/locale.host $(STAGING_DIR)/usr/bin/locale
+	$(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/locale.host $(STAGING_DIR)/usr/bin/locale
 	ln -sf locale $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-locale
 	ln -sf locale $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-locale
 endif
@@ -616,7 +615,7 @@ $(TARGET_DIR)/usr/bin/ldd: $(cross_compiler)
 		PREFIX=$(TARGET_DIR) utils install_utils
 ifeq ($(BR2_CROSS_TOOLCHAIN_TARGET_UTILS),y)
 	mkdir -p $(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils
-	install -c $(TARGET_DIR)/usr/bin/ldd \
+	$(INSTALL) -m0755 -D $(TARGET_DIR)/usr/bin/ldd \
 		$(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils/ldd
 endif
 	touch -c $@
