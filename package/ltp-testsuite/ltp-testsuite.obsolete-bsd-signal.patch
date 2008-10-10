@@ -4,7 +4,7 @@
  LOADLIBES+=	-L../../../../lib -lltp
  
  SRCS=$(wildcard *.c)
-+ifneq ($(UCLIBC_HAS_OBSOLETE_BSD_SIGNAL),y)
++ifeq ($(IS_UCLIBC)x$(UCLIBC_HAS_OBSOLETE_BSD_SIGNAL),yx)
 +SRCS:=$(filter-out ftest01.c ftest03.c ftest04.c ftest05.c ftest07.c ftest08.c,$(SRCS))
 +endif
  TARGETS=$(patsubst %.c,%,$(SRCS))
@@ -16,7 +16,7 @@
  LOADLIBES+=	-L../../../../lib -lltp 
  
  SRCS=$(wildcard *.c)
-+ifneq ($(UCLIBC_HAS_OBSOLETE_BSD_SIGNAL),y)
++ifeq ($(IS_UCLIBC)x$(UCLIBC_HAS_OBSOLETE_BSD_SIGNAL),yx)
 +SRCS:=$(filter-out inode02.c,$(SRCS))
 +endif
  TARGETS=$(patsubst %.c,%,$(SRCS))

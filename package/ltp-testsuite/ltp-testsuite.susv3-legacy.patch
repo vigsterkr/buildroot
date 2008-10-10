@@ -6,7 +6,7 @@ diff -rdup ltp-full-20080831.oorig/testcases/kernel/mem/hugetlb/lib/Makefile ltp
  #		  common routines in the ipc(2) tests.			#
  #########################################################################
 +
-+ifeq ($(UCLIBC_SUSV3_LEGACY),y)
++ifneq ($(IS_UCLIBC)x$(UCLIBC_SUSV3_LEGACY),yx)
  SRCS=libipc.c
 +else
 +SRCS=
@@ -14,7 +14,6 @@ diff -rdup ltp-full-20080831.oorig/testcases/kernel/mem/hugetlb/lib/Makefile ltp
  OBJS=$(SRCS:.c=.o)
  MAINS=libipc.a
  CFLAGS+=-I../../../../../include -g -Wall
-Only in ltp-full-20080831/testcases/kernel/mem/hugetlb/lib: Makefile~
 diff -rdup ltp-full-20080831.oorig/testcases/kernel/sched/tool/Makefile ltp-full-20080831/testcases/kernel/sched/tool/Makefile
 --- ltp-full-20080831.oorig/testcases/kernel/sched/tool/Makefile	2008-08-31 16:33:19.000000000 +0200
 +++ ltp-full-20080831/testcases/kernel/sched/tool/Makefile	2008-09-26 17:16:57.000000000 +0200
@@ -22,14 +21,13 @@ diff -rdup ltp-full-20080831.oorig/testcases/kernel/sched/tool/Makefile ltp-full
  LDLIBS := -lpthread
  
  SRCS=$(wildcard *.c)
-+ifneq ($(UCLIBC_SUSV3_LEGACY),y)
++ifeq ($(IS_UCLIBC)x$(UCLIBC_SUSV3_LEGACY),yx)
 +SRCS:=$(filter-out trace_sched.c,$(SRCS))
 +endif
 +
  TARGETS=$(patsubst %.c,%,$(SRCS))
  
  all: $(TARGETS)
-Only in ltp-full-20080831/testcases/kernel/sched/tool: Makefile~
 diff -rdup ltp-full-20080831.oorig/testcases/kernel/syscalls/ipc/lib/Makefile ltp-full-20080831/testcases/kernel/syscalls/ipc/lib/Makefile
 --- ltp-full-20080831.oorig/testcases/kernel/syscalls/ipc/lib/Makefile	2008-08-31 16:33:16.000000000 +0200
 +++ ltp-full-20080831/testcases/kernel/syscalls/ipc/lib/Makefile	2008-09-26 17:16:31.000000000 +0200
@@ -37,7 +35,7 @@ diff -rdup ltp-full-20080831.oorig/testcases/kernel/syscalls/ipc/lib/Makefile lt
  #  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  #
  
-+ifeq ($(UCLIBC_SUSV3_LEGACY),y)
++ifneq ($(IS_UCLIBC)x$(UCLIBC_SUSV3_LEGACY),yx)
  SRCS   = libipc.c
 +else
 +SRCS   =
@@ -45,4 +43,3 @@ diff -rdup ltp-full-20080831.oorig/testcases/kernel/syscalls/ipc/lib/Makefile lt
  OBJS   = $(SRCS:.c=.o)
  LIBIPC = ../libipc.a
  LIBIPC_HEADERS	= ipcmsg.h ipcsem.h
-Only in ltp-full-20080831/testcases/kernel/syscalls/ipc/lib: Makefile~

@@ -3,7 +3,7 @@
 # ltp-testsuite
 #
 #############################################################
-LTP_TESTSUITE_VERSION:=20080831
+LTP_TESTSUITE_VERSION:=20080930
 LTP_TESTSUITE_SOURCE:=ltp-full-$(LTP_TESTSUITE_VERSION).tgz
 LTP_TESTSUITE_SITE:=http://$(BR2_SOURCEFORGE_MIRROR).dl.sourceforge.net/sourceforge/ltp
 LTP_TESTSUITE_CAT:=$(ZCAT)
@@ -16,11 +16,11 @@ LTP_TESTSUITE_DIR:=$(LTP_TESTSUITE_ROOT)/ltp-full-$(LTP_TESTSUITE_VERSION)
 LTP_PATCHES:=\
 	ltp-testsuite-generate-needs-bash.patch \
 	ltp-testsuite.patch \
-	ltp-testsuite.asm-page-include.patch \
 	ltp-testsuite.obsolete-bsd-signal.patch \
 	ltp-testsuite.susv3-legacy.patch \
 	ltp-testsuite.conflicting-lseek-decl.patch \
-	ltp-testsuite.ignore-missing-proc.patch
+	ltp-testsuite.ignore-missing-proc.patch \
+
 
 ifeq ($(BR2_PTHREADS_NATIVE),y)
 LTP_PATCHES+=ltp-testsuite-enable-openposix-for-nptl.patch
