@@ -3,7 +3,7 @@
 # bzip2
 #
 #############################################################
-BZIP2_VERSION:=1.0.4
+BZIP2_VERSION:=1.0.5
 BZIP2_SOURCE:=bzip2-$(BZIP2_VERSION).tar.gz
 BZIP2_SITE:=http://www.bzip.org/$(BZIP2_VERSION)
 BZIP2_DIR:=$(BUILD_DIR)/bzip2-$(BZIP2_VERSION)
@@ -17,22 +17,29 @@ $(DL_DIR)/$(BZIP2_SOURCE):
 $(BZIP2_DIR)/.unpacked: $(DL_DIR)/$(BZIP2_SOURCE)
 	$(BZIP2_CAT) $(DL_DIR)/$(BZIP2_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	$(SED) "s,ln \$$(,ln -snf \$$(,g" $(BZIP2_DIR)/Makefile
-	$(SED) "s,ln -s (lib.*),ln -snf \$$1; ln -snf libbz2.so.$(BZIP2_VERSION) \
-	    libbz2.so,g" $(BZIP2_DIR)/Makefile-libbz2_so
-ifneq ($(BR2_LARGEFILE),y)
-	$(SED) "s,^BIGFILES,#BIGFILES,g" $(BZIP2_DIR)/Makefile
-	$(SED) "s,^BIGFILES,#BIGFILES,g" $(BZIP2_DIR)/Makefile-libbz2_so
+	$(SED) "s,ln -s (lib.*),ln -snf \$$1; ln -snf libbz2.so.$(BZIP2_VERSION) libbz2.so,g" $(BZIP2_DIR)/Makefile-libbz2_so
+	toolchain/patch-kernel.sh $(BZIP2_DIR) package/bzip2/ \*$(BZIP2_VERSION)\*.patch
+	$(SED) "s:-O2:$$(TARGET_CFLAGS):" $(BZIP2_DIR)/Makefile
+	$(SED) "s:-O2:$$(TARGET_CFLAGS):" $(BZIP2_DIR)/Makefile-libbz2_so
+
+
+$(BZIP2_DIR)/.configured: $(BZIP2_DIR)/.unpacked \
+		  $(wildcard $(BR2_DEPENDS_DIR)/br2/largefile.*) \
+		  $(wildcard $(BR2_DEPENDS_DIR)/br2/target/optimization.*)
+ifeq ($(BR2_LARGEFILE),y)
+	$(SED) "s,^BIGFILES.*,BIGFILES=-D_FILE_OFFSET_BITS=64,g" $(BZIP2_DIR)/Makefile
+	$(SED) "s,^BIGFILES.*,BIGFILES=-D_FILE_OFFSET_BITS=64,g" $(BZIP2_DIR)/Makefile-libbz2_so
+else
+	$(SED) "s,^BIGFILES.*,#BIGFILES=-D_FILE_OFFSET_BITS=64,g" $(BZIP2_DIR)/Makefile
+	$(SED) "s,^BIGFILES.*,#BIGFILES=-D_FILE_OFFSET_BITS=64,g" $(BZIP2_DIR)/Makefile-libbz2_so
 endif
-	$(SED) "s:-O2:$(TARGET_CFLAGS):" $(BZIP2_DIR)/Makefile
-	$(SED) "s:-O2:$(TARGET_CFLAGS):" $(BZIP2_DIR)/Makefile-libbz2_so
 	touch $@
 
-$(STAGING_DIR)/lib/libbz2.so.$(BZIP2_VERSION): $(BZIP2_DIR)/.unpacked
-	$(TARGET_CONFIGURE_OPTS) \
-	$(MAKE) CC=$(TARGET_CC) RANLIB=$(TARGET_RANLIB) AR=$(TARGET_AR) \
+$(STAGING_DIR)/lib/libbz2.so.$(BZIP2_VERSION): $(BZIP2_DIR)/.configured
+	$(MAKE) CC="$(TARGET_CC)" TARGET_CFLAGS="$(TARGET_CFLAGS)" \
 		-C $(BZIP2_DIR) -f Makefile-libbz2_so
-	$(TARGET_CONFIGURE_OPTS) \
-	$(MAKE) CC=$(TARGET_CC) RANLIB=$(TARGET_RANLIB) AR=$(TARGET_AR) \
+	$(MAKE) CC="$(TARGET_CC)" AR="$(TARGET_AR)" RANLIB="$(TARGET_RANLIB)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" TARGET_CFLAGS="$(TARGET_CFLAGS)" \
 		-C $(BZIP2_DIR) libbz2.a
 	cp $(BZIP2_DIR)/bzlib.h $(STAGING_DIR)/usr/include/
 	cp $(BZIP2_DIR)/libbz2.so.$(BZIP2_VERSION) $(STAGING_DIR)/lib/
@@ -44,10 +51,12 @@ $(STAGING_DIR)/lib/libbz2.so.$(BZIP2_VERSION): $(BZIP2_DIR)/.unpacked
 		ln -snf libbz2.so.$(BZIP2_VERSION) libbz2.so.1.0; \
 		ln -snf libbz2.so.$(BZIP2_VERSION) libbz2.so.1; \
 	)
+	touch -c $@
 
 $(BZIP2_BINARY): $(STAGING_DIR)/lib/libbz2.so.$(BZIP2_VERSION)
-	$(TARGET_CONFIGURE_OPTS) \
-	$(MAKE) CC=$(TARGET_CC) -C $(BZIP2_DIR) bzip2 bzip2recover
+	$(MAKE) CC="$(TARGET_CC)" AR="$(TARGET_AR)" RANLIB="$(TARGET_RANLIB)" \
+		LDFLAGS="$(TARGET_LDFLAGS)" TARGET_CFLAGS="$(TARGET_CFLAGS)" \
+		-C $(BZIP2_DIR) bzip2 bzip2recover
 	touch -c $@
 
 $(BZIP2_TARGET_BINARY): $(BZIP2_BINARY)
@@ -56,14 +65,18 @@ $(BZIP2_TARGET_BINARY): $(BZIP2_BINARY)
 			bzgrep bzegrep bzfgrep bzmore bzless bzdiff bzcmp; \
 	)
 	$(TARGET_CONFIGURE_OPTS) \
-	$(MAKE) PREFIX=$(TARGET_DIR)/usr -C $(BZIP2_DIR) install
+	$(MAKE) PREFIX="$(TARGET_DIR)/usr" -C $(BZIP2_DIR) install
 	rm -f $(TARGET_DIR)/usr/lib/libbz2.a
+ifneq ($(BR2_HAVE_INCLUDES),y)
 	rm -f $(TARGET_DIR)/usr/include/bzlib.h
+endif
 	cp $(BZIP2_DIR)/libbz2.so.$(BZIP2_VERSION) $(TARGET_DIR)/usr/lib/
 	(cd $(TARGET_DIR)/usr/lib; \
 		ln -snf libbz2.so.$(BZIP2_VERSION) libbz2.so.1.0; \
 		ln -snf libbz2.so.$(BZIP2_VERSION) libbz2.so; \
 	)
+	rm -f $(TARGET_DIR)/usr/bin/bzip2
+	cp -dpf $(BZIP2_DIR)/bzip2-shared $(TARGET_DIR)/usr/bin/bzip2
 	(cd $(TARGET_DIR)/usr/bin; \
 		ln -snf bzip2 bunzip2; \
 		ln -snf bzip2 bzcat; \
@@ -80,6 +93,8 @@ ifneq ($(BR2_HAVE_MANPAGES),y)
 endif
 	rm -rf $(TARGET_DIR)/share/locale
 	rm -rf $(TARGET_DIR)/usr/share/doc
+	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libbz2.so.$(BZIP2_VERSION)
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $(addprefix $(TARGET_DIR)/usr/bin/, bzip2 bzip2recover)
 
 $(TARGET_DIR)/usr/lib/libbz2.a: $(STAGING_DIR)/lib/libbz2.a
 	mkdir -p $(TARGET_DIR)/usr/include
@@ -89,7 +104,7 @@ $(TARGET_DIR)/usr/lib/libbz2.a: $(STAGING_DIR)/lib/libbz2.a
 	(cd $(TARGET_DIR)/usr/lib; \
 		ln -fs /usr/lib/libbz2.so.1.0 libbz2.so; \
 	)
-	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libbz2.so.1.0
+	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $(TARGET_DIR)/usr/lib/libbz2.so.1.0
 	touch -c $@
 
 bzip2-headers: $(TARGET_DIR)/usr/lib/libbz2.a
