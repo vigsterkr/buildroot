@@ -130,7 +130,7 @@ choice
 	default BR2_mips_1 if BR2_mipsel
 	help
 	  Specific CPU variant to use
-	  
+
 	  64bit cabable: 3, 4, 64, 64r2
 	  non-64bit capable: 1, 2, 32, 32r2
 
@@ -523,8 +523,6 @@ config BR2_powerpc_970
 	bool "970"
 config BR2_powerpc_cell
 	bool "cell"
-config BR2_powerpc_8540
-	bool "8540"
 endchoice
 
 choice
@@ -576,7 +574,7 @@ config BR2_bfin_sirevision
 	  If sirevision is any, all workarounds for the targeted
 	  processor will be enabled.
 	  See man gcc for details.
-	  
+
 	  Default: any
 
 choice
@@ -586,9 +584,9 @@ choice
 	help
 	  Architecture variant.
 config BR2_cris_cris
-        bool "cris"
+	bool "cris"
 config BR2_cris_crisv32
-        bool "crisv32"
+	bool "crisv32"
 endchoice
 choice
 	prompt "Target CPU Variant"
@@ -597,16 +595,289 @@ choice
 	help
 	  CPU variant.
 config BR2_cris_generic
-        bool "generic (v10)"
+	bool "generic (v10)"
 config BR2_cris_unknown
-        bool "unknown (v0)"
+	bool "unknown (v0)"
 config BR2_cris_etrax_4
-        bool "etrax_4 (v3)"
+	bool "etrax_4 (v3)"
 config BR2_cris_etrax_100
-        bool "etrax_100 (v8)"
+	bool "etrax_100 (v8)"
 config BR2_cris_etrax_100lx
-        bool "etrax_100lx (v10)"
+	bool "etrax_100lx (v10)"
 endchoice
+
+choice
+	prompt "Target Type"
+	depends on BR2_m68k
+	default BR2_m68k_type_m68k
+	help
+	  Specific architecture type to use
+
+config BR2_m68k_type_m68k
+	bool "m68k / M680x0"
+	help
+	  Normal 680xx
+
+config BR2_m68k_type_coldfire
+	bool "coldfire / 520X"
+	help
+	  ColdFire
+
+	  Family | CPUs
+
+	  51qe		51qe
+	  5206		5202 5204 5206
+	  5206e		5206e
+	  5208		5207 5208
+	  5211a		5210a 5211a
+	  5213		5211 5212 5213
+	  5216		5214 5216
+	  52235		52230 52231 52232 52233 52234 52235
+	  5225		5224 5225
+	  5235		5232 5233 5234 5235 523x
+	  5249		5249
+	  5250		5250
+	  5271		5270 5271
+	  5272		5272
+	  5275		5274 5275
+	  5282		5280 5281 5282 528x
+	  5307		5307
+	  5329		5327 5328 5329 532x
+	  5373		5372 5373 537x
+	  5407		5407
+	  5475		5470 5471 5472 5473 5474 5475 547x 5480 5481 5482 5483 5484 5485
+
+	  e.g.: coldfire 5407 isab cfv4; see m68k.{c,h} for further details.
+endchoice
+
+if BR2_m68k_type_m68k
+choice
+	prompt "Target CPU Variant"
+	depends on BR2_m68k
+	default BR2_m68k_cpu_m68k_none
+	help
+	  Specific CPU variant to use
+
+config BR2_m68k_cpu_m68k_none
+	bool "none"
+	help
+	  Select this dummy if you do not want to use a specific CPU.
+
+config BR2_m68k_cpu_68000
+	bool "68000"
+config BR2_m68k_cpu_68010
+	bool "68010"
+config BR2_m68k_cpu_68020
+	bool "68020"
+config BR2_m68k_cpu_68030
+	bool "68030"
+config BR2_m68k_cpu_68040
+	bool "68040"
+config BR2_m68k_cpu_68060
+	bool "68060"
+config BR2_m68k_cpu_68302
+	bool "68302"
+config BR2_m68k_cpu_68332
+	bool "68332"
+config BR2_m68k_cpu_cpu32
+	bool "cpu32"
+endchoice
+endif
+
+if BR2_m68k_type_coldfire
+choice
+	prompt "Target CPU Variant"
+	depends on BR2_m68k
+	default BR2_m68k_cpu_coldfire_none
+	help
+	  Specific CPU variant to use
+
+config BR2_m68k_cpu_coldfire_none
+	bool "none"
+	help
+	  Select this dummy if you do not want to use a specific CPU.
+
+config BR2_m68k_cpu_coldfire_51qe
+	bool "51qe"
+config BR2_m68k_cpu_coldfire_5202
+	bool "5202"
+config BR2_m68k_cpu_coldfire_5204
+	bool "5204"
+config BR2_m68k_cpu_coldfire_5206
+	bool "5206"
+config BR2_m68k_cpu_coldfire_5206e
+	bool "5206e"
+config BR2_m68k_cpu_coldfire_5207
+	bool "5207"
+config BR2_m68k_cpu_coldfire_5208
+	bool "5208"
+config BR2_m68k_cpu_coldfire_5210a
+	bool "5210a"
+config BR2_m68k_cpu_coldfire_5211a
+	bool "5211a"
+config BR2_m68k_cpu_coldfire_5211
+	bool "5211"
+config BR2_m68k_cpu_coldfire_5212
+	bool "5212"
+config BR2_m68k_cpu_coldfire_5213
+	bool "5213"
+config BR2_m68k_cpu_coldfire_5214
+	bool "5214"
+config BR2_m68k_cpu_coldfire_5216
+	bool "5216"
+config BR2_m68k_cpu_coldfire_52230
+	bool "52230"
+config BR2_m68k_cpu_coldfire_52231
+	bool "52231"
+config BR2_m68k_cpu_coldfire_52232
+	bool "52232"
+config BR2_m68k_cpu_coldfire_52233
+	bool "52233"
+config BR2_m68k_cpu_coldfire_52234
+	bool "52234"
+config BR2_m68k_cpu_coldfire_52235
+	bool "52235"
+config BR2_m68k_cpu_coldfire_5224
+	bool "5224"
+config BR2_m68k_cpu_coldfire_5225
+	bool "5225"
+config BR2_m68k_cpu_coldfire_5232
+	bool "5232"
+config BR2_m68k_cpu_coldfire_5233
+	bool "5233"
+config BR2_m68k_cpu_coldfire_5234
+	bool "5234"
+config BR2_m68k_cpu_coldfire_5235
+	bool "5235"
+config BR2_m68k_cpu_coldfire_523x
+	bool "523x"
+config BR2_m68k_cpu_coldfire_5249
+	bool "5249"
+config BR2_m68k_cpu_coldfire_5250
+	bool "5250"
+config BR2_m68k_cpu_coldfire_5270
+	bool "5270"
+config BR2_m68k_cpu_coldfire_5271
+	bool "5271"
+config BR2_m68k_cpu_coldfire_5272
+	bool "5272"
+config BR2_m68k_cpu_coldfire_5274
+	bool "5274"
+config BR2_m68k_cpu_coldfire_5275
+	bool "5275"
+config BR2_m68k_cpu_coldfire_5280
+	bool "5280"
+config BR2_m68k_cpu_coldfire_5281
+	bool "5281"
+config BR2_m68k_cpu_coldfire_5282
+	bool "5282"
+config BR2_m68k_cpu_coldfire_528x
+	bool "528x"
+config BR2_m68k_cpu_coldfire_5307
+	bool "5307"
+config BR2_m68k_cpu_coldfire_5327
+	bool "5327"
+config BR2_m68k_cpu_coldfire_5328
+	bool "5328"
+config BR2_m68k_cpu_coldfire_5329
+	bool "5329"
+config BR2_m68k_cpu_coldfire_532x
+	bool "532x"
+config BR2_m68k_cpu_coldfire_5372
+	bool "5372"
+config BR2_m68k_cpu_coldfire_5373
+	bool "5373"
+config BR2_m68k_cpu_coldfire_537x
+	bool "537x"
+config BR2_m68k_cpu_coldfire_5407
+	bool "5407"
+config BR2_m68k_cpu_coldfire_5470
+	bool "5470"
+config BR2_m68k_cpu_coldfire_5471
+	bool "5471"
+config BR2_m68k_cpu_coldfire_5472
+	bool "5472"
+config BR2_m68k_cpu_coldfire_5473
+	bool "5473"
+config BR2_m68k_cpu_coldfire_5474
+	bool "5474"
+config BR2_m68k_cpu_coldfire_5475
+	bool "5475"
+config BR2_m68k_cpu_coldfire_547x
+	bool "547x"
+config BR2_m68k_cpu_coldfire_5480
+	bool "5480"
+config BR2_m68k_cpu_coldfire_5481
+	bool "5481"
+config BR2_m68k_cpu_coldfire_5482
+	bool "5482"
+config BR2_m68k_cpu_coldfire_5483
+	bool "5483"
+config BR2_m68k_cpu_coldfire_5484
+	bool "5484"
+config BR2_m68k_cpu_coldfire_5485
+	bool "5485"
+endchoice
+endif
+
+if 0
+choice
+	prompt "Target tune"
+	depends on BR2_m68k
+	default BR2_m68k_tune_none
+	help
+	  Specific CPU variant to generate code for per default
+config BR2_m68k_68000
+	bool "68000"
+	depends on BR2_m68k_type_m68k
+config BR2_m68k_68010
+	bool "68010"
+	depends on BR2_m68k_type_m68k
+config BR2_m68k_68020
+	bool "68020"
+	depends on BR2_m68k_type_m68k
+config BR2_m68k_68030
+	bool "68030"
+	depends on BR2_m68k_type_m68k
+config BR2_m68k_68040
+	bool "68040"
+	depends on BR2_m68k_type_m68k
+config BR2_m68k_68060
+	bool "68060"
+	depends on BR2_m68k_type_m68k
+config BR2_m68k_cpu32
+	bool "cpu32"
+	depends on BR2_m68k_type_m68k
+
+config BR2_m68k_cfv1
+	bool "cfv1"
+	depends on BR2_m68k_type_coldfire
+config BR2_m68k_cfv2
+	bool "cfv2"
+	depends on BR2_m68k_type_coldfire
+config BR2_m68k_cfv3
+	bool "cfv3"
+	depends on BR2_m68k_type_coldfire
+config BR2_m68k_cfv4
+	bool "cfv4"
+	depends on BR2_m68k_type_coldfire
+config BR2_m68k_cfv4e
+	bool "cfv4e"
+	depends on BR2_m68k_type_coldfire
+config BR2_m68k_tune_none
+	bool "none"
+config BR2_m68k_tune_tune
+	bool "specify tune manually"
+endchoice
+
+config BR2_m68k_tune
+	string "Manual target tune string"
+	depends on BR2_m68k_tune_tune
+	help
+	  You can also use e.g. "68020-40" for code that needs to run
+	  relatively well on 68020, 68030 and 68040 targets.
+	  "68020-60" would do the same but additionally include 68060.
+endif
 
 
 config BR2_ARCH
@@ -655,7 +926,8 @@ config BR2_ENDIAN
 	default "LITTLE" if BR2_arm || BR2_cris || BR2_i386 || BR2_mipsel || \
 			    BR2_sh3 || BR2_sh4 || BR2_x86_64 || BR2_nios2 || \
 			    BR2_sh64 || BR2_bfin
-	default "BIG"    if BR2_alpha || BR2_armeb || BR2_avr32 || BR2_m68k || BR2_mips || \
+	default "BIG"    if BR2_alpha || BR2_armeb || BR2_avr32 || BR2_m68k || \
+			    BR2_mips || \
 			    BR2_powerpc || BR2_sh2a_nofpueb || BR2_sh2eb || \
 			    BR2_sh3eb || BR2_sh4eb || BR2_sparc || BR2_sparc64
 
@@ -721,12 +993,19 @@ config BR2_GCC_TARGET_TUNE
 	default ev67		if BR2_alpha_21264a
 #	default itanium		if BR2_ia64_itanium1
 #	default itanium2	if BR2_ia64_itanium2
-	default 68000		if BR2_m68k_68000
-	default 68010		if BR2_m68k_68010
-	default 68020		if BR2_m68k_68020
-	default 68030		if BR2_m68k_68030
-	default 68040		if BR2_m68k_68040
-	default 68060		if BR2_m68k_68060
+#	default 68000		if BR2_m68k_68000
+#	default 68010		if BR2_m68k_68010
+#	default 68020		if BR2_m68k_68020
+#	default 68030		if BR2_m68k_68030
+#	default 68040		if BR2_m68k_68040
+#	default 68060		if BR2_m68k_68060
+#	default cpu32		if BR2_m68k_cpu32
+#	default cfv1		if BR2_m68k_cfv1
+#	default cfv2		if BR2_m68k_cfv2
+#	default cfv3		if BR2_m68k_cfv3
+#	default cfv4		if BR2_m68k_cfv4
+#	default cfv4e		if BR2_m68k_cfv4e
+#	default $BR2_m68k_tune	if BR2_m68k_tune
 	default mips1		if BR2_mips_1
 	default mips2		if BR2_mips_2
 	default mips3		if BR2_mips_3
@@ -766,7 +1045,6 @@ config BR2_GCC_TARGET_TUNE
 	default e500mc		if BR2_powerpc_e500mc
 	default 860		if BR2_powerpc_860
 	default 970		if BR2_powerpc_970
-	default 8540		if BR2_powerpc_8540
 	default cell		if BR2_powerpc_cell
 	default v7		if BR2_sparc_v7
 	default cypress		if BR2_sparc_cypress
@@ -809,6 +1087,76 @@ config BR2_GCC_TARGET_CPU
 	default bf548		if BR2_bf548
 	default bf549		if BR2_bf549
 	default bf561		if BR2_bf561
+	default 51qe		if BR2_m68k_cpu_coldfire_51qe
+	default 5202		if BR2_m68k_cpu_coldfire_5202
+	default 5204		if BR2_m68k_cpu_coldfire_5204
+	default 5206		if BR2_m68k_cpu_coldfire_5206
+	default 5206e		if BR2_m68k_cpu_coldfire_5206e
+	default 5207		if BR2_m68k_cpu_coldfire_5207
+	default 5208		if BR2_m68k_cpu_coldfire_5208
+	default 5210a		if BR2_m68k_cpu_coldfire_5210a
+	default 5211a		if BR2_m68k_cpu_coldfire_5211a
+	default 5211		if BR2_m68k_cpu_coldfire_5211
+	default 5212		if BR2_m68k_cpu_coldfire_5212
+	default 5213		if BR2_m68k_cpu_coldfire_5213
+	default 5214		if BR2_m68k_cpu_coldfire_5214
+	default 5216		if BR2_m68k_cpu_coldfire_5216
+	default 52230		if BR2_m68k_cpu_coldfire_52230
+	default 52231		if BR2_m68k_cpu_coldfire_52231
+	default 52232		if BR2_m68k_cpu_coldfire_52232
+	default 52233		if BR2_m68k_cpu_coldfire_52233
+	default 52234		if BR2_m68k_cpu_coldfire_52234
+	default 52235		if BR2_m68k_cpu_coldfire_52235
+	default 5224		if BR2_m68k_cpu_coldfire_5224
+	default 5225		if BR2_m68k_cpu_coldfire_5225
+	default 5232		if BR2_m68k_cpu_coldfire_5232
+	default 5233		if BR2_m68k_cpu_coldfire_5233
+	default 5234		if BR2_m68k_cpu_coldfire_5234
+	default 5235		if BR2_m68k_cpu_coldfire_5235
+	default 523x		if BR2_m68k_cpu_coldfire_523x
+	default 5249		if BR2_m68k_cpu_coldfire_5249
+	default 5250		if BR2_m68k_cpu_coldfire_5250
+	default 5270		if BR2_m68k_cpu_coldfire_5270
+	default 5271		if BR2_m68k_cpu_coldfire_5271
+	default 5272		if BR2_m68k_cpu_coldfire_5272
+	default 5274		if BR2_m68k_cpu_coldfire_5274
+	default 5275		if BR2_m68k_cpu_coldfire_5275
+	default 5280		if BR2_m68k_cpu_coldfire_5280
+	default 5281		if BR2_m68k_cpu_coldfire_5281
+	default 5282		if BR2_m68k_cpu_coldfire_5282
+	default 528x		if BR2_m68k_cpu_coldfire_528x
+	default 5307		if BR2_m68k_cpu_coldfire_5307
+	default 5327		if BR2_m68k_cpu_coldfire_5327
+	default 5328		if BR2_m68k_cpu_coldfire_5328
+	default 5329		if BR2_m68k_cpu_coldfire_5329
+	default 532x		if BR2_m68k_cpu_coldfire_532x
+	default 5372		if BR2_m68k_cpu_coldfire_5372
+	default 5373		if BR2_m68k_cpu_coldfire_5373
+	default 537x		if BR2_m68k_cpu_coldfire_537x
+	default 5407		if BR2_m68k_cpu_coldfire_5407
+	default 5470		if BR2_m68k_cpu_coldfire_5470
+	default 5471		if BR2_m68k_cpu_coldfire_5471
+	default 5472		if BR2_m68k_cpu_coldfire_5472
+	default 5473		if BR2_m68k_cpu_coldfire_5473
+	default 5474		if BR2_m68k_cpu_coldfire_5474
+	default 5475		if BR2_m68k_cpu_coldfire_5475
+	default 547x		if BR2_m68k_cpu_coldfire_547x
+	default 5480		if BR2_m68k_cpu_coldfire_5480
+	default 5481		if BR2_m68k_cpu_coldfire_5481
+	default 5482		if BR2_m68k_cpu_coldfire_5482
+	default 5483		if BR2_m68k_cpu_coldfire_5483
+	default 5484		if BR2_m68k_cpu_coldfire_5484
+	default 5485		if BR2_m68k_cpu_coldfire_5485
+	default 68000		if BR2_m68k_cpu_68000
+	default 68010		if BR2_m68k_cpu_68010
+	default 68020		if BR2_m68k_cpu_68020
+	default 68030		if BR2_m68k_cpu_68030
+	default 68040		if BR2_m68k_cpu_68040
+	default 68060		if BR2_m68k_cpu_68060
+	default 68302		if BR2_m68k_cpu_68302
+	default 68332		if BR2_m68k_cpu_68332
+	default cpu32		if BR2_m68k_cpu_cpu32
+
 
 config BR2_GCC_TARGET_ARCH
 	string
@@ -842,12 +1190,8 @@ config BR2_GCC_TARGET_ARCH
 	default v3		if BR2_cris_etrax_4
 	default v8		if BR2_cris_etrax_100
 	default v10		if BR2_cris_etrax_100lx
-	default 68000		if BR2_m68k_68000
-	default 68010		if BR2_m68k_68010
-	default 68020		if BR2_m68k_68020
-	default 68030		if BR2_m68k_68030
-	default 68040		if BR2_m68k_68040
-	default 68060		if BR2_m68k_68060
+#	default m68k		if BR2_m68k_type_m68k
+#	default cf		if BR2_m68k_type_coldfire
 	default g5		if BR2_s390_g5
 	default g6		if BR2_s390_g6
 	default z900		if BR2_s390_z900
