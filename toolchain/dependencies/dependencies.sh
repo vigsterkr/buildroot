@@ -310,12 +310,23 @@ fi
 #
 #############################################################
 if ! which help2man > /dev/null ; then
-	echo "help2man installed:		    FALSE"
+	echo "help2man installed:				FALSE"
 	/bin/echo -e "\n\nYou should install 'help2man' on your build machine\n";
+	/bin/echo "Creating dummy 'help2man' script since missing doesn't work for me"
+	cat > "$HOST_SED_DIR"/bin/help2man <<EOF
+#!/bin/sh
+test \$# -gt 0 &&
+case \$1 in
+-version*) ;;
+*) echo '.ab help2man is required to generate this page' >> \$1 ;;
+esac
+exit 0
+EOF
+	chmod +x "$HOST_SED_DIR"/bin/help2man
 	#exit 1;
-fi;
-echo "help2man installed:					Ok"
-
+else
+	echo "help2man installed:				Ok"
+fi
 
 #############################################################
 #
