@@ -47,8 +47,17 @@ config BR2_ENABLE_LOCALE
 	bool "Enable locale/gettext/i18n support?"
 	default n
 	help
-	    Enable locale/gettext/i18n support?
+	  Enable locale/gettext/i18n support?
 
+config BR2_ENABLE_LOCALE_PREGENERATED
+	bool "Use pregenerated locale data?"
+	depends on BR2_ENABLE_LOCALE
+	default n
+	help
+	  Instead of generating the locale data locally you can optionally
+	  download a pregenerated set of locales.
+
+	  Say N here.
 choice
 	prompt "Thread library implementation"
 	default BR2_PTHREADS_OLD
