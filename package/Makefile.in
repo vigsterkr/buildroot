@@ -37,6 +37,10 @@ CC_TARGET_CPU_SUB_:=$(strip $(subst ",,$(BR2_bfin_sirevision)))
 CC_TARGET_CPU_SUB_:=$(if $(CC_TARGET_CPU_SUB_),-$(CC_TARGET_CPU_SUB_))
 endif
 
+##############################################################################
+#disabled
+ifneq (XXX,XXX)
+# gcc configury --with-foo
 CC_TARGET_CPU_:=$(strip $(subst ",,$(BR2_GCC_TARGET_CPU)))
 #"))
 CC_TARGET_TUNE_:=$(strip $(subst ",,$(BR2_GCC_TARGET_TUNE)))
@@ -45,18 +49,56 @@ CC_TARGET_ARCH_:=$(strip $(subst ",,$(BR2_GCC_TARGET_ARCH)))
 #"))
 CC_TARGET_ABI_:=$(strip $(subst ",,$(BR2_GCC_TARGET_ABI)))
 #"))
-ifneq ($(CC_TARGET_CPU_),)
+
+# fixup for MOTOROLA
+ifeq ($(BR2_m68k),y)
+CC_TARGET_ARCH_:=$(filter-out cf m68k,$(CC_TARGET_ARCH_))
+endif
+
+ifneq ($(strip $(CC_TARGET_CPU_)),)
 TARGET_CFLAGS+=-mcpu=$(CC_TARGET_CPU_)$(CC_TARGET_CPU_SUB_)
 endif
-ifneq ($(CC_TARGET_TUNE_),)
+ifneq ($(strip $(CC_TARGET_TUNE_)),)
 TARGET_CFLAGS+=-mtune=$(CC_TARGET_TUNE_)
 endif
-ifneq ($(CC_TARGET_ARCH_),)
+ifneq ($(strip $(CC_TARGET_ARCH_)),)
 TARGET_CFLAGS+=-march=$(CC_TARGET_ARCH_)
 endif
-ifneq ($(CC_TARGET_ABI_),)
+ifneq ($(strip $(CC_TARGET_ABI_)),)
 TARGET_CFLAGS+=-mabi=$(CC_TARGET_ABI_)
 endif
+
+endif
+##############################################################################
+
+
+# CC -m{cpu,tune,arch,abi} FLAGS
+CC_TARGET_FLAGS_CPU_:=$(strip $(subst ",,$(BR2_GCC_TARGET_FLAGS_CPU)))
+#"))
+CC_TARGET_FLAGS_SUBCPU_:=$(strip $(subst ",,$(BR2_GCC_TARGET_FLAGS_SUBCPU)))
+#"))
+CC_TARGET_FLAGS_TUNE_:=$(strip $(subst ",,$(BR2_GCC_TARGET_FLAGS_TUNE)))
+#"))
+CC_TARGET_FLAGS_ARCH_:=$(strip $(subst ",,$(BR2_GCC_TARGET_FLAGS_ARCH)))
+#"))
+CC_TARGET_FLAGS_ABI_:=$(strip $(subst ",,$(BR2_GCC_TARGET_FLAGS_ABI)))
+#"))
+ifneq ($(strip $(CC_TARGET_FLAGS_CPU_)),)
+ifeq ($(BR2_bfin),y)
+CC_TARGET_FLAGS_SUBCPU_SEPARATOR:=-
+endif
+TARGET_CFLAGS+=-mcpu=$(CC_TARGET_FLAGS_CPU_)$(if CC_TARGET_FLAGS_SUBCPU_,$(CC_TARGET_FLAGS_SUBCPU_SEPARATOR)$(CC_TARGET_FLAGS_SUBCPU_))
+endif
+ifneq ($(strip $(CC_TARGET_FLAGS_TUNE_)),)
+TARGET_CFLAGS+=-mtune=$(CC_TARGET_FLAGS_TUNE_)
+endif
+ifneq ($(strip $(CC_TARGET_FLAGS_ARCH_)),)
+TARGET_CFLAGS+=-march=$(CC_TARGET_FLAGS_ARCH_)
+endif
+ifneq ($(strip $(CC_TARGET_FLAGS_ABI_)),)
+TARGET_CFLAGS+=-mabi=$(CC_TARGET_FLAGS_ABI_)
+endif
+
 
 ifneq ($(BR2_PREFER_STATIC_LIB),y)
 ifeq ($(BR2_x86_64),y)

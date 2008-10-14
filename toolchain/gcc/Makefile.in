@@ -13,14 +13,10 @@ EXTRA_GCC_CONFIG_OPTIONS:=$(strip $(subst ",, $(BR2_EXTRA_GCC_CONFIG_OPTIONS)))
 BR2_GCC_DECNUMBER:=$(strip $(subst ",, $(BR2_GCC_DECNUMBER)))
 #"))
 
-ifeq ($(strip $(subst ",, $(BR2_GCC_IS_SNAP))),y)
-#"))
+ifeq ($(BR2_GCC_IS_SNAP),y)
 GCC_SNAP_DATE:=$(strip $(subst ",, $(BR2_GCC_SNAP_DATE)))
 #"))
-else
-GCC_SNAP_DATE:=
 endif
-#")))
 
 ifeq ($(BR2_GCC_USE_SJLJ_EXCEPTIONS),y)
 GCC_USE_SJLJ_EXCEPTIONS:=--enable-sjlj-exceptions
@@ -67,34 +63,33 @@ SOFT_FLOAT_CONFIG_OPTION:=
 TARGET_SOFT_FLOAT:=
 endif # softfloat support
 
-HAVE_GCC_TARGET_ARCH:=y
-HAVE_GCC_TARGET_TUNE:=y
-HAVE_GCC_TARGET_ABI :=y
 # Some arches (e.g. cris) do not have supported_defaults
-ifeq ($(BR2_cris),y)
-HAVE_GCC_TARGET_ARCH:=n
-HAVE_GCC_TARGET_TUNE:=n
-HAVE_GCC_TARGET_ABI :=n
+# These are not allowed BR2_GCC_TARGET_ARCH but only BR2_GCC_TARGET_FLAGS_ARCH
+GCC_TARGET_ARCH_:=$(strip $(subst ",,$(BR2_GCC_TARGET_ARCH)))
+# "))
+GCC_TARGET_ABI_:=$(strip $(subst ",,$(BR2_GCC_TARGET_ABI)))
+# "))
+GCC_TARGET_TUNE_:=$(strip $(subst ",,$(BR2_GCC_TARGET_TUNE)))
+# "))
+GCC_TARGET_CPU_:=$(strip $(subst ",,$(BR2_GCC_TARGET_CPU)))
+# "))
+GCC_TARGET_SUBCPU_:=$(strip $(subst ",,$(BR2_GCC_TARGET_SUBCPU)))
+# "))
+GCC_TARGET_SUBCPU_SEPARATOR:=$(strip $(subst ",,$(BR2_GCC_TARGET_SUBCPU_SEPARATOR)))
+# "))
+ifneq ($(strip $(GCC_TARGET_CPU_)),)
+GCC_WITH_CPU:=--with-cpu=$(GCC_TARGET_CPU_)$(if $(GCC_TARGET_SUBCPU_),$(GCC_TARGET_SUBCPU_SEPARATOR)$(GCC_TARGET_SUBCPU_))
 endif
-# some additional defaults
-ifeq ($(HAVE_GCC_TARGET_ARCH),y)
-ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_ARCH))),)
-# ")))
-GCC_WITH_ARCH:=--with-arch=$(BR2_GCC_TARGET_ARCH)
+ifneq ($(strip $(GCC_TARGET_TUNE_)),)
+GCC_WITH_TUNE:=--with-tune=$(GCC_TARGET_TUNE_)
 endif
+ifneq ($(strip $(GCC_TARGET_ARCH_)),)
+GCC_WITH_ARCH:=--with-arch=$(GCC_TARGET_ARCH_)
 endif
-ifeq ($(HAVE_GCC_TARGET_TUNE),y)
-ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_TUNE))),)
-# ")))
-GCC_WITH_TUNE:=--with-tune=$(BR2_GCC_TARGET_TUNE)
+ifneq ($(strip $(GCC_TARGET_ABI_)),)
+GCC_WITH_ABI:=--with-abi=$(GCC_TARGET_ABI_)
 endif
-endif
-ifeq ($(HAVE_GCC_TARGET_ABI),y)
-ifneq ($(strip $(subst ",,$(BR2_GCC_TARGET_ABI))),)
-# ")))
-GCC_WITH_ABI:=--with-abi=$(BR2_GCC_TARGET_ABI)
-endif
-endif
+
 
 TARGET_GCC_FLAGS= CFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)" \
 	CXXFLAGS_FOR_TARGET="$(TARGET_CFLAGS) $(TARGET_SOFT_FLOAT)" \
