@@ -665,8 +665,10 @@ config BR2_m68k_cpu_m68k_none
 
 config BR2_m68k_cpu_68000
 	bool "68000"
+	select BR2_HAVE_NOMMU
 config BR2_m68k_cpu_68010
 	bool "68010"
+	select BR2_HAVE_NOMMU
 config BR2_m68k_cpu_68020
 	bool "68020"
 config BR2_m68k_cpu_68030
@@ -699,12 +701,16 @@ config BR2_m68k_cpu_coldfire_none
 
 config BR2_m68k_cpu_coldfire_51qe
 	bool "51qe"
+	select BR2_HAVE_NOMMU
 config BR2_m68k_cpu_coldfire_5202
 	bool "5202"
+	select BR2_HAVE_NOMMU
 config BR2_m68k_cpu_coldfire_5204
 	bool "5204"
+	select BR2_HAVE_NOMMU
 config BR2_m68k_cpu_coldfire_5206
 	bool "5206"
+	select BR2_HAVE_NOMMU
 config BR2_m68k_cpu_coldfire_5206e
 	bool "5206e"
 config BR2_m68k_cpu_coldfire_5207
