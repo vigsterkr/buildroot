@@ -281,12 +281,12 @@ ifeq ($(BR2_cris_cris),y)
 endif
 endif
 ifneq ($(UCLIBC_TARGET_ENDIAN),)
-	# The above doesn't work for me, so redo
-	$(SED) 's/.*\(ARCH_$(UCLIBC_NOT_TARGET_ENDIAN)_ENDIAN\).*/# \1 is not set/g' \
-		-e 's/.*\(ARCH_WANTS_$(UCLIBC_NOT_TARGET_ENDIAN)_ENDIAN\).*/# \1 is not set/g' \
-		-e 's/.*\(ARCH_$(UCLIBC_TARGET_ENDIAN)_ENDIAN\).*/\1=y/g' \
-		-e 's/.*\(ARCH_WANTS_$(UCLIBC_TARGET_ENDIAN)_ENDIAN\).*/\1=y/g' \
+	$(SED) 's/.*ARCH_\(WANTS_\|\)\(LITTLE\|BIG\)_ENDIAN.*//' \
 		$(UCLIBC_DIR)/.oldconfig
+	echo '# ARCH_$(UCLIBC_NOT_TARGET_ENDIAN)_ENDIAN is not set' >> $(UCLIBC_DIR)/.oldconfig
+	echo '# ARCH_WANTS_$(UCLIBC_NOT_TARGET_ENDIAN)_ENDIAN is not set' >> $(UCLIBC_DIR)/.oldconfig
+	echo 'ARCH_WANTS_$(UCLIBC_TARGET_ENDIAN)_ENDIAN=y' >> $(UCLIBC_DIR)/.oldconfig
+	echo 'ARCH_$(UCLIBC_TARGET_ENDIAN)_ENDIAN=y' >> $(UCLIBC_DIR)/.oldconfig
 endif
 	$(SED) '/ARCH_USE_MMU/d' $(UCLIBC_DIR)/.oldconfig
 ifeq ($(BR2_USE_MMU),y)
