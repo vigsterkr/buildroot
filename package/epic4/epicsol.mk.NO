@@ -1,0 +1,21 @@
+#############################################################
+#
+# epic4
+#
+#############################################################
+EPIC4_VERSION = 2.10
+EPIC4_SITE = http://ftp.epicsol.org/pub/epic/EPIC4-PRODUCTION/
+
+EPIC4_SOURCE = epic4-$(EPIC4_VERSION).tar.bz2
+
+EPIC4_INSTALL_TARGET = YES
+EPIC4_INSTALL_TARGET_OPT = IP=$(TARGET_DIR) installepic #installscript
+EPIC4_TARGET_INSTALL_TARGET = /usr/bin/epic4 /usr/share/epic
+
+#EPIC4_DEPENDENCIES =
+EPIC4_CONF_OPT = $(if $(BR2_INET_IPV6),,--without-ipv6) \
+	$(if $(BR2_PACKAGE_OPENSSL),,--without-ssl) \
+	$(if $(BR2_PACKAGE_MICROPERL)$(BR2_PACKAGE_PERL),,--without-perl) \
+	$(if $(BR2_PACKAGE_NCURSES),,--with-termcap)
+
+$(eval $(call AUTOTARGETS,package,epic4))
