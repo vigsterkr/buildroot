@@ -9,6 +9,14 @@ HOSTMAKE :=$(shell $(CONFIG_SHELL) -c "which $(HOSTMAKE)" || type -p $(HOSTMAKE)
 MAKE1:=$(HOSTMAKE) MAKE="$(firstword $(HOSTMAKE)) -j1"
 MAKE:=$(HOSTMAKE) -j$(BR2_JLEVEL)
 
+# installation targets
+ifeq ($(BR2_HAVE_INFOPAGES),y)
+MAKE_INSTALL_INFO:=install-info
+endif
+ifeq ($(BR2_HAVE_MANPAGES),y)
+MAKE_INSTALL_MAN:=install-man
+endif
+
 
 #########################################################################
 ifeq ($(BR2_TOOLCHAIN_SOURCE),y)
