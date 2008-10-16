@@ -142,6 +142,7 @@ endif
 source "package/dnsmasq/Config.in"
 source "package/dropbear/Config.in"
 source "package/ethtool/Config.in"
+source "package/epic4/Config.in"
 source "package/haserl/Config.in"
 source "package/hostap/Config.in"
 source "package/irda-utils/Config.in"

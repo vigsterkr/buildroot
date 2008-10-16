@@ -1,0 +1,8 @@
+config BR2_PACKAGE_EPIC4
+	bool "epic4"
+	default n
+	help
+	  EPIC is an irc client project.
+
+	  http://www.epicsol.org/
+
