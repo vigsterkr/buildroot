@@ -7,3 +7,13 @@ config BR2_PACKAGE_BISON
 	  program to parse that grammar.
 
 	  http://www.gnu.org/software/bison/
+
+config BR2_PACKAGE_BISON_YACC
+	bool "yacc compat"
+	default y
+	depends on BR2_PACKAGE_BISON
+	help
+	  Enable yacc compatibility.
+
+	  If you enable this option, then bison will be built with yacc
+	  compatibility, including liby.

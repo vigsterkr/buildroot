@@ -10,6 +10,9 @@ BISON_DIR:=$(BUILD_DIR)/bison-$(BISON_VERSION)
 BISON_CAT:=$(BZCAT)
 BISON_BINARY:=src/bison
 BISON_TARGET_BINARY:=usr/bin/bison
+ifeq ($(BR2_PACKAGE_BISON_YACC),y)
+YACC_TARGET_BINARY:=$(TARGET_DIR)/usr/bin/yacc
+endif
 
 $(DL_DIR)/$(BISON_SOURCE):
 	 $(WGET) -P $(DL_DIR) $(BISON_SITE)/$(BISON_SOURCE)
@@ -21,35 +24,22 @@ $(BISON_DIR)/.unpacked: $(DL_DIR)/$(BISON_SOURCE)
 
 $(BISON_DIR)/.configured: $(BISON_DIR)/.unpacked
 	(cd $(BISON_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		gt_cv_func_gnugettext2_libintl=yes \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
-		--exec-prefix=/usr \
-		--bindir=/usr/bin \
-		--sbindir=/usr/sbin \
-		--libdir=/lib \
-		--libexecdir=/usr/lib \
-		--sysconfdir=/etc \
-		--datadir=/usr/share \
-		--localstatedir=/var \
-		--mandir=/usr/share/man \
-		--infodir=/usr/share/info \
-		--includedir=/usr/include \
+		$(if $(YACC_TARGET_BINARY),--enable-yacc,--disable-yacc) \
 		$(DISABLE_NLS) \
 	)
-	echo 'all install:' > $(BISON_DIR)/examples/Makefile
+	echo 'all install install-exec install-info install-man install-data uninstall clean:' \
+		> $(BISON_DIR)/examples/Makefile
 	touch $@
 
 $(BISON_DIR)/$(BISON_BINARY): $(BISON_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) -C $(BISON_DIR)
+	$(MAKE) -C $(BISON_DIR)
+	touch -c $@
 
 $(TARGET_DIR)/$(BISON_TARGET_BINARY): $(BISON_DIR)/$(BISON_BINARY)
-	$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(BISON_DIR) install
+	$(MAKE) DESTDIR=$(TARGET_DIR) -C $(BISON_DIR) install-exec \
+		$(MAKE_INSTALL_MAN) $(MAKE_INSTALL_INFO)
 ifneq ($(BR2_HAVE_INFOPAGES),y)
 	rm -rf $(TARGET_DIR)/usr/share/info
 endif
@@ -58,15 +48,21 @@ ifneq ($(BR2_HAVE_MANPAGES),y)
 endif
 	rm -rf $(TARGET_DIR)/share/locale
 	rm -rf $(TARGET_DIR)/usr/share/doc
-	cp -a package/bison/yacc $(TARGET_DIR)/usr/bin/yacc
+	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
-bison: uclibc $(TARGET_DIR)/$(BISON_TARGET_BINARY)
+ifeq ($(BR2_PACKAGE_BISON_YACC),y)
+$(TARGET_DIR)/$(YACC_TARGET_BINARY): $(BISON_DIR)/$(BISON_BINARY)
+	$(INSTALL) -D -m0755 package/bison/yacc $(TARGET_DIR)/usr/bin/yacc
+endif
+
+bison: uclibc $(TARGET_DIR)/$(BISON_TARGET_BINARY) \
+      $(YACC_TARGET_BINARY)
 
 bison-source: $(DL_DIR)/$(BISON_SOURCE)
 
 bison-clean:
-	-$(MAKE) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(BISON_DIR) uninstall
-	rm -f $(TARGET_DIR)/$(BISON_TARGET_BINARY)
+	-$(MAKE) DESTDIR=$(TARGET_DIR) -C $(BISON_DIR) uninstall
+	rm -f $(TARGET_DIR)/$(BISON_TARGET_BINARY) $(YACC_TARGET_BINARY)
 	-$(MAKE) -C $(BISON_DIR) clean
 
 bison-dirclean:
