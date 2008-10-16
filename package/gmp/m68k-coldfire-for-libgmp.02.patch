@@ -1,0 +1,281 @@
+diff -rdup gmp-4.2.4.oorig/configure gmp-4.2.4/configure
+--- gmp-4.2.4.oorig/configure	2008-09-11 22:03:04.000000000 +0200
++++ gmp-4.2.4/configure	2008-10-16 15:30:16.000000000 +0200
+@@ -2836,10 +2836,27 @@ echo "include_mpn(\`ia64/ia64-defs.m4')"
+   # Motorola 68k
+   #
+   m68k-*-* | m68[0-9][0-9][0-9]-*-*)
+-    cat >>confdefs.h <<\_ACEOF
++
++  if test "x$ac_cv_host_cpu_family_coldfire" = "x"; then
++# ideally we would look if the CPP defined __mcoldfire__
++for __cfla in $CFLAGS;
++do
++  case $__cfla in
++  -mcpu=5*) ac_cv_host_cpu_family_coldfire=yes;;
++  esac
++done
++    fi
++    if test "x$ac_cv_host_cpu_family_coldfire" = "xyes"; then
++      cat >>confdefs.h <<\_ACEOF
++#define HAVE_HOST_CPU_FAMILY_coldfire 1
++_ACEOF
++
++    else
++      cat >>confdefs.h <<\_ACEOF
+ #define HAVE_HOST_CPU_FAMILY_m68k 1
+ _ACEOF
+ 
++    fi
+ 
+ echo "include_mpn(\`m68k/m68k-defs.m4')" >> $gmp_tmpconfigm4i
+ 
+@@ -2866,6 +2883,9 @@ echo "include_mpn(\`m68k/m68k-defs.m4')"
+     m680[234]0 | m68360)  path="m68k/mc68020 m68k" ;;
+     *)                      path="m68k" ;;
+     esac
++    if test "x$ac_cv_host_cpu_family_coldfire" = "xyes"; then
++      path="m68k/m5200 m68k" ; path="m68k/m5200"
++    fi
+     ;;
+ 
+ 
+@@ -10410,7 +10430,7 @@ ia64-*-hpux*)
+   ;;
+ *-*-irix6*)
+   # Find out which ABI we are using.
+-  echo '#line 10413 "configure"' > conftest.$ac_ext
++  echo '#line 10433 "configure"' > conftest.$ac_ext
+   if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+   (eval $ac_compile) 2>&5
+   ac_status=$?
+@@ -12152,11 +12172,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:12155: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:12175: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:12159: \$? = $ac_status" >&5
++   echo "$as_me:12179: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -12442,11 +12462,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:12445: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:12465: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:12449: \$? = $ac_status" >&5
++   echo "$as_me:12469: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -12546,11 +12566,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:12549: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:12569: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>out/conftest.err)
+    ac_status=$?
+    cat out/conftest.err >&5
+-   echo "$as_me:12553: \$? = $ac_status" >&5
++   echo "$as_me:12573: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s out/conftest2.$ac_objext
+    then
+      # The compiler can only warn and ignore the option if not recognized
+@@ -14932,7 +14952,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 14935 "configure"
++#line 14955 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -15032,7 +15052,7 @@ else
+   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
+   lt_status=$lt_dlunknown
+   cat > conftest.$ac_ext <<EOF
+-#line 15035 "configure"
++#line 15055 "configure"
+ #include "confdefs.h"
+ 
+ #if HAVE_DLFCN_H
+@@ -17456,11 +17476,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:17459: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:17479: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:17463: \$? = $ac_status" >&5
++   echo "$as_me:17483: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -17560,11 +17580,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:17563: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:17583: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>out/conftest.err)
+    ac_status=$?
+    cat out/conftest.err >&5
+-   echo "$as_me:17567: \$? = $ac_status" >&5
++   echo "$as_me:17587: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s out/conftest2.$ac_objext
+    then
+      # The compiler can only warn and ignore the option if not recognized
+@@ -19122,11 +19142,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:19125: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:19145: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:19129: \$? = $ac_status" >&5
++   echo "$as_me:19149: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -19226,11 +19246,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:19229: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:19249: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>out/conftest.err)
+    ac_status=$?
+    cat out/conftest.err >&5
+-   echo "$as_me:19233: \$? = $ac_status" >&5
++   echo "$as_me:19253: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s out/conftest2.$ac_objext
+    then
+      # The compiler can only warn and ignore the option if not recognized
+@@ -21418,11 +21438,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:21421: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:21441: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:21425: \$? = $ac_status" >&5
++   echo "$as_me:21445: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -21708,11 +21728,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:21711: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:21731: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>conftest.err)
+    ac_status=$?
+    cat conftest.err >&5
+-   echo "$as_me:21715: \$? = $ac_status" >&5
++   echo "$as_me:21735: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s "$ac_outfile"; then
+      # The compiler can only warn and ignore the option if not recognized
+      # So say no if there are warnings other than the usual output.
+@@ -21812,11 +21832,11 @@ else
+    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
+    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
+    -e 's:$: $lt_compiler_flag:'`
+-   (eval echo "\"\$as_me:21815: $lt_compile\"" >&5)
++   (eval echo "\"\$as_me:21835: $lt_compile\"" >&5)
+    (eval "$lt_compile" 2>out/conftest.err)
+    ac_status=$?
+    cat out/conftest.err >&5
+-   echo "$as_me:21819: \$? = $ac_status" >&5
++   echo "$as_me:21839: \$? = $ac_status" >&5
+    if (exit $ac_status) && test -s out/conftest2.$ac_objext
+    then
+      # The compiler can only warn and ignore the option if not recognized
+diff -rdup gmp-4.2.4.oorig/configure.in gmp-4.2.4/configure.in
+--- gmp-4.2.4.oorig/configure.in	2008-08-01 19:24:04.000000000 +0200
++++ gmp-4.2.4/configure.in	2008-10-16 15:28:25.000000000 +0200
+@@ -237,6 +237,7 @@ AH_VERBATIM([HAVE_HOST_CPU_1],
+    For an AMD64 chip, define "x86" in ABI=32, but not in ABI=64. */
+ #undef HAVE_HOST_CPU_FAMILY_alpha
+ #undef HAVE_HOST_CPU_FAMILY_m68k
++#undef HAVE_HOST_CPU_FAMILY_coldfire
+ #undef HAVE_HOST_CPU_FAMILY_power
+ #undef HAVE_HOST_CPU_FAMILY_powerpc
+ #undef HAVE_HOST_CPU_FAMILY_x86
+@@ -719,7 +720,21 @@ case $host in
+   # Motorola 68k
+   #
+   M68K_PATTERN)
+-    AC_DEFINE(HAVE_HOST_CPU_FAMILY_m68k)
++  
++  if test "x$ac_cv_host_cpu_family_coldfire" = "x"; then
++# ideally we would look if the CPP defined __mcoldfire__
++for __cfla in $CFLAGS;
++do
++  case $__cfla in
++  -mcpu=5*) ac_cv_host_cpu_family_coldfire=yes;;
++  esac
++done
++    fi
++    if test "x$ac_cv_host_cpu_family_coldfire" = "xyes"; then
++      AC_DEFINE(HAVE_HOST_CPU_FAMILY_coldfire)
++    else
++      AC_DEFINE(HAVE_HOST_CPU_FAMILY_m68k)
++    fi
+     GMP_INCLUDE_MPN(m68k/m68k-defs.m4)
+     gcc_cflags="-O2 $fomit_frame_pointer"
+     gcc_cflags_optlist="arch"
+@@ -744,6 +759,9 @@ case $host in
+     [m680[234]0 | m68360])  path="m68k/mc68020 m68k" ;;
+     *)                      path="m68k" ;;
+     esac
++    if test "x$ac_cv_host_cpu_family_coldfire" = "xyes"; then
++      path="m68k/m5200 m68k" ; path="m68k/m5200"
++    fi
+     ;;
+ 
+ 
+diff -rdup gmp-4.2.4.oorig/gmp-impl.h gmp-4.2.4/gmp-impl.h
+--- gmp-4.2.4.oorig/gmp-impl.h	2007-08-30 20:31:40.000000000 +0200
++++ gmp-4.2.4/gmp-impl.h	2008-10-16 15:30:05.000000000 +0200
+@@ -2958,7 +2958,7 @@ double mpn_get_d __GMP_PROTO ((mp_srcptr
+    seem to put the operand through memory as hoped.  */
+ 
+ #if (HAVE_HOST_CPU_FAMILY_m68k || HAVE_HOST_CPU_FAMILY_x86      \
+-     || defined (__amd64__))
++     || defined (__amd64__) || HAVE_HOST_CPU_FAMILY_coldfire)
+ #define FORCE_DOUBLE(d) \
+   do { volatile double __gmp_force = (d); (d) = __gmp_force; } while (0)
+ #else
+diff -rdup gmp-4.2.4.oorig/mpn/m68k/README gmp-4.2.4/mpn/m68k/README
+--- gmp-4.2.4.oorig/mpn/m68k/README	2007-08-30 20:31:41.000000000 +0200
++++ gmp-4.2.4/mpn/m68k/README	2008-10-16 13:23:12.000000000 +0200
+@@ -29,10 +29,11 @@ CODE ORGANIZATION
+ 
+ 	m68k             m68000, m68010, m68060
+ 	m68k/mc68020     m68020, m68030, m68040, and CPU32
++	m68k/m5200       coldfire (e.g. 5475)
+ 
+ 
+ The m5200 "coldfire", which is m68000 less a few instructions, currently has
+-no assembler code support.
++no assembler code support.
+ 
+ 
+ STATUS
