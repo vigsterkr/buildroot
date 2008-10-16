@@ -48,6 +48,7 @@ $(LTP_TESTSUITE_DIR)/.configured: $(DL_DIR)/$(LTP_TESTSUITE_SOURCE)
 
 $(LTP_TESTSUITE_DIR)/.compiled: $(LTP_TESTSUITE_DIR)/.configured
 	$(MAKE1) $(TARGET_CONFIGURE_OPTS) CROSS_COMPILER=$(TARGET_CROSS) \
+		CROSS_CFLAGS="$(TARGET_CFLAGS)" \
 		$(LTP_TESTSUITE_ENV) \
 		-C $(LTP_TESTSUITE_DIR) all
 	touch $@
@@ -55,7 +56,8 @@ $(LTP_TESTSUITE_DIR)/.compiled: $(LTP_TESTSUITE_DIR)/.configured
 $(LTP_TESTSUITE_DIR)/.installed: $(LTP_TESTSUITE_DIR)/.compiled
 	# Use fakeroot to pretend to do 'make install' as root
 	echo '$(MAKE1) $(TARGET_CONFIGURE_OPTS) \
-			CROSS_COMPILER=$(TARGET_CROSS) \
+			CROSS_COMPILER="$(TARGET_CROSS)" \
+			CROSS_CFLAGS="$(TARGET_CFLAGS)" \
 			$(LTP_TESTSUITE_ENV) \
 			-C $(LTP_TESTSUITE_DIR) install' \
 			> $(PROJECT_BUILD_DIR)/.fakeroot.ltp
