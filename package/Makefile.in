@@ -402,6 +402,7 @@ TARGET_CONFIGURE_ARGS= \
 	$(BR2_AC_CV_HAVE_DECL_SIGLIST) \
 	$(BR2_AC_CV_TYPE_STAT64) \
 	ac_cv_type_mode_t=yes \
+	ac_cv_func_getpgrp_void=yes \
 	ac_cv_prog_LEX="$(FLEX)" \
 	ac_cv_prog_YACC="$(BISON) $($(PKG)_BISON_FLAGS)" \
 	$(BR2_AC_CV_C_BIGENDIAN) \

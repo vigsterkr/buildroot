@@ -211,13 +211,13 @@ $(BUILD_DIR)/%/.stamp_configured:
 # Build
 $(BUILD_DIR)/%/.stamp_built:
 	$(call MESSAGE,"Building")
-	$($(PKG)_MAKE_ENV) $(MAKE) $($(PKG)_MAKE_OPT) -C $(@D)/$($(PKG)_SUBDIR)
+	+$($(PKG)_MAKE_ENV) $(MAKE) $($(PKG)_MAKE_OPT) -C $(@D)/$($(PKG)_SUBDIR)
 	$(Q)touch $@
 
 # Install to staging dir
 $(BUILD_DIR)/%/.stamp_staging_installed:
 	$(call MESSAGE,'Installing to host (staging directory)')
-	$($(PKG)_MAKE_ENV) $(MAKE) $($(PKG)_INSTALL_STAGING_OPT) -C $(@D)/$($(PKG)_SUBDIR)
+	$($(PKG)_MAKE_ENV) $(MAKE1) $($(PKG)_INSTALL_STAGING_OPT) -C $(@D)/$($(PKG)_SUBDIR)
 #	toolchain/replace.sh $(STAGING_DIR)/usr/lib ".*\.la" "\(['= ]\)/usr" "\\1$(STAGING_DIR)/usr"
 	for i in $$(find $(STAGING_DIR)/usr/lib/ -name "*.la"); do \
 		cp $$i $$i~; \
@@ -228,11 +228,11 @@ $(BUILD_DIR)/%/.stamp_staging_installed:
 # Install to target dir
 $(PROJECT_BUILD_DIR)/autotools-stamps/%_target_installed:
 	$(call MESSAGE,"Installing to target")
-	$($(PKG)_MAKE_ENV) $(MAKE) $($(PKG)_INSTALL_TARGET_OPT) -C $($(PKG)_DIR)/$($(PKG)_SUBDIR)
-	$(if $(BR2_HAVE_MANPAGES),,for d in man share/man; do \
+	$($(PKG)_MAKE_ENV) $(MAKE1) $($(PKG)_INSTALL_TARGET_OPT) -C $($(PKG)_DIR)/$($(PKG)_SUBDIR)
+	$(if $(BR2_HAVE_MANPAGES),,for d in share/man; do \
 		rm -rf $(TARGET_DIR)/$$d $(TARGET_DIR)/usr/$$d; \
 	done)
-	$(if $(BR2_HAVE_INFOPAGES),,for d in info share/info; do \
+	$(if $(BR2_HAVE_INFOPAGES),,for d in share/info; do \
 		rm -rf $(TARGET_DIR)/$$d $(TARGET_DIR)/usr/$$d; \
 	done)
 	$(if $(BR2_HAVE_INCLUDES),,for d in include; do \
@@ -243,18 +243,18 @@ $(PROJECT_BUILD_DIR)/autotools-stamps/%_target_installed:
 
 $(BUILD_DIR)/%/.stamp_cleaned:
 	$(call MESSAGE,"Cleaning up")
-	-$($(PKG)_MAKE_ENV) $(MAKE)  $($(PKG)_CLEAN_OPT) -C $(@D)/$($(PKG)_SUBDIR)
+	-$($(PKG)_MAKE_ENV) $(MAKE1)  $($(PKG)_CLEAN_OPT) -C $(@D)/$($(PKG)_SUBDIR)
 	rm -f $(@D)/.stamp_built
 
 $(BUILD_DIR)/%/.stamp_uninstalled:
 	$(call MESSAGE,"Uninstalling")
-	$($(PKG)_MAKE_ENV) $(MAKE) $($(PKG)_UNINSTALL_STAGING_OPT) -C $(@D)/$($(PKG)_SUBDIR)
+	-$($(PKG)_MAKE_ENV) $(MAKE1) $($(PKG)_UNINSTALL_STAGING_OPT) -C $(@D)/$($(PKG)_SUBDIR)
 	rm -f $(@D)/.stamp_staging_installed
-	$($(PKG)_MAKE_ENV) $(MAKE) $($(PKG)_UNINSTALL_TARGET_OPT) -C $(@D)/$($(PKG)_SUBDIR)
-	rm -f $($(PKG)_TARGET_INSTALL_TARGET) $($(PKG)_HOOK_POST_INSTALL)
+	-$($(PKG)_MAKE_ENV) $(MAKE1) $($(PKG)_UNINSTALL_TARGET_OPT) -C $(@D)/$($(PKG)_SUBDIR)
+	rm -rf $($(PKG)_TARGET_INSTALL_TARGET) $($(PKG)_HOOK_POST_INSTALL)
 
 $(BUILD_DIR)/%/.stamp_dircleaned:
-	rm -Rf $(@D)
+	rm -rf $(@D)
 
 
 ################################################################################
