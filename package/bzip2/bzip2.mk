@@ -19,8 +19,8 @@ $(BZIP2_DIR)/.unpacked: $(DL_DIR)/$(BZIP2_SOURCE)
 	$(SED) "s,ln \$$(,ln -snf \$$(,g" $(BZIP2_DIR)/Makefile
 	$(SED) "s,ln -s (lib.*),ln -snf \$$1; ln -snf libbz2.so.$(BZIP2_VERSION) libbz2.so,g" $(BZIP2_DIR)/Makefile-libbz2_so
 	toolchain/patch-kernel.sh $(BZIP2_DIR) package/bzip2/ \*$(BZIP2_VERSION)\*.patch
-	$(SED) "s:-O2:$$(TARGET_CFLAGS):" $(BZIP2_DIR)/Makefile
-	$(SED) "s:-O2:$$(TARGET_CFLAGS):" $(BZIP2_DIR)/Makefile-libbz2_so
+	$(SED) 's:-O2:$$(TARGET_CFLAGS):' $(BZIP2_DIR)/Makefile
+	$(SED) 's:-O2:$$(TARGET_CFLAGS):' $(BZIP2_DIR)/Makefile-libbz2_so
 
 
 $(BZIP2_DIR)/.configured: $(BZIP2_DIR)/.unpacked \
