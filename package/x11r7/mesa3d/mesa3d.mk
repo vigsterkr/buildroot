@@ -81,5 +81,3 @@ mesa3d-dirclean:
 ifeq ($(BR2_PACKAGE_MESA3D),y)
 TARGETS+=mesa3d
 endif
-# :mode=makefile:
-
