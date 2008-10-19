@@ -265,6 +265,21 @@ if ! which flex > /dev/null ; then
 fi;
 echo "flex installed:					Ok"
 
+#############################################################
+#
+# check build system 'nasm'
+#
+#############################################################
+if [ "x$NEED_NASM" = "xy" ]
+then
+	NASM=$(toolchain/dependencies/check-host-nasm.sh)
+
+	if [ -z "$NASM" ] ; then
+		echo "nasm works:					No, using buildroot version instead"
+	else
+		echo "nasm works:					Ok ($NASM)"
+	fi
+fi
 
 #############################################################
 #
