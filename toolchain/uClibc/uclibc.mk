@@ -6,36 +6,25 @@
 
 ifeq ($(BR2_TOOLCHAIN_SOURCE),y)
 
+UCLIBC_SITE:=http://www.uclibc.org/downloads
+ifeq ($(BR2_TOOLCHAIN_EXTERNAL_SOURCE),y)
+UCLIBC_SITE:=$(VENDOR_SITE)
+endif
+
 # specifying UCLIBC_CONFIG_FILE on the command-line overrides the .config
 # setting.
 ifndef UCLIBC_CONFIG_FILE
-UCLIBC_CONFIG_FILE=$(subst ",, $(strip $(BR2_UCLIBC_CONFIG)))
+UCLIBC_CONFIG_FILE=$(subst ",, $(BR2_UCLIBC_CONFIG))
 #")
 endif
 
+UCLIBC_VER:=$(subst ",,$(BR2_UCLIBC_VERSION_STRING))
+#")
 ifeq ($(BR2_UCLIBC_VERSION_SNAPSHOT),y)
-# Be aware that this changes daily....
-UCLIBC_VER:=0.9.29
 UCLIBC_DIR:=$(TOOL_BUILD_DIR)/uClibc
-UCLIBC_SOURCE:=uClibc-$(strip $(subst ",, $(BR2_USE_UCLIBC_SNAPSHOT))).tar.bz2
-#"))
+UCLIBC_SOURCE:=uClibc-$(UCLIBC_VER).tar.bz2
 UCLIBC_SITE:=http://www.uclibc.org/downloads/snapshots
 UCLIBC_PATCH_DIR:=toolchain/uClibc/
-else
-# releases
-ifeq ($(BR2_UCLIBC_VERSION_0_9_29),y)
-UCLIBC_VER:=0.9.29
-endif
-ifeq ($(BR2_UCLIBC_VERSION_0_9_28_3),y)
-UCLIBC_VER:=0.9.28.3
-endif
-ifeq ($(BR2_UCLIBC_VERSION_0_9_28),y)
-UCLIBC_VER:=0.9.28
-endif
-UCLIBC_SITE:=http://www.uclibc.org/downloads
-
-ifeq ($(BR2_TOOLCHAIN_EXTERNAL_SOURCE),y)
-UCLIBC_SITE:=$(VENDOR_SITE)
 endif
 
 UCLIBC_OFFICIAL_VERSION:=$(UCLIBC_VER)$(VENDOR_SUFFIX)$(VENDOR_UCLIBC_RELEASE)
@@ -46,10 +35,11 @@ else
 UCLIBC_PATCH_DIR:=$(VENDOR_PATCH_DIR)/uClibc-$(UCLIBC_OFFICIAL_VERSION)
 endif
 
+ifneq ($(BR2_UCLIBC_VERSION_SNAPSHOT),y)
 UCLIBC_DIR:=$(TOOL_BUILD_DIR)/uClibc-$(UCLIBC_OFFICIAL_VERSION)
-UCLIBC_SOURCE:=uClibc-$(UCLIBC_OFFICIAL_VERSION).tar.bz2
 endif
 
+UCLIBC_SOURCE:=uClibc-$(UCLIBC_OFFICIAL_VERSION).tar.bz2
 UCLIBC_CAT:=$(BZCAT)
 
 UCLIBC_TARGET_ARCH:=$(shell $(SHELL) -c "echo $(ARCH) | sed \
@@ -89,10 +79,10 @@ else
 UCLIBC_NOT_TARGET_ENDIAN:=LITTLE
 endif
 
-UCLIBC_ARM_TYPE:=CONFIG_$(strip $(subst ",, $(BR2_ARM_TYPE)))
-#"))
-UCLIBC_SPARC_TYPE:=CONFIG_SPARC_$(strip $(subst ",, $(BR2_SPARC_TYPE)))
-#"))
+UCLIBC_ARM_TYPE:=CONFIG_$(subst ",, $(BR2_ARM_TYPE))
+#")
+UCLIBC_SPARC_TYPE:=CONFIG_SPARC_$(subst ",, $(BR2_SPARC_TYPE))
+#")
 
 ifeq ($(BR2_GCC_USE_INTERWORKING),y)
 __UCLIBC_EXTRA_TARGET_CFLAGS+=-mthumb-interwork
@@ -139,7 +129,6 @@ $(wildcard $(BR2_DEPENDS_DIR)/br2/use/*wchar*.h) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/use/*updates*.h) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/uclibc/*.h) \
 $(wildcard $(BR2_DEPENDS_DIR)/br2/uclibc/*/*.h)
-
 
 # Some targets may wish to provide their own UCLIBC_CONFIG_FILE...
 $(UCLIBC_DIR)/.oldconfig: $(UCLIBC_DIR)/.unpacked $(UCLIBC_CONFIG_FILE) $(UCLIBC_CONFIGURED_PREREQ)
@@ -523,7 +512,6 @@ $(UCLIBC_DIR)/lib/libc.a: $(UCLIBC_DIR)/.configured $(gcc_initial) $(LIBFLOAT_TA
 		UCLIBC_EXTRA_LDFLAGS="$(TARGET_LDFLAGS)" \
 		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS) $(__UCLIBC_EXTRA_TARGET_CFLAGS)" \
 		all
-	touch -c $@
 
 uclibc-menuconfig: host-sed $(UCLIBC_DIR)/.config
 	$(MAKE1) -C $(UCLIBC_DIR) \
@@ -600,6 +588,7 @@ ifeq ($(BR2__UCLIBC_UCLIBC_HAS_LOCALE),y)
 endif
 	touch -c $@
 
+# extra paranoia
 ifneq ($(TARGET_DIR),)
 $(TARGET_DIR)/lib/libc.so.0: $(STAGING_DIR)/usr/lib/libc.a
 	$(MAKE1) -C $(UCLIBC_DIR) \
@@ -618,16 +607,14 @@ $(TARGET_DIR)/usr/bin/ldd: $(cross_compiler)
 		UCLIBC_EXTRA_CFLAGS="$(TARGET_CFLAGS) $(__UCLIBC_EXTRA_TARGET_CFLAGS)" \
 		PREFIX=$(TARGET_DIR) utils install_utils
 ifeq ($(BR2_CROSS_TOOLCHAIN_TARGET_UTILS),y)
-	mkdir -p $(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils
 	$(INSTALL) -m0755 -D $(TARGET_DIR)/usr/bin/ldd \
 		$(STAGING_DIR)/$(REAL_GNU_TARGET_NAME)/target_utils/ldd
 endif
 	touch -c $@
 
-UCLIBC_TARGETS=$(TARGET_DIR)/lib/libc.so.0
 endif
 
-uclibc: $(cross_compiler) $(STAGING_DIR)/usr/lib/libc.a $(UCLIBC_TARGETS)
+uclibc: $(cross_compiler) $(STAGING_DIR)/usr/lib/libc.a
 
 uclibc-source: $(DL_DIR)/$(UCLIBC_SOURCE)
 
@@ -677,8 +664,7 @@ uclibc-target-utils-source: $(DL_DIR)/$(UCLIBC_SOURCE)
 
 #############################################################
 #
-# uClibc for the target just needs its header files
-# and whatnot installed.
+# uClibc for the target
 #
 #############################################################
 
@@ -708,8 +694,18 @@ else
 endif
 	touch -c $@
 
-uclibc_target: cross_compiler uclibc $(TARGET_DIR)/usr/lib/libc.a $(TARGET_DIR)/usr/bin/ldd
+ifeq ($(BR2__UCLIBC_HAVE_SHARED),y)
+UCLIBC_TARGETS+=$(TARGET_DIR)/lib/libc.so.0
+ifeq ($(BR2_CROSS_TOOLCHAIN_TARGET_UTILS),y)
+UCLIBC_TARGETS+=$(TARGET_DIR)/usr/bin/ldd
+endif
+else
+ifeq ($(BR2_HAVE_INCLUDES),y)
+UCLIBC_TARGETS+=$(TARGET_DIR)/usr/lib/libc.a
+endif
+endif
 
+uclibc_target: cross_compiler uclibc $(UCLIBC_TARGETS)
 uclibc_target-clean:
 	rm -rf $(TARGET_DIR)/usr/include \
 		$(TARGET_DIR)/usr/lib/libc.a $(TARGET_DIR)/usr/bin/ldd
