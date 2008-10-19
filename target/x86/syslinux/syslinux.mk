@@ -41,16 +41,16 @@ $(SYSLINUX_DIR)/Makefile: $(DL_DIR)/$(SYSLINUX_SOURCE) $(SYSLINUX_PATCH)
 	toolchain/patch-kernel.sh $(SYSLINUX_DIR) target/x86/syslinux/ \*.patch
 	touch -c $@
 
-$(SYSLINUX_DIR)/isolinux.bin $(SYSLINUX_DIR)/pxelinux.bin: $(SYSLINUX_DIR)/Makefile
+$(SYSLINUX_DIR)/core/isolinux.bin $(SYSLINUX_DIR)/core/pxelinux.bin: $(SYSLINUX_DIR)/Makefile
 	$(MAKE) CC="$(HOSTCC)" AR="$(HOSTAR)" \
 		NASM="$(TOOL_BUILD_DIR)/bin/nasm" -C $(SYSLINUX_DIR)
 	touch -c $@
 
-syslinux: $(SYSLINUX_DIR)/isolinux.bin
-pxelinux: $(SYSLINUX_DIR)/pxelinux.bin
+syslinux: $(SYSLINUX_DIR)/core/isolinux.bin
+pxelinux: $(SYSLINUX_DIR)/core/pxelinux.bin
 
 pxelinux-clean syslinux-clean:
-	rm -f $(SYSLINUX_DIR)/isolinux.bin $(SYSLINUX_DIR)/pxelinux.bin
+	rm -f $(SYSLINUX_DIR)/core/isolinux.bin $(SYSLINUX_DIR)/core/pxelinux.bin
 	-$(MAKE) NASM="$(TOOL_BUILD_DIR)/bin/nasm" -C $(SYSLINUX_DIR) clean
 
 pxelinux-dirclean syslinux-dirclean:
