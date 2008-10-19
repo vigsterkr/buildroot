@@ -257,18 +257,22 @@ TARGETS_ALL:=$(patsubst %,__real_tgt_%,$(TARGETS))
 # all targets depend on the crosscompiler and it's prerequisites
 $(TARGETS_ALL): __real_tgt_%: $(BASE_TARGETS) % libtool_cluebait
 
-ifeq ($(BR2__UCLIBC_HAVE_DOT_CONFIG),)
-ifneq ($(findstring uclibc-menuconfig,$(MAKECMDGOALS)),uclibc-menuconfig)
-BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
 
-$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT): dependencies $(UCLIBC_DIR)/.config
+BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
+$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT): $(dependencies) $(UCLIBC_DIR)/.config
 	# Create BR2__UCLIBC_SYM=val
 	cat $(UCLIBC_DIR)/.config > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
 		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 	touch -c $@
 
+ifeq ($(BR2__UCLIBC_HAVE_DOT_CONFIG),)
+ifeq ($(filter uclibc-menuconfig,$(MAKECMDGOALS)),)
+ifneq ($(wildcard $(UCLIBC_CONFIG_FILE)),)
+ifeq ($(findstring host-,$(MAKECMDGOALS)),)
 include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+endif
+endif
 endif
 endif
 
@@ -284,7 +288,7 @@ dirs: $(DL_DIR) $(TOOL_BUILD_DIR) $(BUILD_DIR) $(STAGING_DIR) $(TARGET_DIR) \
 
 $(BASE_TARGETS): dirs
 
-world: dirs target-host-info $(BASE_TARGETS) $(TARGETS_ALL)
+world: $(dependencies) dirs target-host-info $(BASE_TARGETS) $(TARGETS_ALL)
 
 
 .PHONY: all world dirs clean dirclean distclean source \

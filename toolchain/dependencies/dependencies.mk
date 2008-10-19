@@ -26,30 +26,38 @@ endif
 # via dependencies.sh.
 dependencies:=.br.dependencies.host
 
-ENV_DEP_HOST:=$(TOOL_BUILD_DIR)/bin/env_host
+ENV_DEP_HOST:=$(TOOL_BUILD_DIR)/bin/env.host
 ENV_DEP_HOST_SOURCE:=$(TOPDIR)/toolchain/dependencies/env.c
 $(ENV_DEP_HOST): $(ENV_DEP_HOST_SOURCE)
 	@$(INSTALL) -d $(@D)
 	@$(HOSTCC) $(HOST_CFLAGS) $(ENV_DEP_HOST_SOURCE) -o $@
 
-$(dependencies): $(ENV_DEP_HOST)
+$(dependencies): $(ENV_DEP_HOST) .config
 	@$(ENV_DEP_HOST) > $@.new
-	@if cmp $@ $@.new > /dev/null 2>&1; then \
-		rm -f $@.new ; \
+	$(Q)if cmp $@ $@.new > /dev/null 2>&1; then \
+		rm -f $@.new; \
 	else \
-		mv $@.new $@ ; \
+		mv $@.new $@; \
+		set -e; \
+		HOSTCC="$(firstword $(HOSTCC))" MAKE="$(MAKE)" \
+			HOST_SED_DIR="$(HOST_SED_DIR)" \
+			NEED_RUBY="$(NEED_RUBY)" \
+			NEED_NASM="$(NEED_NASM)" \
+			$(TOPDIR)/toolchain/dependencies/dependencies.sh; \
+		$(MAKE1) host-sed $(DEPENDENCIES_HOST_PREREQ); \
+		touch -c $@; \
 	fi
+	@echo 'done.'
+	@echo ''
 
-do-dependencies: $(dependencies) host-sed $(DEPENDENCIES_HOST_PREREQ)
-
-check-dependencies: $(dependencies)
+do-dependencies: $(dependencies)
 	@HOSTCC="$(firstword $(HOSTCC))" MAKE="$(MAKE)" \
 		HOST_SED_DIR="$(HOST_SED_DIR)" \
 		NEED_RUBY="$(NEED_RUBY)" \
 		NEED_NASM="$(NEED_NASM)" \
 		$(TOPDIR)/toolchain/dependencies/dependencies.sh
+	$(MAKE1) host-sed $(DEPENDENCIES_HOST_PREREQ)
 
-dependencies: $(dependencies) check-dependencies do-dependencies
 dependencies-source: $(ENV_DEP_HOST_SOURCE)
 
 dependencies-clean: sstrip_target-clean sstrip_host-clean host-sed-clean \

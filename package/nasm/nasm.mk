@@ -95,10 +95,18 @@ $(NASM_HOSTDIR)/$(NASM_BINARY): $(NASM_HOSTDIR)/.configured
 	touch -c $@
 
 build-nasm-host-binary: $(NASM_HOSTDIR)/$(NASM_BINARY)
-	$(INSTALL) -D -m0755 $(NASM_HOSTDIR)/$(NASM_BINARY) $(TOOL_BUILD_DIR)/bin/$(NASM_BINARY)
-	$(INSTALL) -D -m0755 $(NASM_HOSTDIR)/ndisasm $(TOOL_BUILD_DIR)/bin/ndisasm
-	$(foreach f,$(NASM_BINARIES),\
-	    $(INSTALL) -D -m0755 $(NASM_HOSTDIR)/rdoff/$(f) $(TOOL_BUILD_DIR)/bin/$(f);)
+	$(Q)if [ -L $(TOOL_BUILD_DIR)/bin/$(NASM_BINARY) ]; then \
+		rm -f $(TOOL_BUILD_DIR)/bin/$(NASM_BINARY); \
+	fi
+	$(Q)if [ ! -f $(TOOL_BUILD_DIR)/bin/$(NASM_BINARY) \
+	      -o $(TOOL_BUILD_DIR)/bin/$(NASM_BINARY) \
+	      -ot $(NASM_HOST_DIR)/$(NASM_BINARY) ]; then \
+		set -x; \
+		$(INSTALL) -D -m0755 $(NASM_HOSTDIR)/$(NASM_BINARY) $(TOOL_BUILD_DIR)/bin/$(NASM_BINARY); \
+		$(INSTALL) -D -m0755 $(NASM_HOSTDIR)/ndisasm $(TOOL_BUILD_DIR)/bin/ndisasm; \
+		$(foreach f,$(NASM_BINARIES),\
+		    $(INSTALL) -D -m0755 $(NASM_HOSTDIR)/rdoff/$(f) $(TOOL_BUILD_DIR)/bin/$(f);) \
+	fi
 
 use-nasm-host-binary:
 	$(Q)if [ ! -e "$(TOOL_BUILD_DIR)/bin/$(NASM_BINARY)" ]; then \
@@ -122,5 +130,5 @@ host-nasm-dirclean:
 else
 host-nasm-clean host-nasm-dirclean:
 endif
-.PHONY: host-nasm use-nasm-host-binary build-nasm-host-binary
+.PHONY: host-nasm use-nasm-host-binary
 
