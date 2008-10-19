@@ -43,7 +43,7 @@ acpid: $(TARGET_DIR)/usr/sbin/acpid
 acpid-source: $(DL_DIR)/$(ACPID_SOURCE) $(ACPID_PATCH_FILE)
 
 acpid-clean:
-	-make -C $(ACPID_DIR) clean
+	-$(MAKE) -C $(ACPID_DIR) clean
 	rm -rf $(TARGET_DIR)/usr/sbin/acpid \
 		$(TARGET_DIR)/etc/acpi
 
