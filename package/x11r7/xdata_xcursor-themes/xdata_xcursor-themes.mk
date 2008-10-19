@@ -81,5 +81,3 @@ xdata_xcursor-themes: xdata_xcursor-themes-depends $(XDATA_XCURSOR_THEMES_DIR)/.
 ifeq ($(BR2_PACKAGE_XDATA_XCURSOR_THEMES),y)
 TARGETS+=xdata_xcursor-themes
 endif
-
-# :mode=makefile:

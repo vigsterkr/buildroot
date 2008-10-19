@@ -397,5 +397,3 @@ ifeq ($$(BR2_PACKAGE_$(2)),y)
 TARGETS += $(1)
 endif
 endef
-
-# :mode=makefile:
