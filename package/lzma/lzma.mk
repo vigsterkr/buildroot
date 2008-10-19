@@ -53,9 +53,9 @@ $(STAGING_DIR)/bin/lzma: $(LZMA_HOST_DIR)/src/lzma/lzma
 	$(SED) "s,^libdir=.*,libdir=\'$(STAGING_DIR)/lib\',g" \
 		$(STAGING_DIR)/lib/liblzmadec.la
 
-.PHONY: lzma-host use-lzma-host-binary
+.PHONY: host-lzma use-lzma-host-binary build-lzma-host-binary
 use-lzma-host-binary:
-	if [ ! -f "$(TOOL_BUILD_DIR)/bin/lzma" ]; then \
+	$(Q)if [ ! -f "$(TOOL_BUILD_DIR)/bin/lzma" ]; then \
 		[ -d $(TOOL_BUILD_DIR)/bin ] || mkdir -p $(TOOL_BUILD_DIR)/bin; \
 		ln -sf "$(HOST_LZMA_IF_ANY)" "$(TOOL_BUILD_DIR)/bin/lzma"; \
 	fi

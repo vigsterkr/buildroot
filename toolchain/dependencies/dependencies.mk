@@ -17,31 +17,47 @@ endif
 ifeq ($(BR2_TARGET_GRUB2),y)
 NEED_RUBY:=y
 endif
+ifeq ($(findstring y,$(BR2_TARGET_SYSLINUX)$(BR2_TARGET_PXELINUX)),y)
+NEED_NASM:=y
+DEPENDENCIES_HOST_PREREQ+=host-nasm
+endif
 
 # We record the environ of the caller to see if we have to recheck
 # via dependencies.sh.
 dependencies:=.br.dependencies.host
 
-ENV_DEP_HOST:=$(STAGING_DIR)/bin/env_host
+ENV_DEP_HOST:=$(TOOL_BUILD_DIR)/bin/env_host
 ENV_DEP_HOST_SOURCE:=$(TOPDIR)/toolchain/dependencies/env.c
-$(ENV_DEP_HOST): $(ENV_DEP_HOST_SOURCE) | host-sed $(DEPENDENCIES_HOST_PREREQ)
+$(ENV_DEP_HOST): $(ENV_DEP_HOST_SOURCE)
 	@$(INSTALL) -d $(@D)
 	@$(HOSTCC) $(HOST_CFLAGS) $(ENV_DEP_HOST_SOURCE) -o $@
 
 $(dependencies): $(ENV_DEP_HOST)
+	@$(ENV_DEP_HOST) > $@.new
+	@if cmp $@ $@.new > /dev/null 2>&1; then \
+		rm -f $@.new ; \
+	else \
+		mv $@.new $@ ; \
+	fi
+
+do-dependencies: $(dependencies) host-sed $(DEPENDENCIES_HOST_PREREQ)
+
+check-dependencies: $(dependencies)
 	@HOSTCC="$(firstword $(HOSTCC))" MAKE="$(MAKE)" \
 		HOST_SED_DIR="$(HOST_SED_DIR)" \
 		NEED_RUBY="$(NEED_RUBY)" \
+		NEED_NASM="$(NEED_NASM)" \
 		$(TOPDIR)/toolchain/dependencies/dependencies.sh
-	@$(ENV_DEP_HOST) > $@
 
-$(dependencies)-source: $(ENV_DEP_HOST_SOURCE)
+dependencies: $(dependencies) check-dependencies do-dependencies
+dependencies-source: $(ENV_DEP_HOST_SOURCE)
 
-$(dependencies)-clean: sstrip_target-clean sstrip_host-clean host-sed-clean
+dependencies-clean: sstrip_target-clean sstrip_host-clean host-sed-clean \
+    host-nasm-clean
 	rm -f $(ENV_DEP_HOST) $(dependencies)
 
-$(dependencies)-dirclean:
-	true
+dependencies-dirclean:
+	@true
 
 #############################################################
 #

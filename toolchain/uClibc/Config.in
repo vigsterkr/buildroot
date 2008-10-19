@@ -23,13 +23,19 @@ choice
 
 endchoice
 
-
 config BR2_USE_UCLIBC_SNAPSHOT
 	string "Date (yyyymmdd) of snapshot or 'snapshot' for latest"
 	default "snapshot"
 	depends on BR2_UCLIBC_VERSION_SNAPSHOT
 	help
 	    Use latest snapshot or one from a specific date?
+
+config BR2_UCLIBC_VERSION_STRING
+	string
+	default 0.9.28.3	if BR2_UCLIBC_VERSION_0_9_28_3
+	default 0.9.29		if BR2_UCLIBC_VERSION_0_9_29
+	default 0.9.30		if BR2_UCLIBC_VERSION_0_9_30
+	default $BR2_USE_UCLIBC_SNAPSHOT	if BR2_UCLIBC_VERSION_SNAPSHOT
 
 config BR2_UCLIBC_CONFIG
 	string "uClibc configuration file to use?"

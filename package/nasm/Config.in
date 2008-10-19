@@ -1,0 +1,8 @@
+config BR2_PACKAGE_NASM
+	bool "nasm"
+	default n
+	help
+	  NASM - the famous Netwide Assembler.
+
+	  http://www.nasm.us/
+

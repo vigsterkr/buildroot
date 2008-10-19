@@ -1,0 +1,42 @@
+diff -rdup nasm-2.04.oorig/Makefile.in nasm-2.04/Makefile.in
+--- nasm-2.04.oorig/Makefile.in	2008-09-26 02:10:18.000000000 +0200
++++ nasm-2.04/Makefile.in	2008-10-18 18:42:44.000000000 +0200
+@@ -8,6 +8,8 @@
+ 
+ top_srcdir	= @top_srcdir@
+ srcdir		= @srcdir@
++top_builddir	= @top_builddir@
++builddir	= @builddir@
+ VPATH		= @srcdir@
+ prefix		= @prefix@
+ exec_prefix	= @exec_prefix@
+@@ -18,7 +20,7 @@ datarootdir	= @datarootdir@
+ CC		= @CC@
+ CFLAGS		= @CFLAGS@
+ BUILD_CFLAGS	= $(CFLAGS) @DEFS@
+-INTERNAL_CFLAGS = -I$(srcdir) -I.
++INTERNAL_CFLAGS = -I$(srcdir) -I$(top_builddir)
+ ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
+ LDFLAGS		= @LDFLAGS@
+ LIBS		= @LIBS@
+diff -rdup nasm-2.04.oorig/rdoff/Makefile.in nasm-2.04/rdoff/Makefile.in
+--- nasm-2.04.oorig/rdoff/Makefile.in	2008-09-26 02:10:08.000000000 +0200
++++ nasm-2.04/rdoff/Makefile.in	2008-10-18 18:43:17.000000000 +0200
+@@ -9,6 +9,8 @@
+ 
+ top_srcdir	= @top_srcdir@
+ srcdir		= @srcdir@
++top_builddir	= @top_builddir@
++builddir	= @builddir@
+ VPATH		= @srcdir@
+ prefix		= @prefix@
+ exec_prefix	= @exec_prefix@
+@@ -19,7 +21,7 @@ datarootdir	= @datarootdir@
+ CC		= @CC@
+ CFLAGS		= @CFLAGS@
+ BUILD_CFLAGS	= $(CFLAGS) @DEFS@
+-INTERNAL_CFLAGS = -I$(srcdir) -I$(top_srcdir)
++INTERNAL_CFLAGS = -I$(srcdir) -I$(top_srcdir) -I$(builddir) -I$(top_builddir)
+ ALL_CFLAGS	= $(BUILD_CFLAGS) $(INTERNAL_CFLAGS)
+ LDFLAGS		= @LDFLAGS@
+ 

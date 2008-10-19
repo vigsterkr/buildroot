@@ -72,7 +72,7 @@ ifneq ($(BR2_HAVE_MANPAGES),y)
 endif
 
 $(HOST_SED_DIR)/$(SED_TARGET_BINARY):
-	if [ ! -e "$(HOST_SED_DIR)/$(SED_TARGET_BINARY)" ]; then \
+	$(Q)if [ ! -e "$(HOST_SED_DIR)/$(SED_TARGET_BINARY)" ]; then \
 		mkdir -p "$(HOST_SED_DIR)/bin"; \
 		rm -f "$(HOST_SED_DIR)/$(SED_TARGET_BINARY)"; \
 		ln -sf "$(HOST_SED_IF_ANY)" \
