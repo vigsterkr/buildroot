@@ -42,7 +42,8 @@ $(SYSLINUX_DIR)/Makefile: $(DL_DIR)/$(SYSLINUX_SOURCE) $(SYSLINUX_PATCH)
 	touch -c $@
 
 $(SYSLINUX_DIR)/isolinux.bin $(SYSLINUX_DIR)/pxelinux.bin: $(SYSLINUX_DIR)/Makefile
-	$(MAKE) CC="$(HOSTCC)" AR="$(HOSTAR)" -C $(SYSLINUX_DIR)
+	$(MAKE) CC="$(HOSTCC)" AR="$(HOSTAR)" \
+		NASM="$(TOOL_BUILD_DIR)/bin/nasm" -C $(SYSLINUX_DIR)
 	touch -c $@
 
 syslinux: $(SYSLINUX_DIR)/isolinux.bin
@@ -50,7 +51,7 @@ pxelinux: $(SYSLINUX_DIR)/pxelinux.bin
 
 pxelinux-clean syslinux-clean:
 	rm -f $(SYSLINUX_DIR)/isolinux.bin $(SYSLINUX_DIR)/pxelinux.bin
-	-$(MAKE) -C $(SYSLINUX_DIR) clean
+	-$(MAKE) NASM="$(TOOL_BUILD_DIR)/bin/nasm" -C $(SYSLINUX_DIR) clean
 
 pxelinux-dirclean syslinux-dirclean:
 	rm -rf $(SYSLINUX_DIR)
