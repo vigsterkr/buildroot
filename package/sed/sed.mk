@@ -51,10 +51,10 @@ $(SED_DIR1)/$(SED_BINARY): $(SED_DIR1)/.configured
 
 # This stuff is needed to work around GNU make deficiencies
 build-sed-host-binary: $(SED_DIR1)/$(SED_BINARY)
-	@if [ -L $(HOST_SED_DIR)/$(SED_TARGET_BINARY) ]; then \
+	$(Q)if [ -L $(HOST_SED_DIR)/$(SED_TARGET_BINARY) ]; then \
 		rm -f $(HOST_SED_DIR)/$(SED_TARGET_BINARY); \
 	fi
-	@if [ ! -f $(HOST_SED_DIR)/$(SED_TARGET_BINARY) \
+	$(Q)if [ ! -f $(HOST_SED_DIR)/$(SED_TARGET_BINARY) \
 	      -o $(HOST_SED_DIR)/$(SED_TARGET_BINARY) \
 	      -ot $(SED_DIR1)/$(SED_BINARY) ]; then \
 		set -x; \
@@ -140,8 +140,7 @@ sed-target_binary: $(SED_DIR2)/$(SED_BINARY)
 	@if [ -L $(TARGET_DIR)/$(SED_TARGET_BINARY) ]; then \
 		rm -f $(TARGET_DIR)/$(SED_TARGET_BINARY); \
 	fi
-
-	@if [ ! -f $(SED_DIR2)/$(SED_BINARY) \
+	$(Q)if [ ! -f $(SED_DIR2)/$(SED_BINARY) \
 	      -o $(TARGET_DIR)/$(SED_TARGET_BINARY) \
 	      -ot $(SED_DIR2)/$(SED_BINARY) ]; then \
 		set -x; \
