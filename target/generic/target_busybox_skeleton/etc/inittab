@@ -24,8 +24,9 @@
 ::sysinit:/bin/mount -o remount,rw /
 ::sysinit:/bin/mount -a
 ::sysinit:/bin/hostname -F /etc/hostname
-::sysinit:/sbin/ifconfig lo 127.0.0.1 up
-::sysinit:/sbin/route add -net 127.0.0.0 netmask 255.0.0.0 lo
+::sysinit:/sbin/ip link set lo up
+::sysinit:/sbin/ip addr add 127.0.0.1 dev lo
+::sysinit:/sbin/ip route add 127.0.0.0/255.0.0.0 dev lo
 # now run any rc scripts
 ::sysinit:/etc/init.d/rcS
 
