@@ -37,6 +37,7 @@ $(dependencies): $(ENV_DEP_HOST) .config
 	$(Q)if cmp $@ $@.new > /dev/null 2>&1; then \
 		rm -f $@.new; \
 	else \
+		[ "x$(V)" != "x" ] && diff -u $@ $@.new; \
 		mv $@.new $@; \
 		set -e; \
 		HOSTCC="$(firstword $(HOSTCC))" MAKE="$(MAKE)" \
@@ -47,8 +48,6 @@ $(dependencies): $(ENV_DEP_HOST) .config
 		$(MAKE1) host-sed $(DEPENDENCIES_HOST_PREREQ); \
 		touch -c $@; \
 	fi
-	@echo 'done.'
-	@echo ''
 
 do-dependencies: $(dependencies)
 	@HOSTCC="$(firstword $(HOSTCC))" MAKE="$(MAKE)" \
