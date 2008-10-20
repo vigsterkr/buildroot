@@ -190,7 +190,7 @@ PREFERRED_LIB_FLAGS:=--enable-static --enable-shared
 #
 ##############################################################
 ifeq ($(BR2_TOOLCHAIN_SOURCE),y)
-BASE_TARGETS:=uclibc-configured binutils cross_compiler uclibc-target-utils
+BASE_TARGETS:=uclibc-configured binutils cross_compiler uclibc_target
 else
 BASE_TARGETS:=uclibc
 endif
@@ -257,25 +257,6 @@ TARGETS_ALL:=$(patsubst %,__real_tgt_%,$(TARGETS))
 # all targets depend on the crosscompiler and it's prerequisites
 $(TARGETS_ALL): __real_tgt_%: $(BASE_TARGETS) % libtool_cluebait
 
-
-BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
-$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT): $(dependencies) $(UCLIBC_DIR)/.config
-	# Create BR2__UCLIBC_SYM=val
-	cat $(UCLIBC_DIR)/.config > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
-	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
-		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
-	touch -c $@
-
-ifeq ($(BR2__UCLIBC_HAVE_DOT_CONFIG),)
-ifeq ($(filter uclibc-menuconfig,$(MAKECMDGOALS)),)
-ifneq ($(wildcard $(UCLIBC_CONFIG_FILE)),)
-ifeq ($(findstring host-,$(MAKECMDGOALS)),)
-include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
-endif
-endif
-endif
-endif
-
 $(BR2_DEPENDS_DIR): .config
 	rm -rf $(BR2_DEPENDS_DIR)
 	$(INSTALL) -d $(@D)
@@ -286,7 +267,7 @@ dirs: $(DL_DIR) $(TOOL_BUILD_DIR) $(BUILD_DIR) $(STAGING_DIR) $(TARGET_DIR) \
 	$(BR2_DEPENDS_DIR) \
 	$(BINARIES_DIR) $(PROJECT_BUILD_DIR)
 
-$(BASE_TARGETS): dirs
+$(BASE_TARGETS): | dirs
 
 world: $(dependencies) dirs target-host-info $(BASE_TARGETS) $(TARGETS_ALL)
 

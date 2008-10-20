@@ -38,11 +38,15 @@ $(BUSYBOX_INITRAMFS_DIR)/.config $(BUSYBOX_INITRAMFS_DIR)/.configured: $(BUSYBOX
 	 echo CONFIG_CHROOT=y; \
 	 echo CONFIG_DD=y; \
 	 echo CONFIG_FEATURE_DD_IBS_OBS=y; \
+	 echo CONFIG_ECHO=y; \
 	 echo CONFIG_FALSE=y; \
+	 echo CONFIG_GETTY=y; \
 	 echo CONFIG_GUNZIP=y; \
 	 echo CONFIG_HALT=y; \
+	 echo CONFIG_HOSTNAME=y; \
 	 echo CONFIG_INIT=y; \
 	 echo CONFIG_INSMOD=y; \
+	 echo CONFIG_IP=y; \
 	 echo CONFIG_KILL=y; \
 	 echo CONFIG_LN=y; \
 	 echo CONFIG_MDEV=y; \
@@ -54,6 +58,12 @@ $(BUSYBOX_INITRAMFS_DIR)/.config $(BUSYBOX_INITRAMFS_DIR)/.configured: $(BUSYBOX
 	 echo CONFIG_FEATURE_MODPROBE_FANCY_ALIAS=y; \
 	 echo CONFIG_FEATURE_CHECK_TAINTED_MODULE=n; \
 	 echo CONFIG_FEATURE_2_4_MODULES=n; \
+	 echo CONFIG_FEATURE_IP_ADDRESS=y; \
+	 echo CONFIG_FEATURE_IP_LINK=y; \
+	 echo CONFIG_FEATURE_IP_ROUTE=y; \
+	 echo CONFIG_FEATURE_IP_TUNNEL=y; \
+	 echo CONFIG_FEATURE_IP_RULE=y; \
+	 echo CONFIG_FEATURE_IP_RARE_PROTOCOLS=n; \
 	 echo CONFIG_MOUNT=y; \
 	 echo CONFIG_MSH=y; \
 	 echo CONFIG_FEATURE_SH_IS_MSH=y; \
@@ -113,11 +123,14 @@ $(BR2_INITRAMFS_DIR)/bin/busybox: $(BUSYBOX_INITRAMFS_DIR)/busybox
 	$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 
 
-$(BB_INITRAMFS_TARGET): host-fakeroot $(BR2_INITRAMFS_DIR)/bin/busybox
+$(BB_INITRAMFS_TARGET): host-fakeroot makedevs $(BR2_INITRAMFS_DIR)/bin/busybox
 	ln -fs bin/busybox $(PROJECT_BUILD_DIR)/initramfs/init
 	mkdir -p $(PROJECT_BUILD_DIR)/initramfs/etc
-	cat target/generic/target_busybox_skeleton/etc/inittab > \
-		$(PROJECT_BUILD_DIR)/initramfs/etc/inittab
+	for f in etc/inittab etc/shadow etc/passwd; do \
+		$(INSTALL) -D target/generic/target_busybox_skeleton/$$f \
+			$(PROJECT_BUILD_DIR)/initramfs/$$f; \
+	done
+	#$(INSTALL) -D -m0755 $(STAGING_DIR)/bin/makedev 
 	rm -f $(PROJECT_BUILD_DIR)/_fakeroot.$(BB_INITRAMFS_TARGET_F)
 	(echo "chown -R 0:0 $(PROJECT_BUILD_DIR)/initramfs"; \
 	 echo "$(STAGING_DIR)/bin/makedevs -d $(TARGET_DEVICE_TABLE) $(PROJECT_BUILD_DIR)/initramfs"; \

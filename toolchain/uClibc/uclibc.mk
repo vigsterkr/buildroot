@@ -524,7 +524,25 @@ uclibc-menuconfig: host-sed $(UCLIBC_DIR)/.config
 		menuconfig && \
 	touch -c $(UCLIBC_DIR)/.config
 
-$(STAGING_DIR)/usr/lib/libc.a: $(UCLIBC_DIR)/lib/libc.a
+BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
+$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT): $(dependencies) $(UCLIBC_DIR)/.config
+	# Create BR2__UCLIBC_SYM=val
+	cat $(UCLIBC_DIR)/.config > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
+		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+	touch -c $@
+
+ifeq ($(BR2__UCLIBC_HAVE_DOT_CONFIG),)
+ifeq ($(filter uclibc-menuconfig,$(MAKECMDGOALS)),)
+ifneq ($(wildcard $(UCLIBC_CONFIG_FILE)),)
+ifeq ($(findstring host-,$(MAKECMDGOALS)),)
+include $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
+endif
+endif
+endif
+endif
+
+$(STAGING_DIR)/usr/lib/libc.a: | $(UCLIBC_DIR)/lib/libc.a
 ifneq ($(BR2_TOOLCHAIN_SYSROOT),y)
 	$(MAKE1) -C $(UCLIBC_DIR) \
 		PREFIX= \
@@ -590,7 +608,7 @@ endif
 
 # extra paranoia
 ifneq ($(TARGET_DIR),)
-$(TARGET_DIR)/lib/libc.so.0: $(STAGING_DIR)/usr/lib/libc.a
+$(TARGET_DIR)/lib/libc.so.0: | $(STAGING_DIR)/usr/lib/libc.a
 	$(MAKE1) -C $(UCLIBC_DIR) \
 		PREFIX=$(TARGET_DIR) \
 		DEVEL_PREFIX=/usr/ \
@@ -668,7 +686,7 @@ uclibc-target-utils-source: $(DL_DIR)/$(UCLIBC_SOURCE)
 #
 #############################################################
 
-$(TARGET_DIR)/usr/lib/libc.a: $(STAGING_DIR)/usr/lib/libc.a
+$(TARGET_DIR)/usr/lib/libc.a: | $(STAGING_DIR)/usr/lib/libc.a
 	$(MAKE1) -C $(UCLIBC_DIR) \
 		PREFIX=$(TARGET_DIR) \
 		DEVEL_PREFIX=/usr/ \
@@ -707,7 +725,7 @@ endif
 
 uclibc_target: cross_compiler uclibc $(UCLIBC_TARGETS)
 uclibc_target-clean:
-	rm -rf $(TARGET_DIR)/usr/include \
+	rm -rf $(TARGET_DIR)/usr/include $(UCLIBC_TARGETS) \
 		$(TARGET_DIR)/usr/lib/libc.a $(TARGET_DIR)/usr/bin/ldd
 
 uclibc_target-dirclean:
