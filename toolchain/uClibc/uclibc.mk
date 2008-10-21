@@ -525,7 +525,7 @@ uclibc-menuconfig: host-sed $(UCLIBC_DIR)/.config
 	touch -c $(UCLIBC_DIR)/.config
 
 BR2_UCLIBC_CONFIG_FOR_BUILDROOT=$(BASE_DIR)/.buildroot.uclibc_config
-$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT): $(dependencies) $(UCLIBC_DIR)/.config
+$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT): $(dependencies) host-sed $(UCLIBC_DIR)/.config
 	# Create BR2__UCLIBC_SYM=val
 	cat $(UCLIBC_DIR)/.config > $(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 	$(SED) '/#/d' -e '/^$$/d' -e 's,\([^=]*\)=\(.*\),BR2__UCLIBC_\1=\2,g' \
