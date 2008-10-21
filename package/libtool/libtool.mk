@@ -42,7 +42,7 @@ $(LIBTOOL_SRC_DIR)/.unpacked: $(DL_DIR)/$(LIBTOOL_SOURCE)
 $(LIBTOOL_DIR)/.configured: THIS_SRCDIR = $(LIBTOOL_SRC_DIR)
 $(LIBTOOL_DIR)/.configured: $(LIBTOOL_SRC_DIR)/.unpacked
 ifeq ($(BR2_USE_UPDATES),y)
-	(test -d $(LIBTOOL_SRC_DIR)/.git && cd $(LIBTOOL_SRC_DIR) && $(GIT) pull)
+	(test -d $(LIBTOOL_SRC_DIR)/.git && cd $(LIBTOOL_SRC_DIR) && $(GIT) pull && autoreconf)
 endif
 	rm -rf $(LIBTOOL_DIR)
 	mkdir -p $(LIBTOOL_DIR)
