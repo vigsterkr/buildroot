@@ -49,6 +49,7 @@ $(BUSYBOX_INITRAMFS_DIR)/.config $(BUSYBOX_INITRAMFS_DIR)/.configured: $(BUSYBOX
 	 echo CONFIG_IP=y; \
 	 echo CONFIG_KILL=y; \
 	 echo CONFIG_LN=y; \
+	 echo CONFIG_LOGIN=y; \
 	 echo CONFIG_MDEV=y; \
 	 echo CONFIG_MKDIR=y; \
 	 echo CONFIG_MKFIFO=y; \
