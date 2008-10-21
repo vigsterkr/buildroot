@@ -41,7 +41,7 @@ $(SYSLINUX_DIR)/Makefile: $(DL_DIR)/$(SYSLINUX_SOURCE) $(SYSLINUX_PATCH)
 	toolchain/patch-kernel.sh $(SYSLINUX_DIR) target/x86/syslinux/ \*.patch
 	touch -c $@
 
-$(SYSLINUX_DIR)/core/isolinux.bin $(SYSLINUX_DIR)/core/pxelinux.bin: $(SYSLINUX_DIR)/Makefile
+$(SYSLINUX_DIR)/core/isolinux.bin $(SYSLINUX_DIR)/core/pxelinux.bin: host-nasm $(SYSLINUX_DIR)/Makefile
 	$(MAKE) CC="$(HOSTCC)" AR="$(HOSTAR)" \
 		NASM="$(TOOL_BUILD_DIR)/bin/nasm" -C $(SYSLINUX_DIR)
 	touch -c $@
