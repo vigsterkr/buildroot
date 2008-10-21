@@ -1,0 +1,12 @@
+diff -Naur mc-4.1.40.orig/edit/editcmd.c mc-4.1.40/edit/editcmd.c
+--- mc-4.1.40.orig/edit/editcmd.c	2004-08-28 06:30:33 +0000
++++ mc-4.1.40/edit/editcmd.c	2007-08-02 19:40:06 +0000
+@@ -3159,7 +3159,7 @@
+     bufpos = &edit->buffers1[word_start >> S_EDIT_BUF_SIZE]
+ 	[word_start & M_EDIT_BUF_SIZE];
+ 
+-    match_expr = malloc((word_len + 14) * sizeof(wchar_t));
++    match_expr = malloc((word_len + 14) * sizeof(int));
+ 
+     strncpy (match_expr, bufpos, word_len);
+     match_expr[word_len] = '\0';

@@ -1,0 +1,14 @@
+config BR2_PACKAGE_MC
+	bool "mc"
+	default n
+	help
+	  GNU Midnight Commander is a textmode file manager.
+
+	  http://www.ibiblio.org/mc/
+
+config BR2_PACKAGE_MC_EDIT
+	bool "internal mcedit"
+	depends on BR2_PACKAGE_MC
+	default n
+	help
+	  Enable internal editor
