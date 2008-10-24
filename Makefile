@@ -345,11 +345,10 @@ _source-check:
 #############################################################
 clean: $(TARGETS_CLEAN)
 	rm -rf $(STAGING_DIR) $(TARGET_DIR) $(IMAGE) \
+		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT) $(dependencies) \
 		$(PROJECT_BUILD_DIR)/.root $(PROJECT_BUILD_DIR)/autotools-stamps
 
-dirclean: $(TARGETS_DIRCLEAN)
-	rm -rf $(STAGING_DIR) $(TARGET_DIR) $(IMAGE) \
-		$(PROJECT_BUILD_DIR)/.root $(PROJECT_BUILD_DIR)/autotools-stamps
+dirclean: $(TARGETS_DIRCLEAN) clean
 
 distclean:
 ifeq ($(DL_DIR),$(BASE_DIR)/dl)
@@ -357,7 +356,8 @@ ifeq ($(DL_DIR),$(BASE_DIR)/dl)
 endif
 	rm -rf $(BUILD_DIR) $(PROJECT_BUILD_DIR) $(BINARIES_DIR) \
 	$(LINUX_KERNEL) $(IMAGE) $(BASE_DIR)/include \
-		.config* .auto.deps
+		.config* .auto.deps $(dependencies) \
+		$(BR2_UCLIBC_CONFIG_FOR_BUILDROOT)
 	$(MAKE) -C $(CONFIG) clean distclean
 
 sourceball:
