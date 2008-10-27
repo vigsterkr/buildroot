@@ -3,12 +3,26 @@
 # lzma
 #
 #############################################################
+LZMA_VERSION_STRING:=$(subst ",,$(BR2_PACKAGE_LZMA_VERSION))
+#")
+ifneq ($(BR2_PACKAGE_LZMA_VERSION_git),)
+LZMA_SITE:=git://ctrl.tukaani.org/lzma-utils.git
+LZMA_SOURCE:=lzma-utils.tar.gz
+LZMA_CAT:=$(ZCAT)
+LZMA_SRCDIR:=$(TOOL_BUILD_DIR)/lzma-utils
+LZMA_HOST_DIR:=$(TOOL_BUILD_DIR)/lzma-utils-host
+LZMA_TARGET_DIR:=$(BUILD_DIR)/lzma-utils-host
+LZMA_CONFIGURE_ARGS:=--enable-small
+else
 LZMA_VERSION:=4.32.4
 LZMA_SOURCE:=lzma-$(LZMA_VERSION).tar.gz
 LZMA_CAT:=$(ZCAT)
 LZMA_SITE:=http://tukaani.org/lzma/
-LZMA_HOST_DIR:=$(TOOL_BUILD_DIR)/lzma-$(LZMA_VERSION)
+LZMA_SRCDIR:=$(TOOL_BUILD_DIR)/lzma-$(LZMA_VERSION)
+LZMA_HOST_DIR:=$(TOOL_BUILD_DIR)/lzma-$(LZMA_VERSION)-host
 LZMA_TARGET_DIR:=$(BUILD_DIR)/lzma-$(LZMA_VERSION)
+endif
+
 LZMA_CFLAGS:=$(TARGET_CFLAGS)
 ifeq ($(BR2_LARGEFILE),y)
 LZMA_CFLAGS+=-D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
@@ -22,7 +36,14 @@ HOST_LZMA_IF_ANY=$(shell $(CONFIG_SHELL) toolchain/dependencies/check-host-lzma.
 
 
 $(DL_DIR)/$(LZMA_SOURCE):
+ifeq ($(BR2_PACKAGE_LZMA_VERSION_git),)
 	$(WGET) -P $(DL_DIR) $(LZMA_SITE)/$(LZMA_SOURCE)
+else
+	test -d $(DL_DIR)/lzma-utils/.git || \
+		$(GIT) clone $(LZMA_SITE) $(DL_DIR)/lzma-utils
+	#(cd $(DL_DIR)/lzma-utils && ./autogen.sh)
+	(cd $(DL_DIR) && tar -czf $@ lzma-utils)
+endif
 
 ######################################################################
 #
@@ -30,16 +51,20 @@ $(DL_DIR)/$(LZMA_SOURCE):
 #
 ######################################################################
 
-$(LZMA_HOST_DIR)/.unpacked: $(DL_DIR)/$(LZMA_SOURCE)
+$(LZMA_SRCDIR)/.unpacked: $(DL_DIR)/$(LZMA_SOURCE)
 	$(LZMA_CAT) $(DL_DIR)/$(LZMA_SOURCE) | tar -C $(TOOL_BUILD_DIR) $(TAR_OPTIONS) -
-	toolchain/patch-kernel.sh $(LZMA_HOST_DIR) package/lzma/ lzma\*.patch
+	toolchain/patch-kernel.sh $(LZMA_SRCDIR) package/lzma/ lzma\*.patch
+ifeq ($(BR2_USE_UPDATES),y)
+	(test -d $(LZMA_SRCDIR)/.git && cd $(@D) && $(GIT) pull && ./autogen.sh)
+endif
 	touch $@
 
-$(LZMA_HOST_DIR)/.configured: $(LZMA_HOST_DIR)/.unpacked
+$(LZMA_HOST_DIR)/.configured: $(LZMA_SRCDIR)/.unpacked
+	mkdir -p $(@D)
 	(cd $(LZMA_HOST_DIR); rm -f config.cache;\
 		CC="$(HOSTCC)" \
 		CXX="$(HOSTCXX)" \
-		./configure \
+		$(LZMA_SRCDIR)/configure \
 		--prefix=/ \
 	)
 	touch $@
@@ -82,18 +107,20 @@ lzma-host-install: /usr/local/bin/lzma
 #
 ######################################################################
 
-$(LZMA_TARGET_DIR)/.unpacked: $(DL_DIR)/$(LZMA_SOURCE)
-	$(LZMA_CAT) $(DL_DIR)/$(LZMA_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	toolchain/patch-kernel.sh $(LZMA_TARGET_DIR) package/lzma/ lzma\*.patch
-	touch $@
+#$(LZMA_TARGET_DIR)/.unpacked: $(DL_DIR)/$(LZMA_SOURCE)
+#	$(LZMA_CAT) $(DL_DIR)/$(LZMA_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+#	toolchain/patch-kernel.sh $(LZMA_TARGET_DIR) package/lzma/ lzma\*.patch
+#	touch $@
 
-$(LZMA_TARGET_DIR)/.configured: $(LZMA_TARGET_DIR)/.unpacked
+$(LZMA_TARGET_DIR)/.configured: THIS_SRCDIR=$(LZMA_SRCDIR)
+$(LZMA_TARGET_DIR)/.configured: $(LZMA_SRCDIR)/.unpacked
+	mkdir -p $(@D)
 	(cd $(LZMA_TARGET_DIR); rm -f config.cache;\
 		$(TARGET_CONFIGURE_OPTS) \
 		$(TARGET_CONFIGURE_ARGS) \
 		CFLAGS="$(TARGET_CFLAGS) $(LZMA_CFLAGS)" \
 		ac_cv_func_malloc_0_nonnull=yes \
-		./configure \
+		$(LZMA_SRCDIR)/configure \
 		--target=$(GNU_TARGET_NAME) \
 		--host=$(GNU_TARGET_NAME) \
 		--build=$(GNU_HOST_NAME) \
@@ -104,6 +131,7 @@ $(LZMA_TARGET_DIR)/.configured: $(LZMA_TARGET_DIR)/.unpacked
 		--disable-debug \
 		$(DISABLE_NLS) \
 		$(DISABLE_LARGEFILE) \
+		$(LZMA_CONFIGURE_ARGS) \
 	)
 	touch $@
 
