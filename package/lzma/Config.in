@@ -7,6 +7,25 @@ config BR2_PACKAGE_LZMA_TARGET
 
 	  http://tukaani.org/lzma/
 
+choice
+	prompt "version"
+	default BR2_PACKAGE_LZMA_VERSION_git
+
+config BR2_PACKAGE_LZMA_VERSION_release
+	depends on BR2_PACKAGE_LZMA_TARGET || BR2_PACKAGE_LZMA_HOST
+	bool "release"
+
+config BR2_PACKAGE_LZMA_VERSION_git
+	depends on BR2_PACKAGE_LZMA_TARGET || BR2_PACKAGE_LZMA_HOST
+	bool "git"
+endchoice
+
+config BR2_PACKAGE_LZMA_VERSION
+	string
+	depends on BR2_PACKAGE_LZMA_TARGET || BR2_PACKAGE_LZMA_HOST
+	default "4.32.4" if BR2_PACKAGE_LZMA_VERSION_release
+	default "HEAD" if BR2_PACKAGE_LZMA_VERSION_git
+
 config BR2_PACKAGE_LZMA_TARGET_HEADERS
 	bool "lzma headers in target"
 	default n
