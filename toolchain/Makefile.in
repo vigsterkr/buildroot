@@ -26,6 +26,13 @@ ifneq ($(BR2_LARGEFILE),y)
 DISABLE_LARGEFILE= --disable-largefile
 endif
 
+ifeq ($(BR2_ENABLE_SELINUX),y)
+DISABLE_SELINUX:=
+else
+DISABLE_SELINUX:=--disable-selinux
+endif
+
+
 ifneq ($(BR2_INET_IPV6),y)
 DISABLE_IPV6= --disable-ipv6
 endif
