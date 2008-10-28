@@ -24,7 +24,7 @@
 # USA
 
 DM_BASEVER=1.02
-DM_PATCH=22
+DM_PATCH=28
 DM_VERSION=$(DM_BASEVER).$(DM_PATCH)
 DM_SOURCE:=device-mapper.$(DM_VERSION).tgz
 DM_SITE:=ftp://sources.redhat.com/pub/dm
@@ -44,57 +44,41 @@ $(DL_DIR)/$(DM_SOURCE):
 $(DM_DIR)/.unpacked: $(DL_DIR)/$(DM_SOURCE)
 	$(DM_CAT) $(DL_DIR)/$(DM_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
 	toolchain/patch-kernel.sh $(DM_DIR) package/dm/ \*.patch
+	$(CONFIG_UPDATE) $(@D)/autoconf
 	touch $@
-
+dm-unp: $(DM_DIR)/.unpacked
 $(DM_DIR)/.configured: $(DM_DIR)/.unpacked
 	(cd $(DM_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		ac_cv_have_decl_malloc=yes \
-		gl_cv_func_malloc_0_nonnull=yes \
-		ac_cv_func_malloc_0_nonnull=yes \
-		ac_cv_func_calloc_0_nonnull=yes \
-		ac_cv_func_realloc_0_nonnull=yes \
-		ac_cv_func_lstat_dereferences_slashed_symlink=yes \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--prefix=/usr \
-		--exec-prefix=/usr \
-		--bindir=/usr/bin \
-		--sbindir=/usr/sbin \
 		--libdir=/lib \
-		--libexecdir=/usr/lib \
-		--sysconfdir=/etc \
-		--datadir=/usr/share \
-		--localstatedir=/var \
-		--includedir=/usr/include \
-		--mandir=/usr/share/man \
-		--infodir=/usr/share/info \
 		$(DISABLE_NLS) \
 		$(DISABLE_LARGEFILE) \
-		--with-user=$(shell id -un) --with-group=$(shell id -gn) \
+		$(DISABLE_SELINUX) \
+		--with-kernel-dir=$(LINUX_HEADERS_DIR) \
+		--with-kernel-version=$(LINUX_HEADERS_VERSION) \
+		--with-user=$(shell $(CONFIG_SHELL) -c 'id -un') \
+		--with-group=$(shell $(CONFIG_SHELL) -c 'id -gn') \
+		--with-optimisation="$(TARGET_CFLAGS)" \
+		--disable-debug \
+		--disable-compat \
 	)
 	touch $@
 
-$(DM_DIR)/$(DM_BINARY): dm-build
-$(DM_DIR)/$(DM_LIBRARY): dm-build
-
 $(DM_STAGING_BINARY) $(DM_STAGING_LIBRARY): $(DM_DIR)/.configured
-	$(MAKE) CC=$(TARGET_CC) -C $(DM_DIR)
+	$(MAKE) -C $(DM_DIR)
 	$(MAKE) DESTDIR=$(STAGING_DIR) -C $(DM_DIR) install
 
 # Install dmsetup from staging to target
 $(DM_TARGET_BINARY): $(DM_STAGING_BINARY)
-	$(INSTALL) -m 0755 $? $@
-	-$(STRIPCMD) $(DM_TARGET_BINARY)
+	$(INSTALL) -D -m 0755 $? $@
+	-$(STRIPCMD) $(STRIP_STRIP_ALL) $@
 	touch -c $@
 
 # Install libdevmapper.so.1.00 from staging to target
 $(DM_TARGET_LIBRARY).$(DM_BASEVER): $(DM_STAGING_LIBRARY)
-	$(INSTALL) -m 0644 $? $@
-	-$(STRIPCMD) $@
+	$(INSTALL) -D -m 0644 $? $@
+	-$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $@
 	touch -c $@
 
 # Makes libdevmapper.so a symlink to libdevmapper.so.1.00
@@ -106,17 +90,17 @@ $(DM_TARGET_LIBRARY): $(DM_TARGET_LIBRARY).$(DM_BASEVER)
 # Install header file
 $(DM_TARGET_HEADER): $(DM_TARGET_LIBRARY)
 	rm -f $@
-	mkdir -p $(STAGING_DIR)/usr/include
-	$(INSTALL) -m 0644 $(STAGING_DIR)/usr/include/libdevmapper.h $@
+	$(INSTALL) -D -m 0644 $(STAGING_DIR)/usr/include/libdevmapper.h $@
 
-dm: uclibc $(DM_TARGET_BINARY) $(DM_TARGET_LIBRARY) #$(DM_TARGET_HEADER)
+dm: uclibc $(DM_TARGET_BINARY) $(DM_TARGET_LIBRARY) \
+	$(if $(BR2_HAVE_INCLUDES),$(DM_TARGET_HEADER))
 
 dm-source: $(DL_DIR)/$(DM_SOURCE)
 
 dm-clean:
-	rm $(DM_TARGET_BINARY) $(DM_TARGET_LIBRARY) \
-		$(DM_TARGET_LIBRARY).$(DM_BASEVER) $(DM_TARGET_HEADER)
 	-$(MAKE) -C $(DM_DIR) clean
+	rm -f $(DM_TARGET_BINARY) $(DM_TARGET_LIBRARY) \
+		$(DM_TARGET_LIBRARY).$(DM_BASEVER) $(DM_TARGET_HEADER)
 
 dm-dirclean:
 	rm -rf $(DM_DIR)
