@@ -9,6 +9,7 @@ config BR2_PACKAGE_LZMA_TARGET
 
 choice
 	prompt "version"
+	depends on BR2_PACKAGE_LZMA_TARGET || BR2_PACKAGE_LZMA_HOST
 	default BR2_PACKAGE_LZMA_VERSION_git
 
 config BR2_PACKAGE_LZMA_VERSION_release
