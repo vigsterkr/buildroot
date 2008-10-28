@@ -4,3 +4,7 @@ config BR2_PACKAGE_DM
 	help
 	  The Device-mapper is a new component of the linux kernel that
 	  supports logical volume management. It is required by LVM2 and EVMS.
+
+	  Note: For dm _you_ need to turn on LARGEFILE support.
+
+	  http://sources.redhat.com/dm/
