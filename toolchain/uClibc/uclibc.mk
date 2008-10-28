@@ -597,12 +597,16 @@ ifeq ($(BR2__UCLIBC_HAVE_SHARED),y)
 	ln -sf ldconfig $(STAGING_DIR)/usr/sbin/$(GNU_TARGET_NAME)-ldconfig
 endif
 ifeq ($(BR2__UCLIBC_UCLIBC_HAS_LOCALE),y)
-	$(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/iconv.host $(STAGING_DIR)/usr/bin/iconv
-	ln -sf iconv $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-iconv
-	ln -sf iconv $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-iconv
-	$(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/locale.host $(STAGING_DIR)/usr/bin/locale
-	ln -sf locale $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-locale
-	ln -sf locale $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-locale
+	if [ -r $(UCLIBC_DIR)/utils/iconv.host ]; then \
+	    $(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/iconv.host $(STAGING_DIR)/usr/bin/iconv; \
+	    ln -sf iconv $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-iconv; \
+	    ln -sf iconv $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-iconv; \
+	fi
+	if [ -r $(UCLIBC_DIR)/utils/locale.host ]; then \
+	    $(INSTALL) -m0755 -D $(UCLIBC_DIR)/utils/locale.host $(STAGING_DIR)/usr/bin/locale; \
+	    ln -sf locale $(STAGING_DIR)/usr/bin/$(REAL_GNU_TARGET_NAME)-locale; \
+	    ln -sf locale $(STAGING_DIR)/usr/bin/$(GNU_TARGET_NAME)-locale; \
+	fi
 endif
 	touch -c $@
 
