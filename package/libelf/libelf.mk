@@ -12,6 +12,10 @@ ifeq ($(BR2_LARGEFILE),y)
 LIBELF_CONFIG:=--enable-elf64
 endif
 
+LIBELF_LIBMAJ  :=$(word 1,$(subst ., ,$(LIBELF_VERSION)))
+LIBELF_LIBMIN  :=$(word 2,$(subst ., ,$(LIBELF_VERSION)))
+LIBELF_LIBPATCH:=$(word 3,$(subst ., ,$(LIBELF_VERSION)))
+
 $(DL_DIR)/$(LIBELF_SOURCE):
 	$(WGET) -P $(DL_DIR) $(LIBELF_SITE)/$(LIBELF_SOURCE)
 
@@ -48,9 +52,13 @@ ifeq ($(BR2_PACKAGE_LIBELF_HEADERS),y)
 libelf_headers: $(TARGET_DIR)/usr/lib/libelf.so.$(LIBELF_VERSION)
 $(TARGET_DIR)/usr/lib/libelf.so.$(LIBELF_VERSION): $(STAGING_DIR)/usr/lib/libelf.a
 	$(INSTALL) -d $(@D)
-	$(INSTALL) -m 0755 $(STAGING_DIR)/usr/lib/libelf* $(@D)
+	$(INSTALL) -m0755 $(STAGING_DIR)/usr/lib/$(@F) $@
+	(cd $(@D); \
+	 ln -sf $(@F) $(@F:.$(LIBELF_LIBMIN).$(LIBELF_LIBPATCH)=); \
+	 ln -sf $(@F) $(@F:.$(LIBELF_VERSION)=); \
+	)
 	$(INSTALL) -d $(TARGET_DIR)/usr/include
-	$(INSTALL) -m 0644 $(wildcard $(addprefix $(STAGING_DIR)/usr/include/,gelf.h libelf*)) \
+	cp -dpRf $(wildcard $(addprefix $(STAGING_DIR)/usr/include/,gelf.h libelf*)) \
 		$(TARGET_DIR)/usr/include/
 	$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $@
 
