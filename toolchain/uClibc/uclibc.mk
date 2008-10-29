@@ -329,6 +329,7 @@ endif
 		-e '/HAS_NO_THREADS/d' \
 		-e '/LINUXTHREADS/d' \
 		-e '/LINUXTHREADS_OLD/d' \
+		-e '/LINUXTHREADS_NEW/d' \
 		-e '/PTHREADS_DEBUG_SUPPORT/d' \
 		-e '/UCLIBC_HAS_THREADS_NATIVE/d' $(UCLIBC_DIR)/.oldconfig
 ifeq ($(BR2_PTHREADS_NONE),y)
