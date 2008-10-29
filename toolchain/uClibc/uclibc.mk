@@ -325,15 +325,18 @@ else
 		-e 's,.*UCLIBC_HAS_FPU.*,UCLIBC_HAS_FPU=y\nHAS_FPU=y\nUCLIBC_HAS_FLOATS=y\n,g' \
 		$(UCLIBC_DIR)/.oldconfig
 endif
-	$(SED) '/UCLIBC_HAS_THREADS/d' $(UCLIBC_DIR)/.oldconfig
-	$(SED) '/LINUXTHREADS/d' $(UCLIBC_DIR)/.oldconfig
-	$(SED) '/LINUXTHREADS_OLD/d' $(UCLIBC_DIR)/.oldconfig
-	$(SED) '/PTHREADS_DEBUG_SUPPORT/d' $(UCLIBC_DIR)/.oldconfig
-	$(SED) '/UCLIBC_HAS_THREADS_NATIVE/d' $(UCLIBC_DIR)/.oldconfig
+	$(SED) '/UCLIBC_HAS_THREADS/d' \
+		-e '/HAS_NO_THREADS/d' \
+		-e '/LINUXTHREADS/d' \
+		-e '/LINUXTHREADS_OLD/d' \
+		-e '/PTHREADS_DEBUG_SUPPORT/d' \
+		-e '/UCLIBC_HAS_THREADS_NATIVE/d' $(UCLIBC_DIR)/.oldconfig
 ifeq ($(BR2_PTHREADS_NONE),y)
 	echo "# UCLIBC_HAS_THREADS is not set" >> $(UCLIBC_DIR)/.oldconfig
+	echo "HAS_NO_THREADS=y" >> $(UCLIBC_DIR)/.oldconfig
 else
 	echo "UCLIBC_HAS_THREADS=y" >> $(UCLIBC_DIR)/.oldconfig
+	echo "# HAS_NO_THREADS is not set" >> $(UCLIBC_DIR)/.oldconfig
 endif
 ifeq ($(BR2_PTHREADS),y)
 	echo "LINUXTHREADS=y" >> $(UCLIBC_DIR)/.oldconfig
