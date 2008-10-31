@@ -20,30 +20,6 @@ ifeq ($(BR2_LARGEFILE),y)
 ZLIB_CFLAGS+=-D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64
 endif
 
-$(DL_DIR)/$(ZLIB_SOURCE):
-	$(WGET) -P $(DL_DIR) $(ZLIB_SITE)/$(ZLIB_SOURCE)
-
-$(ZLIB_DIR)/.patched: $(DL_DIR)/$(ZLIB_SOURCE)
-	$(ZLIB_CAT) $(DL_DIR)/$(ZLIB_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
-	toolchain/patch-kernel.sh $(ZLIB_DIR) package/zlib/ zlib\*.patch
-	# not an autoconf package: $(CONFIG_UPDATE) $(@D)
-	touch $@
-
-$(ZLIB_DIR)/.configured: $(ZLIB_DIR)/.patched
-	# not an autoconf package:
-	(cd $(ZLIB_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_ARGS) \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ENV) \
-		./configure \
-		$(if $(BR2_ENABLE_SHARED),--shared) \
-		--prefix=/usr \
-		--exec-prefix=$(STAGING_DIR)/usr/bin \
-		--libdir=$(STAGING_DIR)/usr/lib \
-		--includedir=$(STAGING_DIR)/usr/include \
-	)
-	touch $@
-
 ifeq ($(BR2_x86_i586),y)
 ZLIB_ASM_FILE=cp -dpf $(ZLIB_DIR)/contrib/asm586/match.S $(ZLIB_DIR)/
 endif
@@ -54,12 +30,37 @@ ZLIB_ASM_FILE=cp -dpf $(ZLIB_DIR)/contrib/asm686/match.S $(ZLIB_DIR)/
 endif
 endif
 ifneq ($(ZLIB_ASM_FILE),)
-ZLIB_CFLAGS+=-DASMV
+ZLIB_CFLAGS+=-DASMV -DNO_UNDERLINE
 ZLIB_OBJA:=match.o
 endif
 
+$(DL_DIR)/$(ZLIB_SOURCE):
+	$(WGET) -P $(DL_DIR) $(ZLIB_SITE)/$(ZLIB_SOURCE)
+
+$(ZLIB_DIR)/.patched: $(DL_DIR)/$(ZLIB_SOURCE)
+	$(ZLIB_CAT) $(DL_DIR)/$(ZLIB_SOURCE) | tar -C $(BUILD_DIR) $(TAR_OPTIONS) -
+	toolchain/patch-kernel.sh $(ZLIB_DIR) package/zlib/ zlib-$(ZLIB_VERSION)\*.patch
+	# not an autoconf package: $(CONFIG_UPDATE) $(@D)
+	touch $@
+
+$(ZLIB_DIR)/.configured: $(ZLIB_DIR)/.patched
+	# not an autoconf package:
+	(cd $(ZLIB_DIR); rm -rf config.cache; \
+		$(TARGET_CONFIGURE_ARGS) \
+		$(TARGET_CONFIGURE_OPTS) \
+		CFLAGS="$(TARGET_CFLAGS) $(ZLIB_CFLAGS)" \
+		./configure \
+		$(if $(BR2_ENABLE_SHARED),--shared) \
+		--prefix=/usr \
+		--exec-prefix=$(STAGING_DIR)/usr/bin \
+		--libdir=$(STAGING_DIR)/usr/lib \
+		--includedir=$(STAGING_DIR)/usr/include \
+	)
+	touch $@
+
 $(ZLIB_DIR)/libz.so.$(ZLIB_VERSION): $(ZLIB_DIR)/.configured
-	$(MAKE) CFLAGS="$(ZLIB_CFLAGS)" -C $(ZLIB_DIR) $(ZLIB_OBJA) all libz.a
+	$(ZLIB_ASM_FILE)
+	$(MAKE) $(if $(ZLIB_OBJA),OBJA=$(ZLIB_OBJA)) -C $(ZLIB_DIR) $(ZLIB_OBJA) all libz.a
 	touch -c $(ZLIB_DIR)/libz.so.$(ZLIB_VERSION)
 
 $(STAGING_DIR)/usr/lib/libz.so.$(ZLIB_VERSION): $(ZLIB_DIR)/libz.so.$(ZLIB_VERSION)

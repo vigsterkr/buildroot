@@ -1,0 +1,28 @@
+diff -rdup zlib-1.2.3.old/Makefile.in zlib-1.2.3/Makefile.in
+--- zlib-1.2.3.old/Makefile.in	2008-10-31 13:02:28.000000000 +0100
++++ zlib-1.2.3/Makefile.in	2008-10-31 13:04:21.000000000 +0100
+@@ -47,11 +47,9 @@ includedir = ${prefix}/include
+ mandir = ${prefix}/share/man
+ man3dir = ${mandir}/man3
+ 
+-OBJS = adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o \
+-       zutil.o inflate.o infback.o inftrees.o inffast.o
+-
+-OBJA =
+ # to use the asm code: make OBJA=match.o
++OBJS = adler32.o compress.o crc32.o gzio.o uncompr.o deflate.o trees.o \
++       zutil.o inflate.o infback.o inftrees.o inffast.o $(OBJA)
+ 
+ TEST_OBJS = example.o minigzip.o
+ 
+@@ -68,8 +66,8 @@ test: all
+ 	  echo '		*** zlib test FAILED ***'; \
+ 	fi
+ 
+-libz.a: $(OBJS) $(OBJA)
+-	$(AR) $(ARFLAGS) $@ $(OBJS) $(OBJA)
++libz.a: $(OBJS)
++	$(AR) $(ARFLAGS) $@ $(OBJS)
+ 	-@ ($(RANLIB) $@ || true) >/dev/null 2>&1
+ 
+ match.o: match.S
