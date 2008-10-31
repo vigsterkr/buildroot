@@ -41,9 +41,9 @@ $(ZLIB_DIR)/libz.so.$(ZLIB_VERSION): $(ZLIB_DIR)/.configured
 	touch -c $(ZLIB_DIR)/libz.so.$(ZLIB_VERSION)
 
 $(STAGING_DIR)/usr/lib/libz.so.$(ZLIB_VERSION): $(ZLIB_DIR)/libz.so.$(ZLIB_VERSION)
-	cp -dpf $(ZLIB_DIR)/libz.a $(STAGING_DIR)/usr/lib/
-	cp -dpf $(ZLIB_DIR)/zlib.h $(STAGING_DIR)/usr/include/
-	cp -dpf $(ZLIB_DIR)/zconf.h $(STAGING_DIR)/usr/include/
+	$(INSTALL) -D $(ZLIB_DIR)/libz.a $(STAGING_DIR)/usr/lib/libz.a
+	$(INSTALL) -D $(ZLIB_DIR)/zlib.h $(STAGING_DIR)/usr/include/zlib.h
+	$(INSTALL) $(ZLIB_DIR)/zconf.h $(STAGING_DIR)/usr/include/zconf.h
 	cp -dpf $(ZLIB_DIR)/libz.so* $(STAGING_DIR)/usr/lib/
 	ln -sf libz.so.$(ZLIB_VERSION) $(STAGING_DIR)/usr/lib/libz.so.1
 	chmod a-x $(STAGING_DIR)/usr/lib/libz.so.$(ZLIB_VERSION)
