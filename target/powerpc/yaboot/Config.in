@@ -2,5 +2,44 @@ config BR2_TARGET_YABOOT
 	bool "yaboot"
 	default n
 	depends on BR2_powerpc
+	select BR2_PACKAGE_E2FSPROGS_LIBS
 	help
 	  The yaboot bootloader for new world powerpc systems.
+
+config BR2_YABOOT_HAVE_MD5
+	bool "md5 support"
+	default n
+	depends on BR2_TARGET_YABOOT
+	help
+	  Support both cleartext as well as md5 passwords.
+
+config BR2_YABOOT_HAVE_COLORTEXT
+	bool "color text"
+	default n
+	depends on BR2_TARGET_YABOOT
+	help
+	  Enable text color configurability:
+	  the fgcolor= and bgcolor= config options
+
+config BR2_YABOOT_HAVE_COLORMAP
+	bool "colormap"
+	default n
+	depends on BR2_TARGET_YABOOT
+	help
+	  Enable colormap setup.
+	  Required on PowerMacs for text coloring to work right.
+
+config BR2_YABOOT_FS_XFS
+	bool "xfs"
+	default n
+	depends on BR2_TARGET_YABOOT
+	help
+	  Support SGI's XFS filesystem.
+
+config BR2_YABOOT_FS_REISERFS
+	bool "reiserfs"
+	default n
+	depends on BR2_TARGET_YABOOT
+	help
+	  Support reiserfs filesystem.
+
