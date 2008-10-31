@@ -3,7 +3,8 @@
 # e2fsprogs
 #
 #############################################################
-E2FSPROGS_VERSION:=1.39
+#E2FSPROGS_VERSION:=1.39
+E2FSPROGS_VERSION:=1.41.3
 E2FSPROGS_SOURCE=e2fsprogs-$(E2FSPROGS_VERSION).tar.gz
 E2FSPROGS_SITE=http://$(BR2_SOURCEFORGE_MIRROR).dl.sourceforge.net/sourceforge/e2fsprogs
 E2FSPROGS_DIR=$(BUILD_DIR)/e2fsprogs-$(E2FSPROGS_VERSION)
@@ -28,15 +29,10 @@ $(E2FSPROGS_DIR)/.unpacked: $(DL_DIR)/$(E2FSPROGS_SOURCE)
 
 $(E2FSPROGS_DIR)/.configured: $(E2FSPROGS_DIR)/.unpacked
 	(cd $(E2FSPROGS_DIR); rm -rf config.cache; \
-		$(TARGET_CONFIGURE_OPTS) \
-		$(TARGET_CONFIGURE_ARGS) \
-		CFLAGS="$(TARGET_CFLAGS)" \
-		./configure \
-		--target=$(GNU_TARGET_NAME) \
-		--host=$(GNU_TARGET_NAME) \
-		--build=$(GNU_HOST_NAME) \
+		$(AUTO_CONFIGURE_TARGET) \
 		--with-cc=$(TARGET_CC) \
-		--with-linker=$(TARGET_CROSS)ld \
+		--with-linker=$(TARGET_LD) \
+		--with-gnu-ld \
 		--prefix=/usr \
 		--exec-prefix=/usr \
 		--bindir=/bin \
@@ -48,25 +44,42 @@ $(E2FSPROGS_DIR)/.configured: $(E2FSPROGS_DIR)/.unpacked
 		--localstatedir=/var \
 		--mandir=/usr/share/man \
 		--infodir=/usr/share/info \
-		--enable-elf-shlibs --enable-dynamic-e2fsck --disable-swapfs \
-		--disable-debugfs --disable-imager \
-		--disable-resizer --enable-fsck \
+		--enable-elf-shlibs \
+		--enable-dynamic-e2fsck \
+		--disable-swapfs \
+		--disable-debugfs \
+		--disable-profile \
+		--disable-jbd-debug \
+		--disable-blkid-debug \
+		--disable-testio-debug \
+		--disable-imager \
+		--disable-resizer \
 		--disable-e2initrd-helper \
-		--without-catgets $(DISABLE_NLS) \
+		--enable-fsck \
+		--without-catgets \
+		$(if $(BR2__UCLIBC_HAVE_TLS),--enable-tls,--disable-tls) \
+		$(DISABLE_NLS) \
 		$(DISABLE_LARGEFILE) \
 	)
-	# do away with hiding the commands
-	find $(E2FSPROGS_DIR) -name Makefile \
-		| xargs $(SED) '/^[[:space:]]*@/s/@/$$\(Q\)/'
+	# do away with unconditionally hiding the commands
+	#find $(E2FSPROGS_DIR) -name "Makefile*" \
+	#	| xargs $(SED) '/^	@/s/@/$$\(Q\)/'
 	touch $@
 
 $(E2FSPROGS_DIR)/$(E2FSPROGS_BINARY): $(E2FSPROGS_DIR)/.configured
-	$(MAKE1) -C $(E2FSPROGS_DIR)
+	$(MAKE) -C $(E2FSPROGS_DIR)
 	(cd $(E2FSPROGS_DIR)/misc; \
 		$(STRIPCMD) $(E2FSPROGS_MISC_STRIP); \
 	)
 	#$(STRIPCMD) $(E2FSPROGS_DIR)/lib/lib*.so.*.*
 	touch -c $@
+
+$(STAGING_DIR)/lib/libext2fs.a: $(E2FSPROGS_DIR)/$(E2FSPROGS_BINARY)
+	$(MAKE1) PATH=$(TARGET_PATH) DESTDIR=$(STAGING_DIR) LDCONFIG=true \
+		-C $(E2FSPROGS_DIR) install
+	$(INSTALL) -m0644 $(E2FSPROGS_DIR)/lib/*.a $(STAGING_DIR)/lib/
+	#$(INSTALL) -D -m0755 $(STAGING_DIR)/lib/libext2fs.so $@
+	#$(STRIPCMD) $(STRIP_STRIP_UNNEEDED) $@
 
 $(TARGET_DIR)/$(E2FSPROGS_TARGET_BINARY): $(E2FSPROGS_DIR)/$(E2FSPROGS_BINARY)
 	$(MAKE1) PATH=$(TARGET_PATH) DESTDIR=$(TARGET_DIR) LDCONFIG=true \
@@ -91,13 +104,16 @@ endif
 	rm -rf $(TARGET_DIR)/usr/share/doc
 	touch -c $@
 
+e2fsprogs-libs: $(STAGING_DIR)/lib/libext2fs.a
 e2fsprogs: uclibc $(TARGET_DIR)/$(E2FSPROGS_TARGET_BINARY)
 
-e2fsprogs-clean:
-	$(MAKE1) DESTDIR=$(TARGET_DIR) CC=$(TARGET_CC) -C $(E2FSPROGS_DIR) uninstall
+e2fsprogs-clean e2fsprogs-libs-clean:
+	$(MAKE1) DESTDIR=$(STAGING_DIR) -C $(E2FSPROGS_DIR) uninstall
+	$(MAKE1) DESTDIR=$(TARGET_DIR) -C $(E2FSPROGS_DIR) uninstall
 	-$(MAKE1) -C $(E2FSPROGS_DIR) clean
+	rm -f $(addprefix $(STAGING_DIR)/lib/lib,ext2fs.a e2p.a uuid.a blkid.a)
 
-e2fsprogs-dirclean:
+e2fsprogs-dirclean e2fsprogs-libs-dirclean:
 	rm -rf $(E2FSPROGS_DIR)
 
 #############################################################
@@ -107,4 +123,8 @@ e2fsprogs-dirclean:
 #############################################################
 ifeq ($(BR2_PACKAGE_E2FSPROGS),y)
 TARGETS+=e2fsprogs
+else
+ifeq ($(BR2_PACKAGE_E2FSPROGS_LIBS),y)
+TARGETS+=e2fsprogs-libs
+endif
 endif

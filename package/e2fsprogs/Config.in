@@ -3,3 +3,10 @@ config BR2_PACKAGE_E2FSPROGS
 	default n
 	help
 	  The EXT2 file system utilities and libraries
+
+config BR2_PACKAGE_E2FSPROGS_LIBS
+	bool "e2fsprogs-libs"
+	default n
+	help
+	  The EXT2 file system libraries, without the utilities.
+

@@ -1,0 +1,33 @@
+\\\\
+\\ yaboot/second/fs_ext2.o: In function `ext2_open':
+\\ fs_ext2.c:(.text+0x948): undefined reference to `ext2fs_namei_follow'
+--- e2fsprogs-1.41.3.orig/lib/ext2fs/ext2fs.h	2008-10-11 16:57:31.000000000 +0200
++++ e2fsprogs-1.41.3/lib/ext2fs/ext2fs.h	2008-10-31 17:39:17.000000000 +0100
+@@ -1032,7 +1032,7 @@ extern errcode_t ext2fs_lookup(ext2_fils
+ 			 int namelen, char *buf, ext2_ino_t *inode);
+ extern errcode_t ext2fs_namei(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
+ 			const char *name, ext2_ino_t *inode);
+-errcode_t ext2fs_namei_follow(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
++extern errcode_t ext2fs_namei_follow(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
+ 			      const char *name, ext2_ino_t *inode);
+ extern errcode_t ext2fs_follow_link(ext2_filsys fs, ext2_ino_t root, ext2_ino_t cwd,
+ 			ext2_ino_t inode, ext2_ino_t *res_inode);
+--- e2fsprogs-1.41.3.orig/lib/ext2fs/Makefile.in	2008-10-07 16:22:39.000000000 +0200
++++ e2fsprogs-1.41.3/lib/ext2fs/Makefile.in	2008-10-31 17:49:35.000000000 +0100
+@@ -8,7 +8,7 @@ INSTALL = @INSTALL@
+ @MCONFIG@
+ 
+ @DEBUGFS_CMT@DEBUGFS_LIB_OBJS = bb_compat.o fileio.o \
+-@DEBUGFS_CMT@	inode_io.o namei.o write_bb_file.o 
++@DEBUGFS_CMT@	inode_io.o write_bb_file.o 
+ 
+ MK_CMDS=	_SS_DIR_OVERRIDE=../ss ../ss/mk_cmds
+ 
+@@ -61,6 +61,7 @@ OBJS= $(DEBUGFS_LIB_OBJS) $(RESIZE_LIB_O
+ 	lookup.o \
+ 	mkdir.o \
+ 	mkjournal.o \
++	namei.o \
+ 	native.o \
+ 	newdir.o \
+ 	openfs.o \
