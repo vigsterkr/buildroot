@@ -39,7 +39,7 @@ $(PCIUTILS_DIR)/.unpacked: $(DL_DIR)/$(PCIUTILS_SOURCE) $(DL_DIR)/$(PCIIDS_SOURC
 		$(PCIUTILS_DIR)/lib/configure
 	touch $@
 
-$(PCIUTILS_DIR)/.compiled: $(PCIUTILS_DIR)/.unpacked
+$(PCIUTILS_DIR)/.compiled: $(PCIUTILS_DIR)/.unpacked $(if $(BR2_PACKAGE_ZLIB),zlib)
 	$(MAKE1) CC="$(TARGET_CC)" OPT="$(TARGET_CFLAGS)" -C $(PCIUTILS_DIR) \
 		SHAREDIR="/usr/share/misc" \
 		ZLIB=$(PCIUTILS_HAVE_ZLIB) \
