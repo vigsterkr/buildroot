@@ -1,0 +1,19 @@
+--- a/Makefile.orig	2008-11-08 00:00:16.000000000 +0100
++++ b/Makefile	2008-11-08 00:02:13.000000000 +0100
+@@ -9,7 +9,7 @@
+ 
+ # Targets
+ 
+-bridge_TARGET = libbridge.so
++bridge_TARGET = libbridge.so libbridge.a
+ bridge_SRCDIR = src
+ 
+ $(bridge_TARGET): $(bridge_SRCDIR)/DSPManager.o \
+@@ -53,3 +53,7 @@
+ %.so::
+ 	$(P)SHLIB
+ 	$(Q)$(CC) $(LDFLAGS) -shared -o $@ $^ $(LIBS)
++
++%.a::
++	$(P)STATIC
++	$(Q)$(AR) rcs $@ $^

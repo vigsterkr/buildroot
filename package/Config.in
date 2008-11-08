@@ -237,6 +237,7 @@ endif
 source "package/hwdata/Config.in"
 source "package/iostat/Config.in"
 source "package/libaio/Config.in"
+source "package/libdspbridge/Config.in"
 source "package/libraw1394/Config.in"
 source "package/libusb/Config.in"
 source "package/lm-sensors/Config.in"
