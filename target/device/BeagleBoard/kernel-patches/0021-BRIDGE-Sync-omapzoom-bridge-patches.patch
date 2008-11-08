@@ -1,0 +1,1104 @@
+From 09b217c56543a0c6368fb281daea148447018737 Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Wed, 10 Sep 2008 03:36:39 +0300
+Subject: [PATCH 21/43] BRIDGE: Sync omapzoom bridge patches
+
+Mostly deleting unused header files
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/bridge/dbapi.h     |   48 -------
+ arch/arm/plat-omap/include/bridge/ddma_sh.h   |   95 -------------
+ arch/arm/plat-omap/include/bridge/ddmatypes.h |   36 -----
+ arch/arm/plat-omap/include/bridge/dspapi.h    |   50 -------
+ arch/arm/plat-omap/include/bridge/gp.h        |   33 -----
+ arch/arm/plat-omap/include/bridge/host_os.h   |    7 +-
+ arch/arm/plat-omap/include/bridge/memry.h     |   96 -------------
+ drivers/dsp/bridge/Kbuild                     |    8 +-
+ drivers/dsp/bridge/Kconfig                    |   15 +-
+ drivers/dsp/bridge/gen/gt.c                   |    2 +
+ drivers/dsp/bridge/hw/EasiBase.h              |  179 ------------------------
+ drivers/dsp/bridge/rmgr/drv_interface.c       |   15 ++-
+ drivers/dsp/bridge/wmd/_tiomap_api.h          |  182 -------------------------
+ drivers/dsp/bridge/wmd/_tiomap_clk.h          |  123 -----------------
+ drivers/dsp/bridge/wmd/tiomap3430_pwr.c       |    5 +-
+ 15 files changed, 32 insertions(+), 862 deletions(-)
+ delete mode 100644 arch/arm/plat-omap/include/bridge/dbapi.h
+ delete mode 100644 arch/arm/plat-omap/include/bridge/ddma_sh.h
+ delete mode 100644 arch/arm/plat-omap/include/bridge/ddmatypes.h
+ delete mode 100644 arch/arm/plat-omap/include/bridge/dspapi.h
+ delete mode 100644 arch/arm/plat-omap/include/bridge/gp.h
+ delete mode 100644 arch/arm/plat-omap/include/bridge/memry.h
+ delete mode 100644 drivers/dsp/bridge/hw/EasiBase.h
+ delete mode 100644 drivers/dsp/bridge/wmd/_tiomap_api.h
+ delete mode 100644 drivers/dsp/bridge/wmd/_tiomap_clk.h
+
+diff --git a/arch/arm/plat-omap/include/bridge/dbapi.h b/arch/arm/plat-omap/include/bridge/dbapi.h
+deleted file mode 100644
+index a942848..0000000
+--- a/arch/arm/plat-omap/include/bridge/dbapi.h
++++ /dev/null
+@@ -1,48 +0,0 @@
+-/*
+- * arch/arm/plat-omap/include/bridge/dbapi.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2008 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-/*
+- *  ======== dbapi.h ========
+- *  Description:
+- *      Top level header file for GPP side DSP/BIOS Bridge APIs.
+- *
+- *! Revision History:
+- *! ================
+- *! 22-Nov-2002 gp  Cleaned up comments, formatting.
+- *! 13-Feb-2001 kc: Name changed from ddspapi.h to dbapi.h.
+- *! 27-Jun-2000 rr: Name changed to ddspapi.h. Broken into various h files.
+- *! 12-May-2000 gp: Removed PROC_UNKNOWN state.  Moved OEM DSPProcessor_ fxns
+- *!                 to ddspoem.h. Changed DDSP_MSG to be fixed length;
+- *!                 Changed DDSPStream_Issue/Reclaim to take u32 dwArg.
+- *! 11-May-2000 gp: Reformatted; converted tabs to spaces; changed NODEHANDLE
+- *!                 to HNODE; changed GUID to UUID; added "Detail" sections
+- *!                 documenting differences from DDSP API spec. (ver. 0.6);
+- *!                 enhanced comments.
+- *! 19-Apr-2000 ww: Updated based on code review.
+- *! 12-Apr-2000 ww: Created based on DSP/BIOS Bridge API specification, Ver 0.6.
+- */
+-
+-#ifndef DBAPI_
+-#define DBAPI_
+-
+-#include <dbdefs.h>	/* DSP/BIOS Bridge global definitions and constants */
+-#include <errbase.h>		/* DSP/BIOS Bridge status and error codes   */
+-#include <DSPManager.h>		/* DSP/BIOS Bridge Manager APIs             */
+-#include <DSPProcessor.h>	/* DSP/BIOS Bridge Processor APIs           */
+-#include <DSPNode.h>		/* DSP/BIOS Bridge Node APIs                */
+-#include <DSPStream.h>		/* DSP/BIOS Bridge Stream APIs              */
+-
+-#endif				/* DBAPI_ */
+diff --git a/arch/arm/plat-omap/include/bridge/ddma_sh.h b/arch/arm/plat-omap/include/bridge/ddma_sh.h
+deleted file mode 100644
+index 2cfbe08..0000000
+--- a/arch/arm/plat-omap/include/bridge/ddma_sh.h
++++ /dev/null
+@@ -1,95 +0,0 @@
+-/*
+- * arch/arm/plat-omap/include/bridge/ddma_sh.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== ddma_sh.h ========
+- *
+- *  DSP/BIOS Bridge DSP-DMA(DDMA) shared definitions.
+- *  (used on both GPP and DSP sides).
+- *
+- *
+- *! Revision History
+- *! ================
+- *! 12-Jan-2001 ag  Added Zero-copy channel descriptor
+- *!                    and #ifdef CHNL_DDMA for GPP-side build.
+- *! 05-Jan-2002 ag  Made chnl buf desc ndxs private.
+- *! 07-Dec-2001 ag  DDMA_DSPDESCDONE value changed.
+- *! 24-Jan-2001 ag  Initial.
+- */
+-
+-#ifndef DDMA_SH_
+-#define DDMA_SH_
+-
+-#include <ddmatypes.h>
+-
+-/* Max # of DDSP DMA channels allowed */
+-#define DDMA_MAXZCPYCHNLS   16
+-#define DDMA_MAXDDMACHNLS   16
+-
+-/* descriptor status */
+-#define DDMA_SOK            0x0	/* transfer ok */
+-#define DDMA_SCANCELED      0x1	/* I/O request canceled */
+-#define DDMA_SBUFMISMATCH   0x2	/* Src Buf larger than dst. Data clipped */
+-
+-/* descriptor errors */
+-#define DDMA_ERRDMA         0x8000  /* DMA error(s) occured */
+-#define DDMA_ERRILLDESC	    0x800   /* Illegal desc format */
+-#define DDMA_ERRTIMEOUT	    0x400   /* DMA timeout occured on this descriptor */
+-#define DDMA_ERRALIGN       0x200   /* Bad SM buffer alignment */
+-
+-/* cmd codes (workReq field)*/
+-#define DDMA_WORKREQ        1	/* Channel work requested by Gpp */
+-#define DDMA_WORKREQCLEAR   2	/* Work requested Cleared by Dsp */
+-#define DDMA_DSPDESCDONE    2	/* DSP completed DDMA descr proc'ing */
+-
+-/*
+- * DSP-DMA GPP<->DSP structures
+- */
+-
+-/* SM buffer descriptor structure */
+-struct DDMA_BUFDESC {
+-	DDMA_DWORD workReq;     /* Requesting work(DSP-DMA) to be performed */
+-	DDMA_DWORD status;	/* Desc completion status  */
+-	DDMA_DWORD bufPaDsp;	/* DSP address of SM buffer. */
+-	DDMA_DWORD xferSize;	/* Size of transfer request in Gpp bytes */
+-	DDMA_DWORD bufArg;	/* Optional argument associated with buffer */
+-} ;
+-
+-/* bridge channel descriptor ctrl */
+-struct DDMA_CHNLDESC {
+-	DDMA_WORD numBufDesc;	/* # of SM buf descriptors for this channel */
+-	DDMA_DWORD descPaDsp;	/* DSP address of base SM descriptor. */
+-} ;
+-
+-/*
+- * Zero-copy channel descriptor(SM buffer swap)
+- */
+-struct DDMA_ZCPYCHNLDESC {
+-	/* DSP-Side */
+-	DDMA_DWORD inBuf;	/* address of input buffer */
+-	DDMA_DWORD inDataSize;	/* Data size of inBuf  (DSP MAUs) */
+-	DDMA_DWORD inBufSize;	/* Actual buffer size of inBuf  (DSP MAUs) */
+-	DDMA_DWORD inUserArg;	/* Optional in user argument */
+-
+-	DDMA_DWORD outBuf;	/* address of output buffer  */
+-	DDMA_DWORD outDataSize;	/* Data size of outBuf  (DSP MAUs) */
+-	DDMA_DWORD outBufSize;	/* Actual buffer size of outBuf  (DSP MAUs) */
+-	DDMA_DWORD outUserArg;	/* Optional out user argument */
+-	} ;
+-
+-#endif				/* DDMA_SH_ */
+-
+diff --git a/arch/arm/plat-omap/include/bridge/ddmatypes.h b/arch/arm/plat-omap/include/bridge/ddmatypes.h
+deleted file mode 100644
+index 40341f4..0000000
+--- a/arch/arm/plat-omap/include/bridge/ddmatypes.h
++++ /dev/null
+@@ -1,36 +0,0 @@
+-/*
+- * arch/arm/plat-omap/include/bridge/ddmatypes.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== ddmatypes.h ========
+- *  Description:
+- *      DSP/BIOS Bridge DSP-DMA(DDMA) shared data type definitions.
+- *
+- *! Revision History
+- *! ================
+- *! 24-Jan-2001 ag  Initial.
+- */
+-
+-#ifndef DDMATYPES_
+-#define DDMATYPES_
+-
+-/* DSP-side definitions */
+-typedef u32 DDMA_DWORD;
+-typedef u32 DDMA_WORD;
+-typedef u32 DDMA_STATUS;
+-
+-#endif				/* DDMATYPES_ */
+diff --git a/arch/arm/plat-omap/include/bridge/dspapi.h b/arch/arm/plat-omap/include/bridge/dspapi.h
+deleted file mode 100644
+index 1eaa81c..0000000
+--- a/arch/arm/plat-omap/include/bridge/dspapi.h
++++ /dev/null
+@@ -1,50 +0,0 @@
+-/*
+- * bridge/inc/dspapi.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2008 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== dspapi.h ========
+- *  Purpose:
+- *      Defines function type modifiers used in all DSPSYS public header
+- *      files.
+- *
+- *  Notes:
+- *      Provides __stdcall (required by VB 4.0) and __declspec(dllimport)
+- *      function modifiers for fast dyna-linking.
+- *
+- *! Revision History:
+- *! =================
+- *! 23-Dec-1997 cr: Added WBKERNEL_API definition.
+- *! 11-Oct-1996 gp: Created.
+- */
+-
+-#ifndef DSPAPI_
+-#define DSPAPI_
+-
+-/* Define API decoration for direct importing of DLL references. */
+-#if !defined(_DSPSYSDLL32_)
+-#define DSPAPIDLL __declspec(dllimport)
+-#else
+-#define DSPAPIDLL
+-#endif
+-
+-/* Full export modifier: */
+-#define DSPAPI DSPAPIDLL DSP_STATUS WINAPI
+-
+-/* Explicitly define class driver calling conventions */
+-#define WBKERNEL_API CDECL
+-
+-#endif				/* DSPAPI_ */
+diff --git a/arch/arm/plat-omap/include/bridge/gp.h b/arch/arm/plat-omap/include/bridge/gp.h
+deleted file mode 100644
+index 9e8e37a..0000000
+--- a/arch/arm/plat-omap/include/bridge/gp.h
++++ /dev/null
+@@ -1,33 +0,0 @@
+-/*
+- * bridge/inc/gp.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-/*
+- *  ======== gp.h ========
+- *! Revision History
+- *! ================
+- */
+-
+-#ifndef GP_
+-#define GP_
+-
+-#include <stdarg.h>
+-
+-/*
+- *  ======== GP_snprintf ========
+- */
+-#define GP_snprintf snprintf
+-
+-#endif
+diff --git a/arch/arm/plat-omap/include/bridge/host_os.h b/arch/arm/plat-omap/include/bridge/host_os.h
+index 93297ae..de4fb90 100644
+--- a/arch/arm/plat-omap/include/bridge/host_os.h
++++ b/arch/arm/plat-omap/include/bridge/host_os.h
+@@ -30,9 +30,10 @@
+ #include <linux/autoconf.h>
+ #include <asm/system.h>
+ #include <asm/atomic.h>
+-#include <asm/uaccess.h>
+-#include <asm/irq.h>
+-#include <asm/io.h>
++#include <linux/semaphore.h>
++#include <linux/uaccess.h>
++#include <linux/irq.h>
++#include <linux/io.h>
+ #include <linux/syscalls.h>
+ #include <linux/version.h>
+ #include <linux/kernel.h>
+diff --git a/arch/arm/plat-omap/include/bridge/memry.h b/arch/arm/plat-omap/include/bridge/memry.h
+deleted file mode 100644
+index 457e17f..0000000
+--- a/arch/arm/plat-omap/include/bridge/memry.h
++++ /dev/null
+@@ -1,96 +0,0 @@
+-/*
+- * dspbridge/mp_driver/inc/memry.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2008 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-/*
+- *  ======== memry.h ========
+- *  Purpose:
+- *      Functional interface for the memory manager, exported by the DSP
+- *      system API DLL.  This interface is not publicly documented.
+- *
+- *  Public Functions:
+- *      MEMRY_Alloc
+- *      MEMRY_BindMem
+- *      MEMRY_Calloc
+- *      MEMRY_Free
+- *      MEMRY_FreeVM
+- *      MEMRY_LinearAddress
+- *      MEMRY_ReserveVM
+- *      MEMRY_PageLock
+- *      MEMRY_PageUnlock
+- *      MEMRY_UnMapLinearAddress
+- *
+- *! Revision History:
+- *! ================
+- *! 01-Sep-2001 ag: Added MEMRY_[UnMap]LinearAddress.
+- *! 11-Oct-2000 ag: Added MEMRY_Reserve[Free]VM() & MEMRY_BindMem().
+- *! 12-Nov-1999 kc: Updated for WinCE.
+- *!
+- */
+-
+-#ifndef MEMRY_
+-#define MEMRY_
+-
+-#include <dspapi.h>
+-
+-#include <memdefs.h>
+-
+-/*
+- *  MEMRY_[GET]SET]VIRTUALSEGID is used by Node & Strm to access virtual
+- *  address space in the correct client process context. The virtual to
+- *  physical mapping is done in the client process context.
+- */
+-#define MEMRY_SETVIRTUALSEGID   MEM_SETVIRTUALSEGID
+-#define MEMRY_GETVIRTUALSEGID   MEM_GETVIRTUALSEGID
+-#define MEMRY_MASKVIRTUALSEGID  MEM_MASKVIRTUALSEGID
+-
+-/*
+- *  ======== MEMRY_LinearAddress ========
+- *  Purpose:
+- *      Get the linear address corresponding to the given physical address.
+- *  Parameters:
+- *      pPhysAddr:      Physical address to be mapped.
+- *      cBytes:         Number of bytes in physical range to map.
+- *  Returns:
+- *      The corresponding linear address, or NULL if unsuccessful.
+- *  Requires:
+- *     PhysAddr != 0
+- *  Ensures:
+- *  Notes:
+- *      If valid linear address is returned, be sure to call
+- *      MEMRY_UnMapLinearAddress().
+- */
+-	extern inline void *MEMRY_LinearAddress(void *pPhyAddr, u32 cBytes)
+-	{
+-		return pPhyAddr;
+-	}
+-
+-/*
+- *  ======== MEMRY_UnMapLinearAddress ========
+- *  Purpose:
+- *      Unmap the linear address mapped in MEMRY_LinearAddress.
+- *  Parameters:
+- *      pBaseAddr:  Ptr to mapped memory (as returned by MEMRY_LinearAddress()).
+- *  Returns:
+- *  Requires:
+- *      - pBaseAddr is a valid linear address mapped in MEMRY_LinearAddress.
+- *  Ensures:
+- *      - pBaseAddr no longer points to a valid linear address.
+- */
+-	extern inline void MEMRY_UnMapLinearAddress(void *pBaseAddr)
+-	{
+-	}
+-
+-#endif				/* MEMRY_ */
+diff --git a/drivers/dsp/bridge/Kbuild b/drivers/dsp/bridge/Kbuild
+index eb28111..0c4ae40 100644
+--- a/drivers/dsp/bridge/Kbuild
++++ b/drivers/dsp/bridge/Kbuild
+@@ -6,9 +6,9 @@ libservices = services/csl.o services/mem.o services/list.o services/dpc.o \
+ 		services/clk.o services/cfg.o services/reg.o \
+ 		services/regsup.o services/prcs.o services/ntfy.o \
+ 		services/dbg.o services/services.o
+-libwmd = wmd/chnl_sm.o wmd/msg_sm.o wmd/io_sm.o \
+-		wmd/tiomap3430.o wmd/tiomap3430_pwr.o \
+-		wmd/tiomap_sm.o wmd/tiomap_io.o wmd/mmu_fault.o wmd/ue_deh.o
++libwmd = wmd/chnl_sm.o wmd/msg_sm.o wmd/io_sm.o wmd/tiomap3430.o \
++		wmd/tiomap3430_pwr.o wmd/tiomap_sm.o wmd/tiomap_io.o \
++		wmd/mmu_fault.o wmd/ue_deh.o
+ libpmgr = pmgr/chnl.o pmgr/io.o pmgr/msg.o pmgr/cod.o pmgr/dev.o pmgr/wcd.o \
+ 		pmgr/dmm.o pmgr/cmm.o pmgr/dbll.o
+ librmgr = rmgr/dbdcd.o rmgr/disp.o rmgr/drv.o rmgr/mgr.o rmgr/node.o \
+@@ -26,8 +26,6 @@ ccflags-y += -DGT_TRACE -DDEBUG
+ endif
+ 
+ ccflags-y += -Wno-strict-prototypes
+-ccflags-y += -DOPT_ELIMINATE_EXTRA_DLOAD -DOPT_REDUCE_SYMBOL_LOOKUPS \
+-		-DOPT_USE_MEMSET
+ 
+ #Machine dependent
+ ccflags-y += -D_TI_ -D_DB_TIOMAP -DTMS32060 \
+diff --git a/drivers/dsp/bridge/Kconfig b/drivers/dsp/bridge/Kconfig
+index c9d2d8c..cba1338 100644
+--- a/drivers/dsp/bridge/Kconfig
++++ b/drivers/dsp/bridge/Kconfig
+@@ -6,19 +6,20 @@ menuconfig MPU_BRIDGE
+ 	tristate "DSP Bridge driver"
+ 	default n
+ 	help
+-	  DSP/BIOS Bridge is designed for platforms that contain a GPP and one or
+-	  more attached DSPs.  The GPP is considered the master or "host" processor,
+-	  and the attached DSPs are processing resources that can be utilized by
+-	  applications and drivers running on the GPP.
++	  DSP/BIOS Bridge is designed for platforms that contain a GPP and
++	  one or more attached DSPs.  The GPP is considered the master or
++	  "host" processor, and the attached DSPs are processing resources
++	  that can be utilized by applications and drivers running on the GPP.
+ 
+ config DISABLE_BRIDGE_DVFS
+ 	bool "Disable Bridge Dynamic Voltage and Frequency Scaling (DVFS)"
+ 	depends on MPU_BRIDGE
+ 	default y
+ 	help
+-	  DVFS allows DSP Bridge to initiate the operating point change to scale
+-	  the chip voltage and frequency in order to match the performance and
+-	  power consumption to the current processing requirements.
++	  DVFS allows DSP Bridge to initiate the operating point change to
++	  scale the chip voltage and frequency in order to match the
++	  performance and power consumption to the current processing
++	  requirements.
+ 
+ config DISABLE_BRIDGE_PM
+ 	bool "Disable Bridge Power Management"
+diff --git a/drivers/dsp/bridge/gen/gt.c b/drivers/dsp/bridge/gen/gt.c
+index 468bac1..a2d2030 100644
+--- a/drivers/dsp/bridge/gen/gt.c
++++ b/drivers/dsp/bridge/gen/gt.c
+@@ -48,8 +48,10 @@ enum GT_State {
+ 	GT_DIGITS
+ } ;
+ 
++#ifdef CONFIG_BRIDGE_DEBUG
+ static char *GT_1format = "%s - %d: ";
+ static char *GT_2format = "%s - %d(%d): ";
++#endif /* CONFIG_BRIDGE_DEBUG */
+ 
+ static unsigned char *GT_tMask[GT_BOUND];
+ 
+diff --git a/drivers/dsp/bridge/hw/EasiBase.h b/drivers/dsp/bridge/hw/EasiBase.h
+deleted file mode 100644
+index aa61d21..0000000
+--- a/drivers/dsp/bridge/hw/EasiBase.h
++++ /dev/null
+@@ -1,179 +0,0 @@
+-/*
+- * linux/drivers/dsp/bridge/hw/omap3/inc/EasiBase.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2007 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-#ifndef __EASIBASE_H
+-#define __EASIBASE_H
+-
+-/* ----------------------------------------------------------------------------
+-* DEFINE:        ****_BASE_ID
+-*
+-* DESCRIPTION:  These are registser BASE IDs that will be used to identify
+-*               errors when doing the EASI-Checker register tests
+-*
+-* NOTE:         The values of these defines will be defined at a later stage.
+-* 		TBD
+-*
+-* -----------------------------------------------------------------------------
+-*/
+-
+-#define OSPL1_BASE_ID 0
+-#define D3D1_BASE_ID 0
+-#define MBSP1_BASE_ID 0
+-#define MBSP2_BASE_ID 0
+-#define MSDI1_BASE_ID 0
+-#define RNG1_BASE_ID 0
+-#define SHAM1_BASE_ID 0
+-#define RFBI1_BASE_ID 0
+-#define DISC1_BASE_ID 0
+-#define DSS1_BASE_ID 0
+-#define MLB1_BASE_ID 0
+-#define IPI1_BASE_ID 0
+-#define PDMA1_BASE_ID 0
+-#define PRCM_BASE_ID 0
+-#define SDMA1_BASE_ID 0
+-#define SDRC1_BASE_ID 0
+-#define ST1_BASE_ID 0
+-#define SMS1_BASE_ID 0
+-#define WDT1_BASE_ID 0
+-#define WDT2_BASE_ID 0
+-#define WDT3_BASE_ID 0
+-#define WDT4_BASE_ID 0
+-#define INTC1_BASE_ID 0
+-#define INTC2_BASE_ID 0
+-#define MMU1_BASE_ID 0
+-#define GPMC1_BASE_ID 0
+-#define GPT1_BASE_ID 0
+-#define GPT2_BASE_ID 0
+-#define GPT3_BASE_ID 0
+-#define GPT4_BASE_ID 0
+-#define GPT5_BASE_ID 0
+-#define GPT6_BASE_ID 0
+-#define GPT7_BASE_ID 0
+-#define GPT8_BASE_ID 0
+-#define GPT9_BASE_ID 0
+-#define GPT10_BASE_ID 0
+-#define GPT11_BASE_ID 0
+-#define GPT12_BASE_ID 0
+-#define WTR1_BASE_ID 0
+-#define WTR2_BASE_ID 0
+-#define WTR3_BASE_ID 0
+-#define WTR4_BASE_ID 0
+-#define I2C1_BASE_ID 0
+-#define I2C2_BASE_ID 0
+-#define T32K1_BASE_ID 0
+-#define PRCM1_BASE_ID 0
+-
+-#define AES1_BASE_ID 0
+-#define C2CF1_BASE_ID 0
+-#define DSPF1_BASE_ID 0
+-#define FAC1_BASE_ID 0
+-#define GPMF1_BASE_ID 0
+-#define GPIO1_BASE_ID 0
+-#define GPIO2_BASE_ID 0
+-#define GPIO3_BASE_ID 0
+-#define GPIO4_BASE_ID 0
+-#define HDQW1_BASE_ID 0
+-#define PKA1_BASE_ID 0
+-
+-#define IM1_BASE_ID 0
+-#define IM2_BASE_ID 0
+-#define IM3_BASE_ID 0
+-#define IM4_BASE_ID 0
+-#define IM5_BASE_ID 0
+-#define IM6_BASE_ID 0
+-#define IM7_BASE_ID 0
+-#define IM8_BASE_ID 0
+-#define IMA1_BASE_ID 0
+-#define IMTM1_BASE_ID 0
+-#define IVAF1_BASE_ID 0
+-#define LRCR1_BASE_ID 0
+-#define LRCR2_BASE_ID 0
+-#define LRCS1_BASE_ID 0
+-#define LRCS2_BASE_ID 0
+-#define RAMF1_BASE_ID 0
+-#define ROMF1_BASE_ID 0
+-#define TM1_BASE_ID 0
+-#define TML1_BASE_ID 0
+-#define TML2_BASE_ID 0
+-#define TML3_BASE_ID 0
+-#define TML4_BASE_ID 0
+-#define TML5_BASE_ID 0
+-#define TML6_BASE_ID 0
+-
+-
+-
+-/* ----------------------------------------------------------------------------
+-* DEFINE: ***_BASE_EASIL1
+-*
+-* DESCRIPTION:  These are registser BASE EASIl1 numbers that can be used to
+-*               identify what EASI C functions have been called.
+-*
+-* NOTE:         The values of these defines will be defined at a later stage.
+-* 		TBD
+-*
+-* -----------------------------------------------------------------------------
+-*/
+-
+-#define OSPL1_BASE_EASIL1 0
+-#define D3D_BASE_EASIL1 0
+-#define MBSP_BASE_EASIL1 0
+-#define MSDI_BASE_EASIL1 0
+-#define RNG_BASE_EASIL1 0
+-#define SHAM_BASE_EASIL1 0
+-#define RFBI_BASE_EASIL1 0
+-#define DISC_BASE_EASIL1 0
+-#define DSS_BASE_EASIL1 0
+-#define MLB_BASE_EASIL1 0
+-#define IPI_BASE_EASIL1 0
+-#define PDMA_BASE_EASIL1 0
+-#define SDMA_BASE_EASIL1 0
+-#define SDRC_BASE_EASIL1 0
+-#define ST_BASE_EASIL1 0
+-#define SMS_BASE_EASIL1 0
+-#define WDT1_BASE_EASIL1 0
+-#define INTC1_BASE_EASIL1 0
+-#define INTC2_BASE_EASIL1 0
+-#define MMU1_BASE_EASIL1 0
+-#define GPMC_BASE_EASIL1 0
+-#define GPT_BASE_EASIL1 0
+-#define WTR_BASE_EASIL1 0
+-#define MBSP2_BASE_EASIL1 0
+-#define I2C1_BASE_EASIL1 0
+-#define I2C2_BASE_EASIL1 0
+-#define T32K1_BASE_EASIL1 0
+-#define PRCM1_BASE_EASIL1 0
+-
+-#define AES1_BASE_EASIL1 0
+-#define C2CF1_BASE_EASIL1 0
+-#define DSPF1_BASE_EASIL1 0
+-#define FAC1_BASE_EASIL1 0
+-#define GPMF1_BASE_EASIL1 0
+-#define GPIO1_BASE_EASIL1 0
+-#define HDQW1_BASE_EASIL1 0
+-#define PKA1_BASE_EASIL1 0
+-
+-#define IMA_BASE_EASIL1  0
+-#define IM_BASE_EASIL1  0
+-#define IMTM_BASE_EASIL1  0
+-#define IVAF_BASE_EASIL1  0
+-#define LRCR_BASE_EASIL1  0
+-#define LRCS_BASE_EASIL1  0
+-#define RAMF_BASE_EASIL1  0
+-#define ROMF_BASE_EASIL1  0
+-#define TML_BASE_EASIL1  0
+-#define TM_BASE_EASIL1  0
+-
+-#endif	/* __EASIBASE_H */
+diff --git a/drivers/dsp/bridge/rmgr/drv_interface.c b/drivers/dsp/bridge/rmgr/drv_interface.c
+index 7e6de02..3bd831b 100644
+--- a/drivers/dsp/bridge/rmgr/drv_interface.c
++++ b/drivers/dsp/bridge/rmgr/drv_interface.c
+@@ -127,7 +127,7 @@ struct clk *clk_handle;
+ s32 dsp_debug;
+ 
+ /* This is a test variable used by Bridge to test different sleep states */
+-static s32 dsp_test_sleepstate;
++s32 dsp_test_sleepstate;
+ struct bridge_dev {
+ 	struct cdev cdev;
+ };
+@@ -137,7 +137,9 @@ static struct bridge_dev *bridge_device;
+ static struct class *bridge_class;
+ 
+ static u32 driverContext;
++#ifdef CONFIG_BRIDGE_DEBUG
+ static char *GT_str;
++#endif /* CONFIG_BRIDGE_DEBUG */
+ static s32 driver_major = DRIVER_MAJOR;
+ static s32 driver_minor = DRIVER_MINOR;
+ static char *base_img;
+@@ -213,7 +215,10 @@ MODULE_AUTHOR("Texas Instruments");
+ MODULE_LICENSE("GPL");
+ 
+ static char *driver_name = DRIVER_NAME;
++
++#ifdef CONFIG_BRIDGE_DEBUG
+ static struct GT_Mask driverTrace;
++#endif /* CONFIG_BRIDGE_DEBUG */
+ 
+ static struct file_operations bridge_fops = {
+ 	.open		= bridge_open,
+@@ -334,6 +339,10 @@ static struct platform_driver bridge_driver_ldm = {
+ 
+ };
+ 
++struct device dspbridge_device = {
++	.driver = &bridge_driver_ldm.driver,
++};
++
+ #endif
+ 
+ /* Initialization routine. Executed when the driver is loaded (as a kernel
+@@ -392,8 +401,8 @@ static int __init bridge_init(void)
+ 		GT_0trace(driverTrace, GT_7CLASS,
+ 				"Error creating bridge class \n");
+ 
+-	device_create(bridge_class, NULL, MKDEV(driver_major,
+-			driver_minor), NULL, "DspBridge");
++	device_create(bridge_class, NULL, MKDEV(driver_major, driver_minor),
++			NULL, "DspBridge");
+ 
+ 	GT_init();
+ 	GT_create(&driverTrace, "LD");
+diff --git a/drivers/dsp/bridge/wmd/_tiomap_api.h b/drivers/dsp/bridge/wmd/_tiomap_api.h
+deleted file mode 100644
+index 52986de..0000000
+--- a/drivers/dsp/bridge/wmd/_tiomap_api.h
++++ /dev/null
+@@ -1,182 +0,0 @@
+-/*
+- * linux/drivers/dsp/bridge/wmd/linux/omap/common/_tiomap_api.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== _tiomap_api.h ========
+- *  Description:
+- *      Definitions, types and function prototypes for the API module.
+- *
+- *! Revision History
+- *! ================
+- *! 27-Mar-2003 vp:  Updated for Power Management
+- *!		     - Added setAPI function
+- *!		     - Added API_DSP_BOOT_IDLE enumeration
+- *!		     - Modified setDSPBootMode function to take boot mode option
+- *! 19-Feb-2003 vp:  Ported to Linux platform.
+- *! 08-Oct-2002 rr:  Created.
+- */
+-
+-#ifndef _TIOMAP_API_
+-#define _TIOMAP_API_
+-
+-/* I/O ARM Memory Mapping and ARM Peripheral mapping */
+-#define ARM_API_START                   0xfffec900
+-#define ARM_API_LENGTH                  0xff
+-
+-/* API I/F Registers */
+-#define API_CTRL_OFFSET                 0x0000	/* 32 bit control register   */
+-#define API_STATUS_OFFSET               0x0010	/* 16 bit status register(RO) */
+-#define API_DSP_STATUS_OFFSET           0x0014	/* 16 bit DSP status register */
+-#define API_DSP_BOOT_OFFSET             0x0018	/* 16 bit Boot configuration
+-						 * register
+-						 */
+-#define API_SIZE                        0x001c
+-#define API_DSP_API_OFFSET              0x0020	/* 16 bit API Configuration
+-						 * register
+-						 */
+-
+-/* API_DSP_STATUS_REG related */
+-#define API_DSP_STATUS_HOM_MODE         0x0c00	/* HOM Mode bits - set if HOM */
+-
+-/* SAM/HOM bit in API_DSP_STATUS register value */
+-#define SAM_BIT                         0x0400
+-
+-/*  Define position bit fields */
+-#define API_HIGH_FREQ_POSBIT            0
+-#define API_TIMEOUT_EN_POSBIT           1
+-#define API_API_ERR_EN_POSBIT           3
+-#define API_ACCESS_FACTOR_POSBIT        4
+-#define API_TIMEOUT_POSBIT              8
+-#define API_ENDIANISM_POSBIT            16
+-#define API_ACCESS_PRIORITY_POSBIT      18
+-
+-typedef enum {
+-	API_HIGH_FREQ_LOW = 0,
+-	API_HIGH_FREQ_HIGH = 1
+-} API_HighFreq_t;
+-
+-typedef enum {
+-	API_TIMEOUT_DIS = 0,
+-	API_TIMEOUT_EN = 1
+-} API_TimeoutEn_t;
+-
+-typedef enum {
+-	API_API_ERR_DIS = 0,
+-	API_API_ERR_EN = 1
+-} API_ApiErrEn_t;
+-
+-typedef enum {
+-	API_ACCESS_FACTOR_0 = 0,
+-	API_ACCESS_FACTOR_1,
+-	API_ACCESS_FACTOR_2,
+-	API_ACCESS_FACTOR_3,
+-	API_ACCESS_FACTOR_4,
+-	API_ACCESS_FACTOR_5,
+-	API_ACCESS_FACTOR_6,
+-	API_ACCESS_FACTOR_7,
+-	API_ACCESS_FACTOR_8,
+-	API_ACCESS_FACTOR_9,
+-	API_ACCESS_FACTOR_10,
+-	API_ACCESS_FACTOR_11,
+-	API_ACCESS_FACTOR_12,
+-	API_ACCESS_FACTOR_13,
+-	API_ACCESS_FACTOR_14,
+-	API_ACCESS_FACTOR_15
+-} API_AccessFactor_t;
+-
+-typedef enum {
+-	API_TIMEOUT_MIN = 0,
+-	API_TIMEOUT_MAX = 255
+-} API_Timeout_t;
+-
+-typedef enum {
+-	API_ENDIANISM_NO_CONVERT = 0,
+-	API_ENDIANISM_CONVERT_ALL_ACCESS = 2,
+-	API_ENDIANISM_CONVERT_API_MEM_ONLY = 3
+-} API_Endianism_t;
+-
+-typedef enum {
+-	API_ACCESS_PRIORITY_ARM_DMA_HSAB = 0,
+-	API_ACCESS_PRIORITY_ARM_HSAB_DMA,
+-	API_ACCESS_PRIORITY_DMA_ARM_HSAB,
+-	API_ACCESS_PRIORITY_HSAB_ARM_DMA,
+-	API_ACCESS_PRIORITY_DMA_HSAB_ARM,
+-	API_ACCESS_PRIORITY_HSAB_DMA_ARM
+-} API_AccessPriority_t;
+-
+-typedef enum {
+-	API_DSP_BOOT_INTERNAL = 5,
+-	API_DSP_BOOT_EXTERNAL = 4,
+-	API_DSP_BOOT_EMIF16 = 3,
+-	API_DSP_BOOT_IDLE = 2,
+-	API_DSP_BOOT_PSEUDO_EXT = 1,
+-	API_DSP_BOOT_MPNMC = 0
+-} API_DSPBootMode_t;
+-
+-/* Function prototypes */
+-
+-/*
+- *  ======== setAPIsize ========
+- *  Configures the SARAM blocks which can be accessed in the HOM mode
+- *  Register 0xfffe:c900 offset 0x1c.
+- */
+-extern void setAPIsize(struct WMD_DEV_CONTEXT *pDevContext, u16 size);
+-
+-/*
+- *  ======== setDspBootModeAPI ========
+- *  Sets up the DSP boot mode
+- *  Register 0xfffe:c900 offset 18.
+- *  Boot mode is set API_DSP_BOOT_INTERNAL; DSP will start executing from
+- *  SARAM location 0x10000 byte address.
+- */
+-extern void setDspBootModeAPI(struct WMD_DEV_CONTEXT *pDevContext,
+-			      API_DSPBootMode_t dsp_boot_mode);
+-
+-/*
+- *  ======== setAPI ========
+- *  Configures the API interface.
+- *  Register 0xfffe:c900 offset 0x0.
+- *      -   Set the API access priority to ARM-DMA-HSAB
+- *      -   Sets the no byte swap
+- *      -   Time out is set to MAX
+- *      -   Access factor is 4
+- *      -   Enable the time out
+- *      -   Set it to high frequency mode
+- */
+-extern void setAPI(struct WMD_DEV_CONTEXT *pDevContext,
+-		   API_HighFreq_t high_freq,
+-		   API_TimeoutEn_t timeout_en,
+-		   API_ApiErrEn_t api_err_en,
+-		   API_AccessFactor_t access_factor,
+-		   API_Timeout_t timeout,
+-		   API_Endianism_t endianism,
+-		   API_AccessPriority_t access_priority);
+-
+-/*
+- *  ======== setupAPI ========
+- *  Configures the API interface.
+- *  Register 0xfffe:c900 offset 0x0.
+- *      -   Set the API access priority to ARM-DMA-HSAB
+- *      -   Sets the no byte swap
+- *      -   Time out is set to MAX
+- *      -   Access factor is 4
+- *      -   Enable the time out
+- *      -   Set it to high frequency mode
+- */
+-extern void setupAPI(struct WMD_DEV_CONTEXT *pDevContext);
+-
+-#endif				/* _TIOMAP_API_ */
+diff --git a/drivers/dsp/bridge/wmd/_tiomap_clk.h b/drivers/dsp/bridge/wmd/_tiomap_clk.h
+deleted file mode 100644
+index cb5c685..0000000
+--- a/drivers/dsp/bridge/wmd/_tiomap_clk.h
++++ /dev/null
+@@ -1,123 +0,0 @@
+-/*
+- * linux/drivers/dsp/bridge/wmd/linux/omap/common/_tiomap_clk.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== _tiomap_clk.h ========
+- *  Description:
+- *      Definitions and types for the CLOCK and RESET modules. This
+- *  includes enabling/disabling peripheral clocks,reseting and releasing
+- *  the DSP.
+- *! Revision History
+- *! ================
+- *! 08-Oct-2002 rr:  Created.
+- */
+-
+-#ifndef _TIOMAP_CLK_
+-#define _TIOMAP_CLK_
+-
+-#include "_tiomap.h"
+-
+-/* ARM CLK Module */
+-#define ARM_CLKM_START                  0xfffece00
+-#define ARM_CLKM_LENGTH                 0xff
+-#define ARM_SYSST_OFFSET                0x18
+-#define IDLE_DSP_MASK                   0x40
+-
+-/* DSP CLK Module */
+-#define DSP_CLKM2_BASE                  0xe1008000
+-#define DSP_CLKM2_LENGTH                0xff
+-#define DSP_IDLECT2_OFFSET              0x8	/* Clock domain control */
+-
+-/* CLK related defines */
+-/*  ARM_CKCTL */
+-#define ARM_CKCTL_OFFEST                0x0
+-
+-#define EN_DSPCK_POS                    13
+-#define EN_DSPCK_NUMB                   1
+-
+-/*  ARM_RSTCT1 */
+-#define ARM_RSTCT1_OFFSET               0x10
+-
+-#define DSP_RST_POS                     2
+-#define DSP_RST_NUMB                    1
+-#define DSP_EN_POS                      1
+-#define DSP_EN_NUMB                     1
+-
+-/*  ARM_IDLECT2 */
+-#define ARM_IDLECT2_OFFSET              0x8
+-
+-#define EN_APICK_POS                    6
+-#define EN_APICK_NUMB                   1
+-
+-/* Function prototypes */
+-/*
+- *  ======== dspPeripheralClockDisable ========
+- *  Disables the clock for the DSP external periperal clock (DSPPER_CK)
+- *  Register 0xe100:8000 offset 0x8 bit position 1 is set to zero.
+- */
+-extern void dspPeripheralClockDisable(struct WMD_DEV_CONTEXT *pDevContext);
+-
+-/*
+- *  ======== dspPeripheralClockEnable ========
+- * Enables the clock for DSP external refernce clock, periperal clock, USART clk
+- *  GPIO clk and GPIO peripheral clock.
+- *  Register 0xe100:8000 offset 0x8 bit position 0,1,2,3,4 and 5 are set to 1.
+- */
+-extern void dspPeripheralClockEnable(struct WMD_DEV_CONTEXT *pDevContext);
+-
+-/*
+- *  ======== releaseDSP ========
+- *  Releases the DSP from reset. Th DSP starts running.from whatever
+- *  boot mode is set to. If it is set to internal boot mode, the DSP
+- *  starts executing from location 0x10000 byte address.
+- *  0xfffe:ce00 bit postion 1 is set to one.
+- */
+-extern DSP_STATUS releaseDSP(struct WMD_DEV_CONTEXT *pDevContext,
+-			     BOOL fCheckForSAM);
+-
+-/*
+- *  ======== releaseDspInterFace ========
+- *  Enables the pritoiry registers, EMIF configuration registers and
+- *  the API control logic in the DSP subsystem so that they can be programmed.
+- *  0xfffe:ce00 bit postion 2 is set to one.
+- */
+-extern void releaseDSPInterface(struct WMD_DEV_CONTEXT *pDevContext);
+-
+-/*
+- *  ======== resetDSP ========
+- *  Resets the DSP. This stops the DSP from running.
+- *  0xfffe:ce00 bit postion 1 is set to zero
+- */
+-extern void resetDSP(struct WMD_DEV_CONTEXT *pDevContext);
+-
+-/*
+- *  ======== resetDSPInterface ========
+- *  Resets the pritoiry registers, EMIF configuration registers and
+- *  the API control logic in the DSP subsystem. This is required to configure
+- *  the API and MMU.
+- *  0xfffe:ce00 bit postion 2 is set to zero.
+- */
+-extern void resetDSPInterface(struct WMD_DEV_CONTEXT *pDevContext);
+-
+- /*
+-  *  ======== setTCEndianism =========
+-  *  Sets the endianism register.
+-  */
+-extern void setTCEndianism(struct WMD_DEV_CONTEXT *pDevContext, u32 value);
+-
+-#endif				/* _TIOMAP_CLK_ */
+-
+diff --git a/drivers/dsp/bridge/wmd/tiomap3430_pwr.c b/drivers/dsp/bridge/wmd/tiomap3430_pwr.c
+index 68bbb7e..b66cc65 100644
+--- a/drivers/dsp/bridge/wmd/tiomap3430_pwr.c
++++ b/drivers/dsp/bridge/wmd/tiomap3430_pwr.c
+@@ -78,6 +78,7 @@ extern s32 dsp_test_sleepstate;
+ extern struct constraint_handle *dsp_constraint_handle;
+ #endif
+ #endif
++#endif
+ extern struct MAILBOX_CONTEXT mboxsetting;
+ 
+ extern void GetHWRegs(u32 prm_base, u32 cm_base);
+@@ -522,8 +523,8 @@ DSP_STATUS PostScale_DSP(struct WMD_DEV_CONTEXT *pDevContext, IN void *pArgs)
+ 			  "in wrong state");
+ 		return DSP_EFAIL;
+ 	}
+-#endif /* CONFIG_DISABLE_BRIDGE_DVFS */
+-#endif /* CONFIG_DISABLE_BRIDGE_PM */
++#endif /*#ifndef CONFIG_DISABLE_BRIDGE_DVFS*/
++#endif /*#ifndef CONFIG_DISABLE_BRIDGE_PM*/
+ 	return DSP_SOK;
+ }
+ 
+-- 
+1.6.0.3.613.g9f8f13
+

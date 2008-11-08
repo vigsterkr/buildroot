@@ -1,0 +1,37 @@
+From 68d7b488a8b9e6e2b57711b7d1f50234cf382c24 Mon Sep 17 00:00:00 2001
+From: Omar Ramirez Luna <x00omar@ti.com>
+Date: Mon, 18 Aug 2008 12:16:30 +0300
+Subject: [PATCH 13/43] BRIDGE: Remove unused clk structs
+
+Signed-off-by: Omar Ramirez Luna <x00omar@ti.com>
+Acked-by: Hari Kanigeri <h-kanigeri2@ti.com>
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ drivers/dsp/bridge/services/clk.c |   11 -----------
+ 1 files changed, 0 insertions(+), 11 deletions(-)
+
+diff --git a/drivers/dsp/bridge/services/clk.c b/drivers/dsp/bridge/services/clk.c
+index dfe3e4f..d37a85c 100644
+--- a/drivers/dsp/bridge/services/clk.c
++++ b/drivers/dsp/bridge/services/clk.c
+@@ -117,17 +117,6 @@ struct TIMER_OBJECT {
+ static struct GT_Mask CLK_debugMask = { NULL, NULL };	/* GT trace variable */
+ #endif
+ 
+-struct GPT6_configuration {
+-	u32 config;
+-	u32 tier;
+-	u32 twer;
+-	u32 tclr;
+-	u32 tldr;
+-	u32 ttgr;
+-};
+-/* Shadow settings to save the GPT6 timer settings */
+-struct GPT6_configuration  gpt6_config;
+-
+ /*
+  *  ======== CLK_Exit ========
+  *  Purpose:
+-- 
+1.6.0.3.613.g9f8f13
+

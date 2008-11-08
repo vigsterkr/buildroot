@@ -1,0 +1,81 @@
+From 243c27f12266389802dbcb4c7b9618ef55e57c7e Mon Sep 17 00:00:00 2001
+From: Omar Ramirez Luna <x00omar@ti.com>
+Date: Mon, 18 Aug 2008 12:16:30 +0300
+Subject: [PATCH 14/43] BRIDGE: Clean up unusedvariables
+
+Signed-off-by: Omar Ramirez Luna <x00omar@ti.com>
+Acked-by: Hari Kanigeri <h-kanigeri2@ti.com>
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/bridge/gt.h |    2 --
+ drivers/dsp/bridge/gen/gt.c            |    2 +-
+ drivers/dsp/bridge/wmd/tiomap3430.c    |    7 -------
+ drivers/dsp/bridge/wmd/tiomap_sm.c     |    1 -
+ 4 files changed, 1 insertions(+), 11 deletions(-)
+
+diff --git a/arch/arm/plat-omap/include/bridge/gt.h b/arch/arm/plat-omap/include/bridge/gt.h
+index f4b7954..1ee72ee 100644
+--- a/arch/arm/plat-omap/include/bridge/gt.h
++++ b/arch/arm/plat-omap/include/bridge/gt.h
+@@ -271,8 +271,6 @@ extern struct GT_Config _GT_params;
+ 
+ #else				/* GT_TRACE == 1 */
+ 
+-extern char *GT_format;
+-extern u8 *GT_tMask[GT_BOUND];
+ 
+ #define GT_create(mask, modName)    _GT_create((mask), (modName))
+ #define GT_curLine()                ((u16)__LINE__)
+diff --git a/drivers/dsp/bridge/gen/gt.c b/drivers/dsp/bridge/gen/gt.c
+index 60f5ec1..2e07674 100644
+--- a/drivers/dsp/bridge/gen/gt.c
++++ b/drivers/dsp/bridge/gen/gt.c
+@@ -51,7 +51,7 @@ enum GT_State {
+ static char *GT_1format = "%s - %d: ";
+ static char *GT_2format = "%s - %d(%d): ";
+ 
+-unsigned char *GT_tMask[GT_BOUND];
++static unsigned char *GT_tMask[GT_BOUND];
+ 
+ static bool curInit = false;
+ static char *separator;
+diff --git a/drivers/dsp/bridge/wmd/tiomap3430.c b/drivers/dsp/bridge/wmd/tiomap3430.c
+index e8c6b33..0da20a0 100644
+--- a/drivers/dsp/bridge/wmd/tiomap3430.c
++++ b/drivers/dsp/bridge/wmd/tiomap3430.c
+@@ -136,9 +136,6 @@ static DSP_STATUS run_IdleBoot(u32 prcm_base, u32 cm_base,
+ void GetHWRegs(u32 prcm_base, u32 cm_base);
+ 
+ /*  ----------------------------------- Globals */
+-#ifndef DEBUG
+-u64 tiomap1510_liTicksPerSecond;	/* Timer frequency */
+-#endif
+ 
+ /* Attributes of L2 page tables for DSP MMU */
+ struct PageInfo {
+@@ -249,10 +246,6 @@ void CDECL WMD_DRV_Entry(OUT struct WMD_DRV_INTERFACE **ppDrvInterface,
+ 	DBC_Require(pstrWMDFileName != NULL);
+ 	DBG_Trace(DBG_ENTER, "In the WMD_DRV_Entry \n");
+ 
+-#ifndef DEBUG
+-	tiomap1510_liTicksPerSecond = HZ;
+-#endif
+-
+ 	if (CSL_Strcmp(pstrWMDFileName, "UMA") == 0)
+ 		*ppDrvInterface = &drvInterfaceFxns;
+ 	else
+diff --git a/drivers/dsp/bridge/wmd/tiomap_sm.c b/drivers/dsp/bridge/wmd/tiomap_sm.c
+index d554e36..a25d9ae 100644
+--- a/drivers/dsp/bridge/wmd/tiomap_sm.c
++++ b/drivers/dsp/bridge/wmd/tiomap_sm.c
+@@ -78,7 +78,6 @@ extern struct constraint_handle *dsp_constraint_handle;
+ #ifndef DEBUG
+ #define TIHELEN_INT_TIMEOUT     1
+ #define LOOP_COUNT              1000000
+-extern u64 tiomap1510_liTicksPerSecond;	/* Timer frequency */
+ #endif
+ 
+ extern struct MAILBOX_CONTEXT mboxsetting;
+-- 
+1.6.0.3.613.g9f8f13
+

@@ -1,0 +1,679 @@
+From 213c790033fd1bda5de0f48964c4e8156bec1d40 Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Sat, 13 Sep 2008 10:46:10 +0300
+Subject: [PATCH 32/43] BRIDGE: Fix header path name to "arch/arm/plat-omap/include/dspbridge"
+
+sed -i -e \
+'s@arch/arm/plat-omap/include/bridge@arch/arm/plat-omap/include/dspbridge@g' \
+drivers/dsp/bridge/Kbuild \
+drivers/dsp/bridge/*/*.[ch] \
+arch/arm/plat-omap/include/dspbridge/*.h
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/dspbridge/_chnl_sm.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/_dcd.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/brddefs.h     |    2 +-
+ arch/arm/plat-omap/include/dspbridge/cfg.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/cfgdefs.h     |    2 +-
+ arch/arm/plat-omap/include/dspbridge/chnl.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/chnldefs.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/chnlpriv.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/clk.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/cmm.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/cmmdefs.h     |    2 +-
+ arch/arm/plat-omap/include/dspbridge/cod.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/csl.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbc.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbdcd.h       |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbdcddef.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbdefs.h      |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbg.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbl.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbldefs.h     |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbll.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dblldefs.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbof.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbreg.h       |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dbtype.h      |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dehdefs.h     |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dev.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/devdefs.h     |    2 +-
+ arch/arm/plat-omap/include/dspbridge/disp.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/dispdefs.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/procpriv.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/pwr.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/pwr_sh.h      |    2 +-
+ arch/arm/plat-omap/include/dspbridge/reg.h         |    2 +-
+ .../plat-omap/include/dspbridge/resourcecleanup.h  |    2 +-
+ arch/arm/plat-omap/include/dspbridge/rmm.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/rms_sh.h      |    2 +-
+ arch/arm/plat-omap/include/dspbridge/rmstypes.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/services.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/std.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/strm.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/strmdefs.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/sync.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/util.h        |    2 +-
+ arch/arm/plat-omap/include/dspbridge/utildefs.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/uuidutil.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wcd.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wcdioctl.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wmd.h         |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wmdchnl.h     |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wmddeh.h      |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wmdio.h       |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wmdioctl.h    |    2 +-
+ arch/arm/plat-omap/include/dspbridge/wmdmsg.h      |    2 +-
+ drivers/dsp/bridge/Kbuild                          |    2 +-
+ 55 files changed, 55 insertions(+), 55 deletions(-)
+
+diff --git a/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h b/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h
+index de2f690..28e36aa 100644
+--- a/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h
++++ b/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/_chnl_sm.h
++ * arch/arm/plat-omap/include/dspbridge/_chnl_sm.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/_dcd.h b/arch/arm/plat-omap/include/dspbridge/_dcd.h
+index 56e0b51..823a4f7 100644
+--- a/arch/arm/plat-omap/include/dspbridge/_dcd.h
++++ b/arch/arm/plat-omap/include/dspbridge/_dcd.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/_dcd.h
++ * arch/arm/plat-omap/include/dspbridge/_dcd.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/brddefs.h b/arch/arm/plat-omap/include/dspbridge/brddefs.h
+index 239e3b4..c9a4b25 100644
+--- a/arch/arm/plat-omap/include/dspbridge/brddefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/brddefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/brddefs.h
++ * arch/arm/plat-omap/include/dspbridge/brddefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/cfg.h b/arch/arm/plat-omap/include/dspbridge/cfg.h
+index 1473d79..7335702 100644
+--- a/arch/arm/plat-omap/include/dspbridge/cfg.h
++++ b/arch/arm/plat-omap/include/dspbridge/cfg.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/cfg.h
++ * arch/arm/plat-omap/include/dspbridge/cfg.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/cfgdefs.h b/arch/arm/plat-omap/include/dspbridge/cfgdefs.h
+index c81cb1a..48217d3 100644
+--- a/arch/arm/plat-omap/include/dspbridge/cfgdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/cfgdefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/cfgdefs.h
++ * arch/arm/plat-omap/include/dspbridge/cfgdefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/chnl.h b/arch/arm/plat-omap/include/dspbridge/chnl.h
+index 515a470..8931553 100644
+--- a/arch/arm/plat-omap/include/dspbridge/chnl.h
++++ b/arch/arm/plat-omap/include/dspbridge/chnl.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/chnl.h
++ * arch/arm/plat-omap/include/dspbridge/chnl.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/chnldefs.h b/arch/arm/plat-omap/include/dspbridge/chnldefs.h
+index 0e72431..9c246ae 100644
+--- a/arch/arm/plat-omap/include/dspbridge/chnldefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/chnldefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/chnldefs.h
++ * arch/arm/plat-omap/include/dspbridge/chnldefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/chnlpriv.h b/arch/arm/plat-omap/include/dspbridge/chnlpriv.h
+index a49f971..1043044 100644
+--- a/arch/arm/plat-omap/include/dspbridge/chnlpriv.h
++++ b/arch/arm/plat-omap/include/dspbridge/chnlpriv.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/chnlpriv.h
++ * arch/arm/plat-omap/include/dspbridge/chnlpriv.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/clk.h b/arch/arm/plat-omap/include/dspbridge/clk.h
+index b2bf366..95e899b 100644
+--- a/arch/arm/plat-omap/include/dspbridge/clk.h
++++ b/arch/arm/plat-omap/include/dspbridge/clk.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/clk.h
++ * arch/arm/plat-omap/include/dspbridge/clk.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/cmm.h b/arch/arm/plat-omap/include/dspbridge/cmm.h
+index e9792d7..bb87979 100644
+--- a/arch/arm/plat-omap/include/dspbridge/cmm.h
++++ b/arch/arm/plat-omap/include/dspbridge/cmm.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/cmm.h
++ * arch/arm/plat-omap/include/dspbridge/cmm.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/cmmdefs.h b/arch/arm/plat-omap/include/dspbridge/cmmdefs.h
+index 680400c..978e248 100644
+--- a/arch/arm/plat-omap/include/dspbridge/cmmdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/cmmdefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/cmmdefs.h
++ * arch/arm/plat-omap/include/dspbridge/cmmdefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/cod.h b/arch/arm/plat-omap/include/dspbridge/cod.h
+index d63b370..22deef2 100644
+--- a/arch/arm/plat-omap/include/dspbridge/cod.h
++++ b/arch/arm/plat-omap/include/dspbridge/cod.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/cod.h
++ * arch/arm/plat-omap/include/dspbridge/cod.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/csl.h b/arch/arm/plat-omap/include/dspbridge/csl.h
+index 1cc757d..3152e0d 100644
+--- a/arch/arm/plat-omap/include/dspbridge/csl.h
++++ b/arch/arm/plat-omap/include/dspbridge/csl.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/csl.h
++ * arch/arm/plat-omap/include/dspbridge/csl.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbc.h b/arch/arm/plat-omap/include/dspbridge/dbc.h
+index 9b97342..c92a05f 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbc.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbc.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbc.h
++ * arch/arm/plat-omap/include/dspbridge/dbc.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbdcd.h b/arch/arm/plat-omap/include/dspbridge/dbdcd.h
+index 1ec41f3..4f3854d 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbdcd.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbdcd.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbdcd.h
++ * arch/arm/plat-omap/include/dspbridge/dbdcd.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbdcddef.h b/arch/arm/plat-omap/include/dspbridge/dbdcddef.h
+index 9f56f95..aa680b4 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbdcddef.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbdcddef.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbdcddef.h
++ * arch/arm/plat-omap/include/dspbridge/dbdcddef.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbdefs.h b/arch/arm/plat-omap/include/dspbridge/dbdefs.h
+index 97140ef..41699f4 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbdefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbdefs.h
++ * arch/arm/plat-omap/include/dspbridge/dbdefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbg.h b/arch/arm/plat-omap/include/dspbridge/dbg.h
+index 9422630..079c41b 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbg.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbg.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbg.h
++ * arch/arm/plat-omap/include/dspbridge/dbg.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbl.h b/arch/arm/plat-omap/include/dspbridge/dbl.h
+index 0c16dca..44216ce 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbl.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbl.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbl.h
++ * arch/arm/plat-omap/include/dspbridge/dbl.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbldefs.h b/arch/arm/plat-omap/include/dspbridge/dbldefs.h
+index 0987512..a53914d 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbldefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbldefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbldefs.h
++ * arch/arm/plat-omap/include/dspbridge/dbldefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbll.h b/arch/arm/plat-omap/include/dspbridge/dbll.h
+index 03bf027..3062055 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbll.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbll.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbll.h
++ * arch/arm/plat-omap/include/dspbridge/dbll.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dblldefs.h b/arch/arm/plat-omap/include/dspbridge/dblldefs.h
+index 8a3b663..b03a1dc 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dblldefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/dblldefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dblldefs.h
++ * arch/arm/plat-omap/include/dspbridge/dblldefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbof.h b/arch/arm/plat-omap/include/dspbridge/dbof.h
+index 5c0b4f6..ceca3e0 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbof.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbof.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbof.h
++ * arch/arm/plat-omap/include/dspbridge/dbof.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbreg.h b/arch/arm/plat-omap/include/dspbridge/dbreg.h
+index ea44032..1149682 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbreg.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbreg.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbreg.h
++ * arch/arm/plat-omap/include/dspbridge/dbreg.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbtype.h b/arch/arm/plat-omap/include/dspbridge/dbtype.h
+index 9a22515..57e9a62 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbtype.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbtype.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dbtype.h
++ * arch/arm/plat-omap/include/dspbridge/dbtype.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dehdefs.h b/arch/arm/plat-omap/include/dspbridge/dehdefs.h
+index 6448337..4887f54 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dehdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/dehdefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dehdefs.h
++ * arch/arm/plat-omap/include/dspbridge/dehdefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dev.h b/arch/arm/plat-omap/include/dspbridge/dev.h
+index 5b8ef99..14c1f39 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dev.h
++++ b/arch/arm/plat-omap/include/dspbridge/dev.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dev.h
++ * arch/arm/plat-omap/include/dspbridge/dev.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/devdefs.h b/arch/arm/plat-omap/include/dspbridge/devdefs.h
+index eea6185..08f0227 100644
+--- a/arch/arm/plat-omap/include/dspbridge/devdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/devdefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/devdefs.h
++ * arch/arm/plat-omap/include/dspbridge/devdefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/disp.h b/arch/arm/plat-omap/include/dspbridge/disp.h
+index 608ef9d..7b1d4e0 100644
+--- a/arch/arm/plat-omap/include/dspbridge/disp.h
++++ b/arch/arm/plat-omap/include/dspbridge/disp.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/disp.h
++ * arch/arm/plat-omap/include/dspbridge/disp.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/dispdefs.h b/arch/arm/plat-omap/include/dspbridge/dispdefs.h
+index 6dfdbba..125fef3 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dispdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/dispdefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/dispdefs.h
++ * arch/arm/plat-omap/include/dspbridge/dispdefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/procpriv.h b/arch/arm/plat-omap/include/dspbridge/procpriv.h
+index 74dfd84..c9fb729 100644
+--- a/arch/arm/plat-omap/include/dspbridge/procpriv.h
++++ b/arch/arm/plat-omap/include/dspbridge/procpriv.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/procpriv.h
++ * arch/arm/plat-omap/include/dspbridge/procpriv.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/pwr.h b/arch/arm/plat-omap/include/dspbridge/pwr.h
+index ac84802..b6f22e0 100644
+--- a/arch/arm/plat-omap/include/dspbridge/pwr.h
++++ b/arch/arm/plat-omap/include/dspbridge/pwr.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/pwr.h
++ * arch/arm/plat-omap/include/dspbridge/pwr.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/pwr_sh.h b/arch/arm/plat-omap/include/dspbridge/pwr_sh.h
+index 14a395b..e7993c8 100644
+--- a/arch/arm/plat-omap/include/dspbridge/pwr_sh.h
++++ b/arch/arm/plat-omap/include/dspbridge/pwr_sh.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/pwr_sh.h
++ * arch/arm/plat-omap/include/dspbridge/pwr_sh.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/reg.h b/arch/arm/plat-omap/include/dspbridge/reg.h
+index 6d449c1..6e721f4 100644
+--- a/arch/arm/plat-omap/include/dspbridge/reg.h
++++ b/arch/arm/plat-omap/include/dspbridge/reg.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/reg.h
++ * arch/arm/plat-omap/include/dspbridge/reg.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/resourcecleanup.h b/arch/arm/plat-omap/include/dspbridge/resourcecleanup.h
+index 6b86412..aa7fef0 100644
+--- a/arch/arm/plat-omap/include/dspbridge/resourcecleanup.h
++++ b/arch/arm/plat-omap/include/dspbridge/resourcecleanup.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/resourcecleanup.h
++ * arch/arm/plat-omap/include/dspbridge/resourcecleanup.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/rmm.h b/arch/arm/plat-omap/include/dspbridge/rmm.h
+index 22b15fc..84e7313 100644
+--- a/arch/arm/plat-omap/include/dspbridge/rmm.h
++++ b/arch/arm/plat-omap/include/dspbridge/rmm.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/rmm.h
++ * arch/arm/plat-omap/include/dspbridge/rmm.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/rms_sh.h b/arch/arm/plat-omap/include/dspbridge/rms_sh.h
+index c2b34a9..d567a25 100644
+--- a/arch/arm/plat-omap/include/dspbridge/rms_sh.h
++++ b/arch/arm/plat-omap/include/dspbridge/rms_sh.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/rms_sh.h
++ * arch/arm/plat-omap/include/dspbridge/rms_sh.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/rmstypes.h b/arch/arm/plat-omap/include/dspbridge/rmstypes.h
+index ebdfff8..85769d4 100644
+--- a/arch/arm/plat-omap/include/dspbridge/rmstypes.h
++++ b/arch/arm/plat-omap/include/dspbridge/rmstypes.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/rmstypes.h
++ * arch/arm/plat-omap/include/dspbridge/rmstypes.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/services.h b/arch/arm/plat-omap/include/dspbridge/services.h
+index 652824e..171f3cc 100644
+--- a/arch/arm/plat-omap/include/dspbridge/services.h
++++ b/arch/arm/plat-omap/include/dspbridge/services.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/services.h
++ * arch/arm/plat-omap/include/dspbridge/services.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/std.h b/arch/arm/plat-omap/include/dspbridge/std.h
+index 18f3a78..260c944 100644
+--- a/arch/arm/plat-omap/include/dspbridge/std.h
++++ b/arch/arm/plat-omap/include/dspbridge/std.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/std.h
++ * arch/arm/plat-omap/include/dspbridge/std.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/strm.h b/arch/arm/plat-omap/include/dspbridge/strm.h
+index 76768b5..a27b659 100644
+--- a/arch/arm/plat-omap/include/dspbridge/strm.h
++++ b/arch/arm/plat-omap/include/dspbridge/strm.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/strm.h
++ * arch/arm/plat-omap/include/dspbridge/strm.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/strmdefs.h b/arch/arm/plat-omap/include/dspbridge/strmdefs.h
+index 2567bf2..cd31cc2 100644
+--- a/arch/arm/plat-omap/include/dspbridge/strmdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/strmdefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/strmdefs.h
++ * arch/arm/plat-omap/include/dspbridge/strmdefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/sync.h b/arch/arm/plat-omap/include/dspbridge/sync.h
+index 25bb335..ea8ea3f 100644
+--- a/arch/arm/plat-omap/include/dspbridge/sync.h
++++ b/arch/arm/plat-omap/include/dspbridge/sync.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/sync.h
++ * arch/arm/plat-omap/include/dspbridge/sync.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/util.h b/arch/arm/plat-omap/include/dspbridge/util.h
+index 813feed..f4d6c69 100644
+--- a/arch/arm/plat-omap/include/dspbridge/util.h
++++ b/arch/arm/plat-omap/include/dspbridge/util.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/util.h
++ * arch/arm/plat-omap/include/dspbridge/util.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/utildefs.h b/arch/arm/plat-omap/include/dspbridge/utildefs.h
+index 15b8d13..f44cc19 100644
+--- a/arch/arm/plat-omap/include/dspbridge/utildefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/utildefs.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/utildefs.h
++ * arch/arm/plat-omap/include/dspbridge/utildefs.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/uuidutil.h b/arch/arm/plat-omap/include/dspbridge/uuidutil.h
+index fa715ba..6563a9c 100644
+--- a/arch/arm/plat-omap/include/dspbridge/uuidutil.h
++++ b/arch/arm/plat-omap/include/dspbridge/uuidutil.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/uuidutil.h
++ * arch/arm/plat-omap/include/dspbridge/uuidutil.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wcd.h b/arch/arm/plat-omap/include/dspbridge/wcd.h
+index 1c5d638..a1cda92 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wcd.h
++++ b/arch/arm/plat-omap/include/dspbridge/wcd.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wcd.h
++ * arch/arm/plat-omap/include/dspbridge/wcd.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wcdioctl.h b/arch/arm/plat-omap/include/dspbridge/wcdioctl.h
+index 420369f..5ffdcbc 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wcdioctl.h
++++ b/arch/arm/plat-omap/include/dspbridge/wcdioctl.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wcdioctl.h
++ * arch/arm/plat-omap/include/dspbridge/wcdioctl.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wmd.h b/arch/arm/plat-omap/include/dspbridge/wmd.h
+index 154d79b..169380a 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wmd.h
++++ b/arch/arm/plat-omap/include/dspbridge/wmd.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wmd.h
++ * arch/arm/plat-omap/include/dspbridge/wmd.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wmdchnl.h b/arch/arm/plat-omap/include/dspbridge/wmdchnl.h
+index 8f5251f..8c85dc3 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wmdchnl.h
++++ b/arch/arm/plat-omap/include/dspbridge/wmdchnl.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wmdchnl.h
++ * arch/arm/plat-omap/include/dspbridge/wmdchnl.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wmddeh.h b/arch/arm/plat-omap/include/dspbridge/wmddeh.h
+index 6b83750..5c0fcb8 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wmddeh.h
++++ b/arch/arm/plat-omap/include/dspbridge/wmddeh.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wmddeh.h
++ * arch/arm/plat-omap/include/dspbridge/wmddeh.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wmdio.h b/arch/arm/plat-omap/include/dspbridge/wmdio.h
+index 49a84ae..bd71c3b 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wmdio.h
++++ b/arch/arm/plat-omap/include/dspbridge/wmdio.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wmdio.h
++ * arch/arm/plat-omap/include/dspbridge/wmdio.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wmdioctl.h b/arch/arm/plat-omap/include/dspbridge/wmdioctl.h
+index e2136a6..eac4737 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wmdioctl.h
++++ b/arch/arm/plat-omap/include/dspbridge/wmdioctl.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wmdioctl.h
++ * arch/arm/plat-omap/include/dspbridge/wmdioctl.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/arch/arm/plat-omap/include/dspbridge/wmdmsg.h b/arch/arm/plat-omap/include/dspbridge/wmdmsg.h
+index bb267f9..14b40d6 100644
+--- a/arch/arm/plat-omap/include/dspbridge/wmdmsg.h
++++ b/arch/arm/plat-omap/include/dspbridge/wmdmsg.h
+@@ -1,5 +1,5 @@
+ /*
+- * arch/arm/plat-omap/include/bridge/wmdmsg.h
++ * arch/arm/plat-omap/include/dspbridge/wmdmsg.h
+  *
+  * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+  *
+diff --git a/drivers/dsp/bridge/Kbuild b/drivers/dsp/bridge/Kbuild
+index f57826d..5824383 100644
+--- a/drivers/dsp/bridge/Kbuild
++++ b/drivers/dsp/bridge/Kbuild
+@@ -38,5 +38,5 @@ ccflags-y += -Idrivers/dsp/bridge/wmd
+ ccflags-y += -Idrivers/dsp/bridge/pmgr
+ ccflags-y += -Idrivers/dsp/bridge/rmgr
+ 
+-ccflags-y += -Iarch/arm/plat-omap/include/bridge
++ccflags-y += -Iarch/arm/plat-omap/include/dspbridge
+ ccflags-y += -Idrivers/dsp/bridge/hw
+\ No newline at end of file
+-- 
+1.6.0.3.613.g9f8f13
+

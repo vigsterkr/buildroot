@@ -1,0 +1,48 @@
+From ffd4c8606bc1d81fd840f346c1fb5e973de23d34 Mon Sep 17 00:00:00 2001
+From: Tony Lindgren <tony@atomide.com>
+Date: Fri, 31 Oct 2008 12:02:57 -0700
+Subject: [PATCH 43/43] DSPBRIDGE: Flush posted write when acking mailbox irq
+
+The only way to flush posted write to L4 bus is to do a read back
+of the same register right after the write.
+
+This seems to be mostly needed in interrupt handlers to avoid
+causing spurious interrupts.
+
+The earlier fix has been to mark the L4 bus as strongly ordered
+memory, which solves the problem, but causes performance penalties.
+
+Similar fixes may be needed in other interrupt handlers too.
+
+Signed-off-by: Tony Lindgren <tony@atomide.com>
+---
+ drivers/dsp/bridge/hw/hw_mbox.c |   14 ++++++++++++++
+ 1 files changed, 14 insertions(+), 0 deletions(-)
+
+diff --git a/drivers/dsp/bridge/hw/hw_mbox.c b/drivers/dsp/bridge/hw/hw_mbox.c
+index 7055259..e07e5a7 100644
+--- a/drivers/dsp/bridge/hw/hw_mbox.c
++++ b/drivers/dsp/bridge/hw/hw_mbox.c
+@@ -251,5 +251,19 @@ HW_STATUS HW_MBOX_EventAck(const u32 baseAddress, const HW_MBOX_Id_t mailBoxId,
+ 	MLBMAILBOX_IRQSTATUS___0_3WriteRegister32(baseAddress, (u32)userId,
+ 					     (u32)irqStatusReg);
+ 
++	/*
++	 * FIXME: Replace all this custom register access with standard
++	 * __raw_read/write().
++	 *
++	 * FIXME: Replace all interrupt handlers with standard linux style
++	 * interrupt handlers.
++	 *
++	 * FIXME: Replace direct access to PRCM registers with omap standard
++	 * PRCM register access.
++	 *
++	 * Flush posted write for the irq status to avoid spurious interrupts.
++	 */
++	MLBMAILBOX_IRQSTATUS___0_3ReadRegister32(baseAddress, (u32)userId);
++
+ 	return status;
+ }
+-- 
+1.6.0.3.613.g9f8f13
+

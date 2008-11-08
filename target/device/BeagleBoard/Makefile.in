@@ -1,0 +1,18 @@
+# Override the default uClibc configuration
+ifeq ($(strip $(BR2_TARGET_BEAGLE)),y)
+
+BR2_BOARD_PATH:=target/device/BeagleBoard
+                                                                                                                                                                            
+TARGET_SKELETON=$(BR2_BOARD_PATH)/target_skeleton                                                                                                                       
+#TARGET_DEVICE_TABLE=$(BEAGLE_PATH)/device_table.txt    
+
+LINUX26_KCONFIG=$(BR2_BOARD_PATH)/linux26.beagle.config                                                                                                             
+TARGETS+=linux26
+                                                                                                                                                                            
+#ifndef UCLIBC_CONFIG_FILE
+UCLIBC_CONFIG_FILE:=$(BR2_BOARD_PATH)/uClibc.beagle.config
+#endif
+
+include $(BR2_BOARD_PATH)/linux26.mk
+
+endif

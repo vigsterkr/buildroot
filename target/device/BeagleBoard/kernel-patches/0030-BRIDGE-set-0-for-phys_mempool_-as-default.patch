@@ -1,0 +1,32 @@
+From bf5ca8b93a556ed20b99e4624421c9298a712914 Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Fri, 12 Sep 2008 22:09:45 -0500
+Subject: [PATCH 30/43] BRIDGE: set 0 for phys_mempool_* as default
+
+The default values of these parameters shouldn't expect a
+certain amount of ram size and its reservation, otherwise
+it will result in kernel crash.
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ drivers/dsp/bridge/rmgr/drv_interface.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/dsp/bridge/rmgr/drv_interface.c b/drivers/dsp/bridge/rmgr/drv_interface.c
+index 3c3afe8..b63f7f4 100644
+--- a/drivers/dsp/bridge/rmgr/drv_interface.c
++++ b/drivers/dsp/bridge/rmgr/drv_interface.c
+@@ -145,8 +145,8 @@ static char *base_img;
+ char *iva_img;
+ static char *num_procs = "C55=1";
+ static s32 shm_size = 0x400000;	/* 4 MB */
+-static u32 phys_mempool_base = 0x87000000;
+-static u32 phys_mempool_size = 0x600000;
++static u32 phys_mempool_base;
++static u32 phys_mempool_size;
+ 
+ #if !defined(CONFIG_ARCH_OMAP2430) && !defined(CONFIG_ARCH_OMAP3430)
+ static int tc_wordswapon = 1;	/* Default value is always TRUE */
+-- 
+1.6.0.3.613.g9f8f13
+

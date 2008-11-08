@@ -1,0 +1,184 @@
+From cba0b13e3fafec51c067a52cd3848f7b11534f4a Mon Sep 17 00:00:00 2001
+From: ext Ramirez Luna, Omar <x00omar@ti.com>
+Date: Fri, 19 Sep 2008 21:08:07 -0500
+Subject: [PATCH 37/43] BRIDGE: removing unnecesary OMAP3430 checks
+
+Only this platform (OMAP3430) is supported by default and
+these ifdefs are not necessary
+
+Signed-off-by: Omar Ramirez Luna <x00omar@ti.com
+---
+ arch/arm/plat-omap/include/dspbridge/_chnl_sm.h |    6 ------
+ arch/arm/plat-omap/include/dspbridge/cfgdefs.h  |    3 ---
+ arch/arm/plat-omap/include/dspbridge/dbdefs.h   |    2 --
+ arch/arm/plat-omap/include/dspbridge/drv.h      |    4 ----
+ arch/arm/plat-omap/include/dspbridge/host_os.h  |    8 --------
+ drivers/dsp/bridge/rmgr/drv_interface.c         |   12 +-----------
+ 6 files changed, 1 insertions(+), 34 deletions(-)
+
+diff --git a/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h b/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h
+index 5dd3287..457e6c7 100644
+--- a/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h
++++ b/arch/arm/plat-omap/include/dspbridge/_chnl_sm.h
+@@ -76,8 +76,6 @@
+ #define _CHNL_WORDSIZE 4	/* default _CHNL_WORDSIZE is 2 bytes/word */
+ #endif
+ 
+-#ifdef CONFIG_ARCH_OMAP3430
+-
+ #define MAXOPPS 16
+ 
+ struct oppTableEntry {
+@@ -107,8 +105,6 @@ struct loadMonStruct {
+     u32 predDspFreq;
+ };
+ 
+-#endif
+-
+ 	enum SHM_DESCTYPE {
+ 		SHM_CURROPP = 0,
+ 		SHM_OPPINFO = 1,
+@@ -131,7 +127,6 @@ struct loadMonStruct {
+ 		u32 arg;	/* Arg for Issue/Reclaim (23 bits for 55x). */
+ 		u32 resvd;	/* Keep structure size even for 32-bit DSPs */
+ 
+-#ifdef CONFIG_ARCH_OMAP3430
+ 		/* Operating Point structure */
+ 		struct oppStruct  oppTableStruct;
+ 		/* Operating Point Request structure */
+@@ -140,7 +135,6 @@ struct loadMonStruct {
+ 		struct loadMonStruct loadMonInfo;
+ 		char dummy[184];             /* padding to 256 byte boundary */
+ 		u32 shm_dbg_var[64];         /* shared memory debug variables */
+-#endif
+ 	} ;
+ 
+ 	/* Channel Manager: only one created per board: */
+diff --git a/arch/arm/plat-omap/include/dspbridge/cfgdefs.h b/arch/arm/plat-omap/include/dspbridge/cfgdefs.h
+index 48217d3..2a1ea13 100644
+--- a/arch/arm/plat-omap/include/dspbridge/cfgdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/cfgdefs.h
+@@ -96,8 +96,6 @@
+ 		u32 dwChnlOffset;
+ 		u32 dwChnlBufSize;
+ 		u32 dwNumChnls;
+-
+-#ifdef CONFIG_ARCH_OMAP3430
+ 		u32 dwPrmBase;
+ 		u32 dwCmBase;
+ 		u32 dwPerBase;
+@@ -106,7 +104,6 @@
+ 		u32 dwDmmuBase;
+ 		u32 dwDipiBase;
+ 		u32 dwSysCtrlBase;
+-#endif
+ 	} ;
+ 
+ 	struct CFG_DSPMEMDESC {
+diff --git a/arch/arm/plat-omap/include/dspbridge/dbdefs.h b/arch/arm/plat-omap/include/dspbridge/dbdefs.h
+index 422f5a6..0296adc 100644
+--- a/arch/arm/plat-omap/include/dspbridge/dbdefs.h
++++ b/arch/arm/plat-omap/include/dspbridge/dbdefs.h
+@@ -373,11 +373,9 @@
+ 		u32 uConnectedNodeStreamIndex;
+ 	} ;
+ 
+-#if defined(CONFIG_ARCH_OMAP2430) || defined(CONFIG_ARCH_OMAP3430)
+ 	struct DSP_NODEPROFS {
+ 		u32 ulHeapSize;
+ 	} ;
+-#endif
+ 
+ /* The DSP_NDBPROPS structure reports the attributes of a node */
+ 	struct DSP_NDBPROPS {
+diff --git a/arch/arm/plat-omap/include/dspbridge/drv.h b/arch/arm/plat-omap/include/dspbridge/drv.h
+index 5aa5756..2363eff 100644
+--- a/arch/arm/plat-omap/include/dspbridge/drv.h
++++ b/arch/arm/plat-omap/include/dspbridge/drv.h
+@@ -68,8 +68,6 @@
+ #define DRV_ASSIGN     1
+ #define DRV_RELEASE    0
+ 
+-#ifdef CONFIG_ARCH_OMAP3430
+-
+ /* Provide the DSP Internal memory windows that can be accessed from L3 address
+  * space */
+ 
+@@ -114,8 +112,6 @@
+ #define OMAP_PRCM_VDD1_DOMAIN 1
+ #define OMAP_PRCM_VDD2_DOMAIN 2
+ 
+-#endif
+-
+ #ifndef RES_CLEANUP_DISABLE
+ 
+ /* GPP PROCESS CLEANUP Data structures */
+diff --git a/arch/arm/plat-omap/include/dspbridge/host_os.h b/arch/arm/plat-omap/include/dspbridge/host_os.h
+index 7d90cdc..63a0fa8 100644
+--- a/arch/arm/plat-omap/include/dspbridge/host_os.h
++++ b/arch/arm/plat-omap/include/dspbridge/host_os.h
+@@ -54,14 +54,8 @@
+ #include <linux/ioport.h>
+ #include <linux/platform_device.h>
+ #include <dspbridge/dbtype.h>
+-
+-#if defined(CONFIG_ARCH_OMAP2430) || defined(CONFIG_ARCH_OMAP3430)
+ #include <mach/clock.h>
+-#ifdef CONFIG_ARCH_OMAP3430
+ #include <linux/clk.h>
+-#endif
+-#endif
+-
+ #include <linux/pagemap.h>
+ #include <asm/cacheflush.h>
+ #include <linux/dma-mapping.h>
+@@ -73,9 +67,7 @@
+ #define SEEK_END        2	/* Seek from end of file.  */
+ 
+ /* TODO -- Remove, once BP defines them */
+-#ifdef CONFIG_ARCH_OMAP3430
+ #define INT_MAIL_MPU_IRQ        26
+ #define INT_DSP_MMU_IRQ        28
+-#endif
+ 
+ #endif
+diff --git a/drivers/dsp/bridge/rmgr/drv_interface.c b/drivers/dsp/bridge/rmgr/drv_interface.c
+index e72d2ae..8394944 100644
+--- a/drivers/dsp/bridge/rmgr/drv_interface.c
++++ b/drivers/dsp/bridge/rmgr/drv_interface.c
+@@ -147,14 +147,7 @@ static char *num_procs = "C55=1";
+ static s32 shm_size = 0x400000;	/* 4 MB */
+ static u32 phys_mempool_base;
+ static u32 phys_mempool_size;
+-
+-#if !defined(CONFIG_ARCH_OMAP2430) && !defined(CONFIG_ARCH_OMAP3430)
+-static int tc_wordswapon = 1;	/* Default value is always TRUE */
+-#else
+-static int tc_wordswapon;	/* Default value is always true */
+-#endif
+-
+-
++static int tc_wordswapon;	/* Default value is always false */
+ 
+ #ifndef CONFIG_DISABLE_BRIDGE_PM
+ struct omap34xx_bridge_suspend_data {
+@@ -242,7 +235,6 @@ static int omap34xx_bridge_probe(struct platform_device *dev)
+ 	return 0;
+ }
+ 
+-#if defined(CONFIG_ARCH_OMAP2430) || defined(CONFIG_ARCH_OMAP3430)
+ static struct platform_device omap_dspbridge_dev = {
+ 		.name = BRIDGE_NAME,
+ 		.id = -1,
+@@ -342,8 +334,6 @@ struct device dspbridge_device = {
+ 	.driver = &bridge_driver_ldm.driver,
+ };
+ 
+-#endif
+-
+ /* Initialization routine. Executed when the driver is loaded (as a kernel
+  * module), or when the system is booted (when included as part of the kernel
+  * image). */
+-- 
+1.6.0.3.613.g9f8f13
+

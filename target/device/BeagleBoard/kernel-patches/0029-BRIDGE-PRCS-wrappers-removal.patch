@@ -1,0 +1,835 @@
+From ec8a4fbd394c69a9e3d40d15a2606eb1303b8cd2 Mon Sep 17 00:00:00 2001
+From: Fernando Guzman Lugo <x0095840@ti.com>
+Date: Fri, 12 Sep 2008 23:12:26 -0500
+Subject: [PATCH 29/43] BRIDGE: PRCS wrappers removal
+
+This patch removes all the prcs wrapper functions
+
+Signed-off-by: Fernando Guzman Lugo <x0095840@ti.com>
+Signed-off-by: Omar Ramirez Luna <x00omar@ti.com>
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/bridge/_chnl_sm.h |    2 +-
+ arch/arm/plat-omap/include/bridge/prcs.h     |   86 -------------------
+ drivers/dsp/bridge/Kbuild                    |    2 +-
+ drivers/dsp/bridge/pmgr/cmm.c                |    7 +-
+ drivers/dsp/bridge/rmgr/drv.c                |    1 -
+ drivers/dsp/bridge/rmgr/drv_interface.c      |   17 ++--
+ drivers/dsp/bridge/rmgr/node.c               |   24 +++--
+ drivers/dsp/bridge/rmgr/proc.c               |   47 ++++++----
+ drivers/dsp/bridge/rmgr/strm.c               |   33 +++++---
+ drivers/dsp/bridge/services/kfile.c          |    9 +-
+ drivers/dsp/bridge/services/prcs.c           |  119 --------------------------
+ drivers/dsp/bridge/services/services.c       |   10 +--
+ drivers/dsp/bridge/wmd/chnl_sm.c             |    4 +-
+ 13 files changed, 87 insertions(+), 274 deletions(-)
+ delete mode 100644 arch/arm/plat-omap/include/bridge/prcs.h
+ delete mode 100644 drivers/dsp/bridge/services/prcs.c
+
+diff --git a/arch/arm/plat-omap/include/bridge/_chnl_sm.h b/arch/arm/plat-omap/include/bridge/_chnl_sm.h
+index addcb0e..de2f690 100644
+--- a/arch/arm/plat-omap/include/bridge/_chnl_sm.h
++++ b/arch/arm/plat-omap/include/bridge/_chnl_sm.h
+@@ -183,7 +183,7 @@ struct loadMonStruct {
+ 		struct SYNC_OBJECT *hSyncEvent;
+ 		/* Name of Sync event */
+ 		char szEventName[SYNC_MAXNAMELENGTH + 1];
+-		HANDLE hProcess;	/* Process which created this channel */
++               u32 hProcess;   /* Process which created this channel */
+ 		u32 pCBArg;	/* Argument to use with callback */
+ 		struct LST_LIST *pIORequests;	/* List of IOR's to driver */
+ 		s32 cIOCs;	/* Number of IOC's in queue */
+diff --git a/arch/arm/plat-omap/include/bridge/prcs.h b/arch/arm/plat-omap/include/bridge/prcs.h
+deleted file mode 100644
+index 5240449..0000000
+--- a/arch/arm/plat-omap/include/bridge/prcs.h
++++ /dev/null
+@@ -1,86 +0,0 @@
+-/*
+- * bridge/inc/prcs.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== prcs.h ========
+- *  Purpose:
+- *      Return process and thread information.
+- *
+- *  Public Functions:
+- *      PRCS_Exit
+- *      PRCS_GetCurrentHandle
+- *      PRCS_Init
+- *
+- *! Revision History:
+- *! ================
+- *! 18-Dec-2000 rr: PRCS_GetCurrentProcesshandle's DBC_Ensure class
+- *!                 removed. See the foot node.
+- *! 06-Jul-2000 rr: Name changed to PRCS to accomodate RM PROC.
+- *! 29-Oct-1999 kc: Cleaned up for code review.
+- *! 22-Oct-1996 gp: Created.
+- */
+-
+-#ifndef _PRCS_H
+-#define _PRCS_H
+-
+-/*
+- *  ======== PRCS_Exit ========
+- *  Purpose:
+- *      Discontinue usage of module; free resources when reference count
+- *      reaches 0.
+- *  Parameters:
+- *  Returns:
+- *  Requires:
+- *      PRCS initialized.
+- *  Ensures:
+- *      Resources used by module are freed when cRef reaches zero.
+- */
+-	extern void PRCS_Exit();
+-
+-/*
+- *  ======== PRCS_GetCurrentHandle ========
+- *  Purpose:
+- *      Retrieve the handle of the calling process.
+- *  Parameters:
+- *      phProcess:      Location to store the current process handle.
+- *  Returns:
+- *      DSP_SOK:        Success.
+- *      DSP_EPOINTER:   Invalid argument.
+- *  Requires:
+- *      - PRCS initialized.
+- *      - phProcess != NULL.
+- *  Ensures:
+- *
+- */
+-	extern DSP_STATUS PRCS_GetCurrentHandle(OUT HANDLE *phProcess);
+-
+-
+-
+-/*
+- *  ======== PRCS_Init ========
+- *  Purpose:
+- *      Initializes private state of PROC module.
+- *  Parameters:
+- *  Returns:
+- *      TRUE if initialized; FALSE if error occured.
+- *  Requires:
+- *  Ensures:
+- *      PRCS initialized.
+- */
+-	extern bool PRCS_Init();
+-
+-#endif				/* _PRCS_H */
+diff --git a/drivers/dsp/bridge/Kbuild b/drivers/dsp/bridge/Kbuild
+index 3589186..f57826d 100644
+--- a/drivers/dsp/bridge/Kbuild
++++ b/drivers/dsp/bridge/Kbuild
+@@ -4,7 +4,7 @@ libgen = gen/gb.o gen/gt.o gen/gs.o gen/gh.o gen/_gt_para.o gen/uuidutil.o
+ libservices = services/csl.o services/mem.o services/list.o services/dpc.o \
+                services/kfile.o services/sync.o \
+ 		services/clk.o services/cfg.o services/reg.o \
+-		services/regsup.o services/prcs.o services/ntfy.o \
++               services/regsup.o services/ntfy.o \
+ 		services/dbg.o services/services.o
+ libwmd = wmd/chnl_sm.o wmd/msg_sm.o wmd/io_sm.o wmd/tiomap3430.o \
+ 		wmd/tiomap3430_pwr.o wmd/tiomap_sm.o wmd/tiomap_io.o \
+diff --git a/drivers/dsp/bridge/pmgr/cmm.c b/drivers/dsp/bridge/pmgr/cmm.c
+index 4043d96..3b4504a 100644
+--- a/drivers/dsp/bridge/pmgr/cmm.c
++++ b/drivers/dsp/bridge/pmgr/cmm.c
+@@ -106,7 +106,6 @@
+ #include <cfg.h>
+ #include <list.h>
+ #include <mem.h>
+-#include <prcs.h>
+ #include <sync.h>
+ #include <util.h>
+ 
+@@ -204,7 +203,7 @@ struct CMM_MNODE {
+ 	u32 dwPA;		/* Phys addr */
+ 	u32 dwVA;		/* Virtual address in device process context */
+ 	u32 ulSize;		/* SM block size in bytes */
+-	HANDLE hClientProc;	/* Process that allocated this mem block */
++       u32 hClientProc;        /* Process that allocated this mem block */
+ } ;
+ 
+ 
+@@ -285,7 +284,9 @@ void *CMM_CallocBuf(struct CMM_OBJECT *hCmmMgr, u32 uSize,
+ 			 * We'll need to free up a process's alloc'd SM if the
+ 			 * client process goes away.
+ 			 */
+-			(void)PRCS_GetCurrentHandle(&pNode->hClientProc);
++                       /* Return PID instead of process handle */
++                       pNode->hClientProc = current->pid;
++
+ 			/* put our node on InUse list */
+ 			LST_PutTail(pAllocator->pInUseListHead,
+ 				   (struct LST_ELEM *)pNode);
+diff --git a/drivers/dsp/bridge/rmgr/drv.c b/drivers/dsp/bridge/rmgr/drv.c
+index b344de9..cc5bbc6 100644
+--- a/drivers/dsp/bridge/rmgr/drv.c
++++ b/drivers/dsp/bridge/rmgr/drv.c
+@@ -117,7 +117,6 @@
+ #include <dev.h>
+ 
+ #ifndef RES_CLEANUP_DISABLE
+-#include <prcs.h>
+ #include <node.h>
+ #include <proc.h>
+ #include <strm.h>
+diff --git a/drivers/dsp/bridge/rmgr/drv_interface.c b/drivers/dsp/bridge/rmgr/drv_interface.c
+index e0642f3..3c3afe8 100644
+--- a/drivers/dsp/bridge/rmgr/drv_interface.c
++++ b/drivers/dsp/bridge/rmgr/drv_interface.c
+@@ -83,7 +83,6 @@
+ #include <sync.h>
+ #include <reg.h>
+ #include <csl.h>
+-#include <prcs.h>
+ 
+ /*  ----------------------------------- Platform Manager */
+ #include <wcdioctl.h>
+@@ -636,7 +635,7 @@ static int bridge_open(struct inode *ip, struct file *filp)
+ {
+ 	int status = 0;
+ #ifndef RES_CLEANUP_DISABLE
+-	HANDLE	     hProcess;
++       u32     hProcess;
+ 	DSP_STATUS dsp_status = DSP_SOK;
+ 	HANDLE	     hDrvObject = NULL;
+ 	struct PROCESS_CONTEXT    *pPctxt = NULL;
+@@ -708,9 +707,11 @@ func_cont:
+ 				(struct DRV_OBJECT *)hDrvObject, &pPctxt);
+ 
+ 	if (pPctxt != NULL) {
+-		PRCS_GetCurrentHandle(&hProcess);
++               /* Return PID instead of process handle */
++               hProcess = current->pid;
++
+ 		DRV_ProcUpdatestate(pPctxt, PROC_RES_ALLOCATED);
+-		DRV_ProcSetPID(pPctxt, (s32) hProcess);
++               DRV_ProcSetPID(pPctxt, hProcess);
+ 	}
+ #endif
+ 
+@@ -723,14 +724,14 @@ func_cont:
+ static int bridge_release(struct inode *ip, struct file *filp)
+ {
+ 	int status;
+-	HANDLE pid;
++       u32 pid;
+ 
+ 	GT_0trace(driverTrace, GT_ENTER, "-> driver_release\n");
+ 
+-	status = PRCS_GetCurrentHandle(&pid);
++       /* Return PID instead of process handle */
++       pid = current->pid;
+ 
+-	if (DSP_SUCCEEDED(status))
+-		status = DSP_Close((u32) pid);
++       status = DSP_Close(pid);
+ 
+ 
+ 	(status == true) ? (status = 0) : (status = -1);
+diff --git a/drivers/dsp/bridge/rmgr/node.c b/drivers/dsp/bridge/rmgr/node.c
+index 842cb76..47656e1 100644
+--- a/drivers/dsp/bridge/rmgr/node.c
++++ b/drivers/dsp/bridge/rmgr/node.c
+@@ -148,7 +148,6 @@
+ #ifndef RES_CLEANUP_DISABLE
+ #include <drv.h>
+ #include <drvdefs.h>
+-#include <prcs.h>
+ #include <dbreg.h>
+ #include <resourcecleanup.h>
+ #endif
+@@ -426,7 +425,7 @@ DSP_STATUS NODE_Allocate(struct PROC_OBJECT *hProcessor,
+ 
+ 	HANDLE	     hDrvObject;
+ 	HANDLE	     nodeRes;
+-	HANDLE	     hProcess;
++       u32                  hProcess;
+ 	struct PROCESS_CONTEXT   *pPctxt = NULL;
+ 	DSP_STATUS res_status = DSP_SOK;
+ 
+@@ -777,11 +776,13 @@ func_cont2:
+ 
+ #ifndef RES_CLEANUP_DISABLE
+ 	if (DSP_SUCCEEDED(status)) {
+-		PRCS_GetCurrentHandle(&hProcess);
++               /* Return PID instead of process handle */
++               hProcess = current->pid;
++
+ 		res_status = CFG_GetObject((u32 *)&hDrvObject,
+ 					  REG_DRV_OBJECT);
+ 		if (DSP_SUCCEEDED(res_status)) {
+-			DRV_GetProcContext((u32)hProcess,
++                       DRV_GetProcContext(hProcess,
+ 					 (struct DRV_OBJECT *)hDrvObject,
+ 					 &pPctxt, *phNode, 0);
+ 			if (pPctxt == NULL) {
+@@ -791,7 +792,7 @@ func_cont2:
+ 				if (pPctxt != NULL) {
+ 					DRV_ProcUpdatestate(pPctxt,
+ 							PROC_RES_ALLOCATED);
+-					DRV_ProcSetPID(pPctxt, (s32) hProcess);
++                                       DRV_ProcSetPID(pPctxt, hProcess);
+ 					pPctxt->hProcessor =
+ 						 (DSP_HPROCESSOR)hProcessor;
+ 				}
+@@ -799,11 +800,13 @@ func_cont2:
+ 		}
+ 	}
+ 	if (DSP_SUCCEEDED(status)) {
+-		PRCS_GetCurrentHandle(&hProcess);
++               /* Return PID instead of process handle */
++               hProcess = current->pid;
++
+ 		res_status = CFG_GetObject((u32 *)&hDrvObject,
+ 					REG_DRV_OBJECT);
+ 		if (DSP_SUCCEEDED(res_status)) {
+-			DRV_GetProcContext((u32)hProcess,
++                       DRV_GetProcContext(hProcess,
+ 					 (struct DRV_OBJECT *)hDrvObject,
+ 					 &pPctxt, *phNode, 0);
+ 			if (pPctxt != NULL) {
+@@ -1663,7 +1666,7 @@ DSP_STATUS NODE_Delete(struct NODE_OBJECT *hNode)
+ 	struct WMD_DRV_INTERFACE *pIntfFxns;
+ 
+ #ifndef RES_CLEANUP_DISABLE
+-	HANDLE		hProcess;
++       u32                     hProcess;
+ 	HANDLE		nodeRes;
+ 	HANDLE		hDrvObject;
+ 	struct PROCESS_CONTEXT *pCtxt = NULL;
+@@ -1794,12 +1797,13 @@ func_cont1:
+ 	 *  DeleteNode() fails if SM buffers not freed by client!  */
+ #ifndef RES_CLEANUP_DISABLE
+ 	/* Update the node and stream resource status */
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_FAILED(res_status))
+ 		goto func_cont;
+ 
+-	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject,
++       DRV_GetProcContext(hProcess, (struct DRV_OBJECT *)hDrvObject,
+ 			 &pCtxt, hNode, 0);
+ 	if (pCtxt == NULL)
+ 		goto func_cont;
+diff --git a/drivers/dsp/bridge/rmgr/proc.c b/drivers/dsp/bridge/rmgr/proc.c
+index 004ea73..c401425 100644
+--- a/drivers/dsp/bridge/rmgr/proc.c
++++ b/drivers/dsp/bridge/rmgr/proc.c
+@@ -118,7 +118,6 @@
+ #include <list.h>
+ #include <mem.h>
+ #include <ntfy.h>
+-#include <prcs.h>
+ 
+ /*  ----------------------------------- Mini Driver */
+ #include <wmd.h>
+@@ -174,7 +173,7 @@ struct PROC_OBJECT {
+ 	struct LST_ELEM link;		/* Link to next PROC_OBJECT */
+ 	u32 dwSignature;	/* Used for object validation */
+ 	struct DEV_OBJECT *hDevObject;	/* Device this PROC represents */
+-	HANDLE hProcess;	/* Process owning this Processor */
++       u32 hProcess;   /* Process owning this Processor */
+ 	struct MGR_OBJECT *hMgrObject;	/* Manager Object Handle */
+ 	u32 uAttachCount;	/* Processor attach count */
+ 	u32 uProcessor;	/* Processor number */
+@@ -232,7 +231,7 @@ PROC_Attach(u32 uProcessor, OPTIONAL CONST struct DSP_PROCESSORATTRIN *pAttrIn,
+ 
+ #ifndef RES_CLEANUP_DISABLE
+ 	HANDLE	     hDRVObject;
+-	HANDLE	     hProcess;
++       u32                  hProcess;
+ 	DSP_STATUS res_status = DSP_SOK;
+ 	struct PROCESS_CONTEXT   *pPctxt = NULL;
+ #endif
+@@ -292,7 +291,9 @@ PROC_Attach(u32 uProcessor, OPTIONAL CONST struct DSP_PROCESSORATTRIN *pAttrIn,
+ 	pProcObject->hMgrObject = hMgrObject;
+ 	pProcObject->uProcessor = devType;
+ 	/* Get Caller Process and store it */
+-	(void)PRCS_GetCurrentHandle(&pProcObject->hProcess);
++       /* Return PID instead of process handle */
++       pProcObject->hProcess = current->pid;
++
+ 	if (pAttrIn)
+ 		pProcObject->uTimeout = pAttrIn->uTimeout;
+ 	else
+@@ -367,25 +368,29 @@ func_end:
+ 	if (DSP_FAILED(status))
+ 		goto func_cont;
+ 
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDRVObject, REG_DRV_OBJECT);
+ 	if (DSP_FAILED(res_status))
+ 		goto func_cont;
+ 
+-	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDRVObject,
++       DRV_GetProcContext(hProcess, (struct DRV_OBJECT *)hDRVObject,
+ 			 &pPctxt, NULL, 0);
+ 	if (pPctxt == NULL) {
+ 		DRV_InsertProcContext((struct DRV_OBJECT *)hDRVObject, &pPctxt);
+ 		if (pPctxt != NULL) {
+ 			DRV_ProcUpdatestate(pPctxt, PROC_RES_ALLOCATED);
+-			DRV_ProcSetPID(pPctxt, (s32)hProcess);
++                       DRV_ProcSetPID(pPctxt, hProcess);
+ 		}
+ 	}
+ func_cont:
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDRVObject, REG_DRV_OBJECT);
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext((u32)hProcess,
++               DRV_GetProcContext(hProcess,
+ 				 (struct DRV_OBJECT *)hDRVObject, &pPctxt,
+ 				 NULL, 0);
+ 		if (pPctxt != NULL)
+@@ -619,7 +624,7 @@ DSP_STATUS PROC_Detach(DSP_HPROCESSOR hProcessor)
+ 	struct PROC_OBJECT *pProcObject = (struct PROC_OBJECT *)hProcessor;
+ #ifndef RES_CLEANUP_DISABLE
+ 	HANDLE hDRVObject;
+-	HANDLE hProcess;
++       u32 hProcess;
+ 	DSP_STATUS res_status = DSP_SOK;
+ 	struct PROCESS_CONTEXT   *pPctxt = NULL;
+ #endif
+@@ -640,11 +645,13 @@ DSP_STATUS PROC_Detach(DSP_HPROCESSOR hProcessor)
+ 		/* Free the Processor Object */
+ 		MEM_FreeObject(pProcObject);
+ #ifndef RES_CLEANUP_DISABLE
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDRVObject, REG_DRV_OBJECT);
+ 	/* res_status = CFG_GetObject(REG_DRV_OBJECT, (u32*)&hDRVObject); */
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext((u32)hProcess,
++               DRV_GetProcContext(hProcess,
+ 				 (struct DRV_OBJECT *)hDRVObject, &pPctxt,
+ 				 NULL, 0);
+ 		if (pPctxt != NULL)
+@@ -1357,7 +1364,7 @@ DSP_STATUS PROC_Map(DSP_HPROCESSOR hProcessor, void *pMpuAddr, u32 ulSize,
+ 	struct PROC_OBJECT *pProcObject = (struct PROC_OBJECT *)hProcessor;
+ 
+ #ifndef RES_CLEANUP_DISABLE
+-	    HANDLE	      hProcess;
++           u32               hProcess;
+ 	    HANDLE	      pCtxt = NULL;
+ 	    HANDLE	      hDrvObject;
+ 	    HANDLE	      dmmRes;
+@@ -1402,11 +1409,13 @@ DSP_STATUS PROC_Map(DSP_HPROCESSOR hProcessor, void *pMpuAddr, u32 ulSize,
+ #ifndef RES_CLEANUP_DISABLE
+ 	if (DSP_SUCCEEDED(status)) {
+ 		/* Update the node and stream resource status */
+-		PRCS_GetCurrentHandle(&hProcess);
++               /* Return PID instead of process handle */
++               hProcess = current->pid;
++
+ 		res_status = CFG_GetObject((u32 *)&hDrvObject,
+ 					  REG_DRV_OBJECT);
+ 		if (DSP_SUCCEEDED(res_status)) {
+-			if (DRV_GetProcContext((u32)hProcess,
++                       if (DRV_GetProcContext(hProcess,
+ 			   (struct DRV_OBJECT *)hDrvObject, &pCtxt, NULL,
+ 			   (u32)pMpuAddr) != DSP_ENOTFOUND) {
+ 				DRV_InsertDMMResElement(&dmmRes, pCtxt);
+@@ -1721,7 +1730,7 @@ DSP_STATUS PROC_UnMap(DSP_HPROCESSOR hProcessor, void *pMapAddr)
+ 	u32 vaAlign;
+ 	u32 sizeAlign;
+ #ifndef RES_CLEANUP_DISABLE
+-	HANDLE	      hProcess;
++       u32                   hProcess;
+ 	HANDLE	      pCtxt = NULL;
+ 	HANDLE	      hDrvObject;
+ 	HANDLE	      dmmRes;
+@@ -1756,12 +1765,14 @@ DSP_STATUS PROC_UnMap(DSP_HPROCESSOR hProcessor, void *pMapAddr)
+ 		goto func_end;
+ 
+ 	/* Update the node and stream resource status */
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_FAILED(res_status))
+ 		goto func_end;
+ 
+-	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject,
++       DRV_GetProcContext(hProcess, (struct DRV_OBJECT *)hDrvObject,
+ 			 &pCtxt, NULL, (u32)pMapAddr);
+ 	if (pCtxt != NULL) {
+ 		if (DRV_GetDMMResElement((u32)pMapAddr, &dmmRes, pCtxt) !=
+diff --git a/drivers/dsp/bridge/rmgr/strm.c b/drivers/dsp/bridge/rmgr/strm.c
+index f6a7153..0491e51 100644
+--- a/drivers/dsp/bridge/rmgr/strm.c
++++ b/drivers/dsp/bridge/rmgr/strm.c
+@@ -91,7 +91,6 @@
+ 
+ #ifndef RES_CLEANUP_DISABLE
+ #include <cfg.h>
+-#include <prcs.h>
+ #include <dbreg.h>
+ #include <resourcecleanup.h>
+ #endif
+@@ -162,7 +161,7 @@ DSP_STATUS STRM_AllocateBuffer(struct STRM_OBJECT *hStrm, u32 uSize,
+ 	u32 i;
+ 	#ifndef RES_CLEANUP_DISABLE
+ 	DSP_STATUS res_status = DSP_SOK;
+-	HANDLE	     hProcess;
++       u32                  hProcess;
+ 	HANDLE	     pCtxt = NULL;
+ 	HANDLE	     hDrvObject;
+ 	HANDLE hSTRMRes;
+@@ -204,12 +203,14 @@ DSP_STATUS STRM_AllocateBuffer(struct STRM_OBJECT *hStrm, u32 uSize,
+ 	if (DSP_FAILED(status))
+ 		goto func_end;
+ 
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_FAILED(res_status))
+ 		goto func_end;
+ 
+-	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject,
++       DRV_GetProcContext(hProcess, (struct DRV_OBJECT *)hDrvObject,
+ 			 &pCtxt, NULL, 0);
+ 	if (pCtxt != NULL) {
+ 		if (DRV_GetSTRMResElement(hStrm, &hSTRMRes, pCtxt) !=
+@@ -235,7 +236,7 @@ DSP_STATUS STRM_Close(struct STRM_OBJECT *hStrm)
+ 
+ 
+ #ifndef RES_CLEANUP_DISABLE
+-    HANDLE	      hProcess;
++    u32                      hProcess;
+     HANDLE	      pCtxt = NULL;
+     HANDLE	      hDrvObject;
+     HANDLE	      hSTRMRes;
+@@ -276,12 +277,14 @@ DSP_STATUS STRM_Close(struct STRM_OBJECT *hStrm)
+ 		goto func_end;
+ 
+ 	/* Update the node and stream resource status */
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_FAILED(res_status))
+ 		goto func_end;
+ 
+-	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject,
++       DRV_GetProcContext(hProcess, (struct DRV_OBJECT *)hDrvObject,
+ 			 &pCtxt, NULL, 0);
+ 	if (pCtxt != NULL) {
+ 		if (DRV_GetSTRMResElement(hStrm, &hSTRMRes, pCtxt) !=
+@@ -398,7 +401,7 @@ DSP_STATUS STRM_FreeBuffer(struct STRM_OBJECT *hStrm, u8 **apBuffer,
+ 
+ 	#ifndef RES_CLEANUP_DISABLE
+ 	DSP_STATUS res_status = DSP_SOK;
+-	HANDLE	     hProcess;
++       u32                  hProcess;
+ 	HANDLE	     pCtxt = NULL;
+ 	HANDLE	     hDrvObject;
+ 	HANDLE 		    hSTRMRes = NULL;
+@@ -427,10 +430,12 @@ DSP_STATUS STRM_FreeBuffer(struct STRM_OBJECT *hStrm, u8 **apBuffer,
+ 	}
+ #ifndef RES_CLEANUP_DISABLE
+ 	/* Update the node and stream resource status */
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext((u32)hProcess,
++               DRV_GetProcContext(hProcess,
+ 				 (struct DRV_OBJECT *)hDrvObject, &pCtxt,
+ 				 NULL, 0);
+ 		if (pCtxt != NULL) {
+@@ -634,7 +639,7 @@ DSP_STATUS STRM_Open(struct NODE_OBJECT *hNode, u32 uDir, u32 uIndex,
+ 
+ 	#ifndef RES_CLEANUP_DISABLE
+ 	DSP_STATUS res_status = DSP_SOK;
+-	HANDLE	     hProcess;
++       u32                  hProcess;
+ 	HANDLE	     pCtxt = NULL;
+ 	HANDLE	     hDrvObject;
+ 	HANDLE 		    hSTRMRes;
+@@ -774,10 +779,12 @@ func_cont:
+ 		(void)DeleteStrm(pStrm);
+ 
+ #ifndef RES_CLEANUP_DISABLE
+-	PRCS_GetCurrentHandle(&hProcess);
++       /* Return PID instead of process handle */
++       hProcess = current->pid;
++
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext((u32)hProcess,
++               DRV_GetProcContext(hProcess,
+ 				 (struct DRV_OBJECT *)hDrvObject, &pCtxt,
+ 				 hNode, 0);
+ 		if (pCtxt != NULL)
+diff --git a/drivers/dsp/bridge/services/kfile.c b/drivers/dsp/bridge/services/kfile.c
+index d5c02e3..8af6018 100644
+--- a/drivers/dsp/bridge/services/kfile.c
++++ b/drivers/dsp/bridge/services/kfile.c
+@@ -56,7 +56,6 @@
+ /*  ----------------------------------- OS Adaptation Layer */
+ #include <csl.h>
+ #include <mem.h>
+-#include <prcs.h>
+ 
+ /*  ----------------------------------- This */
+ #include <kfile.h>
+@@ -102,8 +101,8 @@ s32 KFILE_Close(struct KFILE_FileObj *hFile)
+ 	if (MEM_IsValidHandle(hFile, SIGNATURE)) {
+ 		/* Close file only if opened by the same process (id). Otherwise
+ 		 * Linux closes all open file handles when process exits.*/
+-		PRCS_GetCurrentHandle((void **)&curr_pid);
+-
++               /* Return PID instead of process handle */
++               curr_pid = (__kernel_pid_t)current->pid;
+ 		fRetVal = filp_close(hFile->fileDesc, NULL) ;
+ 		if (fRetVal) {
+ 			cRetVal = E_KFILE_ERROR;
+@@ -182,7 +181,9 @@ struct KFILE_FileObj *KFILE_Open(CONST char *pszFileName, CONST char *pszMode)
+ 			hFile->size = fileDesc->f_op->llseek(fileDesc, 0,
+ 							    SEEK_END);
+ 			fileDesc->f_op->llseek(fileDesc, 0, SEEK_SET);
+-			PRCS_GetCurrentHandle((void **) &hFile->owner_pid);
++                       /* Return PID instead of process handle */
++                       hFile->owner_pid = current->pid;
++
+ 			status = DSP_SOK;
+ 		}
+ 		set_fs(fs);
+diff --git a/drivers/dsp/bridge/services/prcs.c b/drivers/dsp/bridge/services/prcs.c
+deleted file mode 100644
+index cb45541..0000000
+--- a/drivers/dsp/bridge/services/prcs.c
++++ /dev/null
+@@ -1,119 +0,0 @@
+-/*
+- * linux/drivers/dsp/bridge/services/prcs.c
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== procce.c ========
+- *  Purpose:
+- *      Provide information about processes and threads.
+- *
+- *  Public Functions:
+- *      PRCS_Exit
+- *      PRCS_GetCurrentHandle
+- *      PRCS_Init
+- *
+- *! Revision History:
+- *! ================
+- *! 18-Dec-2000 rr: PRCS_GetCurrentProcesshandle's DBC_Ensure class
+- *!                 removed. See the foot node.
+- *! 06-Jul-2000 rr: Prefix changed to PRCS to accomodate RM PROC.
+- *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
+- *!		 GT Changes.
+- *! 22-Nov-1999 kc: Added changes from code review.
+- *! 22-Sep-1999 kc: Modified from procnt.c.
+- *! 26-Aug-1997 cr: Implemented.
+- *! 16-Aug-1997 cr: Stubbed from proc95.c
+- */
+-
+-/*  ----------------------------------- Host OS */
+-#include <host_os.h>
+-
+-/*  ----------------------------------- DSP/BIOS Bridge */
+-#include <std.h>
+-#include <dbdefs.h>
+-#include <errbase.h>
+-
+-/*  ----------------------------------- Trace & Debug */
+-#include <dbc.h>
+-#include <gt.h>
+-
+-/*  ----------------------------------- This */
+-#include <prcs.h>
+-
+-/*  ----------------------------------- Globals & Defines */
+-#if GT_TRACE
+-static struct GT_Mask PRCS_debugMask = { NULL, NULL };	/* GT trace var. */
+-#endif
+-
+-/*
+- *  ======== PRCS_Exit ========
+- *  Purpose:
+- *      Discontinue usage of the PRCS module.
+- */
+-void PRCS_Exit(void)
+-{
+-	GT_0trace(PRCS_debugMask, GT_5CLASS, "PRCS_Exit\n");
+-}
+-
+-/*
+- *  ======== PRCS_GetCurrentHandle ========
+- *  Purpose:
+- *      This functions returns the process handle of the
+- *      caller process.
+- */
+-DSP_STATUS PRCS_GetCurrentHandle(OUT HANDLE *phProcess)
+-{
+-	DSP_STATUS status;
+-
+-	DBC_Require(phProcess != NULL);
+-
+-	GT_1trace(PRCS_debugMask, GT_ENTER,
+-		  "PRCS_GetCurrentHandle: phProcess 0x%x\n",
+-		  phProcess);
+-	if (phProcess) {
+-		if (!in_interrupt()) {
+-			/* Return PID instead of process handle */
+-			*phProcess = (HANDLE)current->pid;
+-			status = DSP_SOK;
+-		} else {
+-			*phProcess = NULL;
+-			status = DSP_EFAIL;
+-		}
+-	} else {
+-		*phProcess = NULL;
+-		status = DSP_EPOINTER;
+-		GT_0trace(PRCS_debugMask, GT_6CLASS,
+-			  "PRCS_GetCurrentHandle: invalid "
+-			  "handle\n");
+-	}
+-	return status;
+-}
+-
+-/*
+- *  ======== PRCS_Init ========
+- *  Purpose:
+- *      Initialize the PRCS module's private state.
+- */
+-bool PRCS_Init(void)
+-{
+-
+-	GT_create(&PRCS_debugMask, "PS");	/* PS for ProcesS */
+-
+-	GT_0trace(PRCS_debugMask, GT_5CLASS, "PRCS_Init\n");
+-
+-	return true;
+-}
+-
+diff --git a/drivers/dsp/bridge/services/services.c b/drivers/dsp/bridge/services/services.c
+index bc21912..a004758 100644
+--- a/drivers/dsp/bridge/services/services.c
++++ b/drivers/dsp/bridge/services/services.c
+@@ -51,7 +51,6 @@
+ #include <list.h>
+ #include <mem.h>
+ #include <ntfy.h>
+-#include <prcs.h>
+ #include <reg.h>
+ #include <sync.h>
+ #include <clk.h>
+@@ -88,7 +87,6 @@ void SERVICES_Exit(void)
+ 		SYNC_Exit();
+ 		CLK_Exit();
+ 		REG_Exit();
+-		PRCS_Exit();
+ 		LST_Exit();
+ 		KFILE_Exit();
+ 		DPC_Exit();
+@@ -112,7 +110,7 @@ bool SERVICES_Init(void)
+ {
+ 	bool fInit = true;
+        bool fCFG, fCSL, fDBG, fDPC, fKFILE, fLST, fMEM;
+-	bool fPRCS, fREG, fSYNC, fCLK, fUTIL, fNTFY;
++       bool fREG, fSYNC, fCLK, fUTIL, fNTFY;
+ 
+ 	DBC_Require(cRefs >= 0);
+ 
+@@ -133,7 +131,6 @@ bool SERVICES_Init(void)
+ 		fDPC = DPC_Init();
+ 		fKFILE = KFILE_Init();
+ 		fLST = LST_Init();
+-		fPRCS = PRCS_Init();
+ 		/* fREG = REG_Init(); */
+ 		fSYNC = SYNC_Init();
+ 		fCLK  = CLK_Init();
+@@ -141,7 +138,7 @@ bool SERVICES_Init(void)
+ 		fNTFY = NTFY_Init();
+ 
+                fInit = fCFG && fCSL && fDBG && fDPC && fKFILE &&
+-			fLST && fMEM && fPRCS && fREG && fSYNC && fCLK && fUTIL;
++                       fLST && fMEM && fREG && fSYNC && fCLK && fUTIL;
+ 
+ 		if (!fInit) {
+ 			if (fNTFY)
+@@ -159,9 +156,6 @@ bool SERVICES_Init(void)
+ 			if (fREG)
+ 				REG_Exit();
+ 
+-			if (fPRCS)
+-				PRCS_Exit();
+-
+ 			if (fLST)
+ 				LST_Exit();
+ 
+diff --git a/drivers/dsp/bridge/wmd/chnl_sm.c b/drivers/dsp/bridge/wmd/chnl_sm.c
+index 12193ba..c706c78 100644
+--- a/drivers/dsp/bridge/wmd/chnl_sm.c
++++ b/drivers/dsp/bridge/wmd/chnl_sm.c
+@@ -129,7 +129,6 @@
+ #include <mem.h>
+ #include <cfg.h>
+ #include <csl.h>
+-#include <prcs.h>
+ #include <sync.h>
+ 
+ /*  ----------------------------------- Mini-Driver */
+@@ -935,7 +934,8 @@ DSP_STATUS WMD_CHNL_Open(OUT struct CHNL_OBJECT **phChnl,
+ 			pChnl->uMode = uMode;
+ 			pChnl->hUserEvent = hSyncEvent;	/* for Linux */
+ 			pChnl->hSyncEvent = hSyncEvent;
+-			PRCS_GetCurrentHandle(&pChnl->hProcess);
++                       /* get the process handle */
++                       pChnl->hProcess = current->pid;
+ 			pChnl->pCBArg = 0;
+ 			pChnl->cBytesMoved = 0;
+ 			/* Default to proc-copy */
+-- 
+1.6.0.3.613.g9f8f13
+

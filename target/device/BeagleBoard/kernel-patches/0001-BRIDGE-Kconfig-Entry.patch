@@ -1,0 +1,141 @@
+From cdc8d78919a6fccae2753a251ecbcfc0dee3f296 Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Fri, 15 Aug 2008 01:55:54 +0300
+Subject: [PATCH 01/43] BRIDGE: Kconfig Entry
+
+Initial port from omapzoom:
+	http://omapzoom.org/gf/project/omapbridge
+
+For details,
+http://omapzoom.org/gf/project/omapbridge/docman/?subdir=3
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/Kconfig           |    1 +
+ drivers/Makefile           |    1 +
+ drivers/dsp/bridge/Kbuild  |   44 ++++++++++++++++++++++++++++++++++++++++++++
+ drivers/dsp/bridge/Kconfig |   35 +++++++++++++++++++++++++++++++++++
+ 4 files changed, 81 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/dsp/bridge/Kbuild
+ create mode 100644 drivers/dsp/bridge/Kconfig
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 72b45cd..194374f 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1279,6 +1279,7 @@ source "drivers/uio/Kconfig"
+ if ARCH_OMAP
+ source "drivers/cbus/Kconfig"
+ source "drivers/dsp/dspgateway/Kconfig"
++source "drivers/dsp/bridge/Kconfig"
+ endif
+ 
+ endmenu
+diff --git a/drivers/Makefile b/drivers/Makefile
+index 022029b..e59052a 100644
+--- a/drivers/Makefile
++++ b/drivers/Makefile
+@@ -40,6 +40,7 @@ obj-y				+= base/ block/ misc/ mfd/ net/ media/ cbus/
+ obj-y				+= i2c/
+ obj-y				+= cbus/
+ obj-$(CONFIG_ARCH_OMAP)		+= dsp/dspgateway/
++obj-$(CONFIG_MPU_BRIDGE)	+= dsp/bridge/
+ obj-$(CONFIG_NUBUS)		+= nubus/
+ obj-$(CONFIG_ATM)		+= atm/
+ obj-y				+= macintosh/
+diff --git a/drivers/dsp/bridge/Kbuild b/drivers/dsp/bridge/Kbuild
+new file mode 100644
+index 0000000..eb28111
+--- /dev/null
++++ b/drivers/dsp/bridge/Kbuild
+@@ -0,0 +1,44 @@
++obj-$(CONFIG_MPU_BRIDGE)	+= bridgedriver.o
++
++libgen = gen/gb.o gen/gt.o gen/gs.o gen/gh.o gen/_gt_para.o gen/uuidutil.o
++libservices = services/csl.o services/mem.o services/list.o services/dpc.o \
++		services/isr.o services/kfile.o services/sync.o \
++		services/clk.o services/cfg.o services/reg.o \
++		services/regsup.o services/prcs.o services/ntfy.o \
++		services/dbg.o services/services.o
++libwmd = wmd/chnl_sm.o wmd/msg_sm.o wmd/io_sm.o \
++		wmd/tiomap3430.o wmd/tiomap3430_pwr.o \
++		wmd/tiomap_sm.o wmd/tiomap_io.o wmd/mmu_fault.o wmd/ue_deh.o
++libpmgr = pmgr/chnl.o pmgr/io.o pmgr/msg.o pmgr/cod.o pmgr/dev.o pmgr/wcd.o \
++		pmgr/dmm.o pmgr/cmm.o pmgr/dbll.o
++librmgr = rmgr/dbdcd.o rmgr/disp.o rmgr/drv.o rmgr/mgr.o rmgr/node.o \
++		rmgr/proc.o rmgr/pwr.o rmgr/rmm.o rmgr/strm.o rmgr/dspdrv.o \
++		rmgr/nldr.o rmgr/drv_interface.o
++libdload = dynload/cload.o dynload/getsection.o dynload/reloc.o
++libhw = hw/hw_prcm.o hw/hw_dspssC64P.o hw/hw_mmu.o hw/hw_mbox.o
++
++bridgedriver-objs = $(libgen) $(libservices) $(libwmd) $(libpmgr) $(librmgr) \
++			$(libdload) $(libhw)
++
++# Debug
++ifeq ($(CONFIG_BRIDGE_DEBUG),y)
++ccflags-y += -DGT_TRACE -DDEBUG
++endif
++
++ccflags-y += -Wno-strict-prototypes
++ccflags-y += -DOPT_ELIMINATE_EXTRA_DLOAD -DOPT_REDUCE_SYMBOL_LOOKUPS \
++		-DOPT_USE_MEMSET
++
++#Machine dependent
++ccflags-y += -D_TI_ -D_DB_TIOMAP -DTMS32060 \
++		-DTICFG_PROC_VER -DTICFG_EVM_TYPE -DCHNL_SMCLASS \
++		-DCHNL_MESSAGES -DUSE_LEVEL_1_MACROS
++
++#Header files
++ccflags-y += -Idrivers/dsp/bridge/services
++ccflags-y += -Idrivers/dsp/bridge/wmd
++ccflags-y += -Idrivers/dsp/bridge/pmgr
++ccflags-y += -Idrivers/dsp/bridge/rmgr
++
++ccflags-y += -Iarch/arm/plat-omap/include/bridge
++ccflags-y += -Idrivers/dsp/bridge/hw
+\ No newline at end of file
+diff --git a/drivers/dsp/bridge/Kconfig b/drivers/dsp/bridge/Kconfig
+new file mode 100644
+index 0000000..c9d2d8c
+--- /dev/null
++++ b/drivers/dsp/bridge/Kconfig
+@@ -0,0 +1,35 @@
++#
++# DSP Bridge Driver Support
++#
++
++menuconfig MPU_BRIDGE
++	tristate "DSP Bridge driver"
++	default n
++	help
++	  DSP/BIOS Bridge is designed for platforms that contain a GPP and one or
++	  more attached DSPs.  The GPP is considered the master or "host" processor,
++	  and the attached DSPs are processing resources that can be utilized by
++	  applications and drivers running on the GPP.
++
++config DISABLE_BRIDGE_DVFS
++	bool "Disable Bridge Dynamic Voltage and Frequency Scaling (DVFS)"
++	depends on MPU_BRIDGE
++	default y
++	help
++	  DVFS allows DSP Bridge to initiate the operating point change to scale
++	  the chip voltage and frequency in order to match the performance and
++	  power consumption to the current processing requirements.
++
++config DISABLE_BRIDGE_PM
++	bool "Disable Bridge Power Management"
++	depends on MPU_BRIDGE && PM
++	default y
++	help
++	  DSP Bridge employs power management techniques to save dynamic and
++	  static power consumption of the IVA sub system.
++
++config BRIDGE_DEBUG
++	bool "DSP Bridge Debug Support"
++	depends on MPU_BRIDGE
++	help
++	  Say Y to enable Bridge debugging capabilities
+\ No newline at end of file
+-- 
+1.6.0.3.613.g9f8f13
+

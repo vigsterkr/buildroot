@@ -1,0 +1,37 @@
+From 5acc96f6ec2f60e54266bb57e809104752b5bf76 Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Tue, 21 Oct 2008 11:46:56 +0300
+Subject: [PATCH 41/43] BRIDGE: enable dspbridge in omap_3430sdp_defconfig
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/configs/omap_3430sdp_defconfig |    6 +++++-
+ 1 files changed, 5 insertions(+), 1 deletions(-)
+
+diff --git a/arch/arm/configs/omap_3430sdp_defconfig b/arch/arm/configs/omap_3430sdp_defconfig
+index f7b1bd6..bb4ee5e 100644
+--- a/arch/arm/configs/omap_3430sdp_defconfig
++++ b/arch/arm/configs/omap_3430sdp_defconfig
+@@ -908,7 +908,7 @@ CONFIG_FB_CFB_IMAGEBLIT=y
+ CONFIG_FB_OMAP=y
+ # CONFIG_FB_OMAP_LCDC_EXTERNAL is not set
+ # CONFIG_FB_OMAP_BOOTLOADER_INIT is not set
+-CONFIG_FB_OMAP_CONSISTENT_DMA_SIZE=2
++CONFIG_FB_OMAP_CONSISTENT_DMA_SIZE=14
+ # CONFIG_BACKLIGHT_LCD_SUPPORT is not set
+ 
+ #
+@@ -1175,6 +1175,10 @@ CONFIG_RTC_DRV_TWL4030=y
+ # CBUS support
+ #
+ # CONFIG_CBUS is not set
++CONFIG_MPU_BRIDGE=m
++CONFIG_DISABLE_BRIDGE_DVFS=y
++# CONFIG_DISABLE_BRIDGE_PM is not set
++CONFIG_BRIDGE_DEBUG=y
+ 
+ #
+ # File systems
+-- 
+1.6.0.3.613.g9f8f13
+

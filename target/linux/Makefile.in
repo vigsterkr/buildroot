@@ -158,7 +158,7 @@ ifeq ($(BR2_PACKAGE_OPENSWAN),y)
 endif
 ifneq ($(LINUX26_PATCH_DIR),)
 	if [ -d $(LINUX26_PATCH_DIR) ] ; then \
-		toolchain/patch-kernel.sh $(LINUX26_DIR) $(LINUX26_PATCH_DIR) linux-$(LINUX26_VERSION)\*.patch ; \
+		toolchain/patch-kernel.sh $(LINUX26_DIR) $(LINUX26_PATCH_DIR) ; \
 	fi
 endif
 	touch $@
@@ -229,7 +229,8 @@ $(TARGET_DIR)/lib/modules/$(LINUX26_VERSION)/modules.dep: $(LINUX26_DIR)/.config
 		INSTALL_MOD_PATH=$(TARGET_DIR) modules_install
 	rm -f $(TARGET_DIR)/lib/modules/$(LINUX26_VERSION)/build
 	rm -f $(TARGET_DIR)/lib/modules/$(LINUX26_VERSION)/source
-	$(STAGING_DIR)/bin/$(GNU_TARGET_NAME)-depmod26 -b $(TARGET_DIR) $(LINUX_HEADERS_VERSION)
+	$(STAGING_DIR)/bin/$(GNU_TARGET_NAME)-depmod26 -b $(TARGET_DIR) $(LINUX26_VERSION)
+	#$(LINUX_HEADERS_VERSION)
 	touch -c $@
 
 linux26-menuconfig: host-sed dirs $(LINUX26_DIR)/.patched

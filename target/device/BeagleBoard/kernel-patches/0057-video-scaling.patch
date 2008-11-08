@@ -1,0 +1,22 @@
+From: Tuomas Kulve <tuomas.kulve@movial.com>
+Date: Wed, 29 Oct 2008 08:54:06 +0000 (+0200)
+Subject: Removed old contradictory leftover 'if' that prevents video scaling.
+X-Git-Url: http://git.mansr.com/?p=linux-omap;a=commitdiff_plain;h=731948aca08e65eee22456ee3861e0d6517dab69
+
+Removed old contradictory leftover 'if' that prevents video scaling.
+---
+
+diff --git a/drivers/video/omap/dispc.c b/drivers/video/omap/dispc.c
+index 1e6e035..68bc887 100644
+--- a/drivers/video/omap/dispc.c
++++ b/drivers/video/omap/dispc.c
+@@ -583,9 +583,6 @@ static int omap_dispc_set_scale(int plane,
+ 	if ((unsigned)plane > OMAPFB_PLANE_NUM)
+ 		return -ENODEV;
+ 
+-	if (out_width != orig_width || out_height != orig_height)
+-		return -EINVAL;
+-
+ 	enable_lcd_clocks(1);
+ 	if (orig_width < out_width) {
+ 		/*

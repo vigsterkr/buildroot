@@ -1,0 +1,4352 @@
+From e4c2f0dd64a0dbb5c3b85b5c4860bf3565e4cfb8 Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Fri, 15 Aug 2008 01:55:54 +0300
+Subject: [PATCH 05/43] BRIDGE: Hardware Interfaces
+
+Initial port from omapzoom
+	http://omapzoom.org/gf/project/omapbridge
+
+For details,
+http://omapzoom.org/gf/project/omapbridge/docman/?subdir=3
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ drivers/dsp/bridge/hw/EasiBase.h     |  179 +++++++++
+ drivers/dsp/bridge/hw/EasiGlobal.h   |   42 +++
+ drivers/dsp/bridge/hw/GlobalTypes.h  |  328 +++++++++++++++++
+ drivers/dsp/bridge/hw/IPIAccInt.h    |   41 ++
+ drivers/dsp/bridge/hw/IVA2RegAcM.h   |   28 ++
+ drivers/dsp/bridge/hw/MLBAccInt.h    |  132 +++++++
+ drivers/dsp/bridge/hw/MLBRegAcM.h    |  200 ++++++++++
+ drivers/dsp/bridge/hw/MMUAccInt.h    |   79 ++++
+ drivers/dsp/bridge/hw/MMURegAcM.h    |  267 ++++++++++++++
+ drivers/dsp/bridge/hw/PRCMAccInt.h   |  300 +++++++++++++++
+ drivers/dsp/bridge/hw/PRCMRegAcM.h   |  669 ++++++++++++++++++++++++++++++++++
+ drivers/dsp/bridge/hw/hw_defs.h      |   73 ++++
+ drivers/dsp/bridge/hw/hw_dspssC64P.c |   55 +++
+ drivers/dsp/bridge/hw/hw_dspssC64P.h |   48 +++
+ drivers/dsp/bridge/hw/hw_mbox.c      |  255 +++++++++++++
+ drivers/dsp/bridge/hw/hw_mbox.h      |  358 ++++++++++++++++++
+ drivers/dsp/bridge/hw/hw_mmu.c       |  607 ++++++++++++++++++++++++++++++
+ drivers/dsp/bridge/hw/hw_mmu.h       |  178 +++++++++
+ drivers/dsp/bridge/hw/hw_prcm.c      |  167 +++++++++
+ drivers/dsp/bridge/hw/hw_prcm.h      |  168 +++++++++
+ 20 files changed, 4174 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/dsp/bridge/hw/EasiBase.h
+ create mode 100644 drivers/dsp/bridge/hw/EasiGlobal.h
+ create mode 100644 drivers/dsp/bridge/hw/GlobalTypes.h
+ create mode 100644 drivers/dsp/bridge/hw/IPIAccInt.h
+ create mode 100644 drivers/dsp/bridge/hw/IVA2RegAcM.h
+ create mode 100644 drivers/dsp/bridge/hw/MLBAccInt.h
+ create mode 100644 drivers/dsp/bridge/hw/MLBRegAcM.h
+ create mode 100644 drivers/dsp/bridge/hw/MMUAccInt.h
+ create mode 100644 drivers/dsp/bridge/hw/MMURegAcM.h
+ create mode 100644 drivers/dsp/bridge/hw/PRCMAccInt.h
+ create mode 100644 drivers/dsp/bridge/hw/PRCMRegAcM.h
+ create mode 100644 drivers/dsp/bridge/hw/hw_defs.h
+ create mode 100644 drivers/dsp/bridge/hw/hw_dspssC64P.c
+ create mode 100644 drivers/dsp/bridge/hw/hw_dspssC64P.h
+ create mode 100644 drivers/dsp/bridge/hw/hw_mbox.c
+ create mode 100644 drivers/dsp/bridge/hw/hw_mbox.h
+ create mode 100644 drivers/dsp/bridge/hw/hw_mmu.c
+ create mode 100644 drivers/dsp/bridge/hw/hw_mmu.h
+ create mode 100644 drivers/dsp/bridge/hw/hw_prcm.c
+ create mode 100644 drivers/dsp/bridge/hw/hw_prcm.h
+
+diff --git a/drivers/dsp/bridge/hw/EasiBase.h b/drivers/dsp/bridge/hw/EasiBase.h
+new file mode 100644
+index 0000000..aa61d21
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/EasiBase.h
+@@ -0,0 +1,179 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/EasiBase.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifndef __EASIBASE_H
++#define __EASIBASE_H
++
++/* ----------------------------------------------------------------------------
++* DEFINE:        ****_BASE_ID
++*
++* DESCRIPTION:  These are registser BASE IDs that will be used to identify
++*               errors when doing the EASI-Checker register tests
++*
++* NOTE:         The values of these defines will be defined at a later stage.
++* 		TBD
++*
++* -----------------------------------------------------------------------------
++*/
++
++#define OSPL1_BASE_ID 0
++#define D3D1_BASE_ID 0
++#define MBSP1_BASE_ID 0
++#define MBSP2_BASE_ID 0
++#define MSDI1_BASE_ID 0
++#define RNG1_BASE_ID 0
++#define SHAM1_BASE_ID 0
++#define RFBI1_BASE_ID 0
++#define DISC1_BASE_ID 0
++#define DSS1_BASE_ID 0
++#define MLB1_BASE_ID 0
++#define IPI1_BASE_ID 0
++#define PDMA1_BASE_ID 0
++#define PRCM_BASE_ID 0
++#define SDMA1_BASE_ID 0
++#define SDRC1_BASE_ID 0
++#define ST1_BASE_ID 0
++#define SMS1_BASE_ID 0
++#define WDT1_BASE_ID 0
++#define WDT2_BASE_ID 0
++#define WDT3_BASE_ID 0
++#define WDT4_BASE_ID 0
++#define INTC1_BASE_ID 0
++#define INTC2_BASE_ID 0
++#define MMU1_BASE_ID 0
++#define GPMC1_BASE_ID 0
++#define GPT1_BASE_ID 0
++#define GPT2_BASE_ID 0
++#define GPT3_BASE_ID 0
++#define GPT4_BASE_ID 0
++#define GPT5_BASE_ID 0
++#define GPT6_BASE_ID 0
++#define GPT7_BASE_ID 0
++#define GPT8_BASE_ID 0
++#define GPT9_BASE_ID 0
++#define GPT10_BASE_ID 0
++#define GPT11_BASE_ID 0
++#define GPT12_BASE_ID 0
++#define WTR1_BASE_ID 0
++#define WTR2_BASE_ID 0
++#define WTR3_BASE_ID 0
++#define WTR4_BASE_ID 0
++#define I2C1_BASE_ID 0
++#define I2C2_BASE_ID 0
++#define T32K1_BASE_ID 0
++#define PRCM1_BASE_ID 0
++
++#define AES1_BASE_ID 0
++#define C2CF1_BASE_ID 0
++#define DSPF1_BASE_ID 0
++#define FAC1_BASE_ID 0
++#define GPMF1_BASE_ID 0
++#define GPIO1_BASE_ID 0
++#define GPIO2_BASE_ID 0
++#define GPIO3_BASE_ID 0
++#define GPIO4_BASE_ID 0
++#define HDQW1_BASE_ID 0
++#define PKA1_BASE_ID 0
++
++#define IM1_BASE_ID 0
++#define IM2_BASE_ID 0
++#define IM3_BASE_ID 0
++#define IM4_BASE_ID 0
++#define IM5_BASE_ID 0
++#define IM6_BASE_ID 0
++#define IM7_BASE_ID 0
++#define IM8_BASE_ID 0
++#define IMA1_BASE_ID 0
++#define IMTM1_BASE_ID 0
++#define IVAF1_BASE_ID 0
++#define LRCR1_BASE_ID 0
++#define LRCR2_BASE_ID 0
++#define LRCS1_BASE_ID 0
++#define LRCS2_BASE_ID 0
++#define RAMF1_BASE_ID 0
++#define ROMF1_BASE_ID 0
++#define TM1_BASE_ID 0
++#define TML1_BASE_ID 0
++#define TML2_BASE_ID 0
++#define TML3_BASE_ID 0
++#define TML4_BASE_ID 0
++#define TML5_BASE_ID 0
++#define TML6_BASE_ID 0
++
++
++
++/* ----------------------------------------------------------------------------
++* DEFINE: ***_BASE_EASIL1
++*
++* DESCRIPTION:  These are registser BASE EASIl1 numbers that can be used to
++*               identify what EASI C functions have been called.
++*
++* NOTE:         The values of these defines will be defined at a later stage.
++* 		TBD
++*
++* -----------------------------------------------------------------------------
++*/
++
++#define OSPL1_BASE_EASIL1 0
++#define D3D_BASE_EASIL1 0
++#define MBSP_BASE_EASIL1 0
++#define MSDI_BASE_EASIL1 0
++#define RNG_BASE_EASIL1 0
++#define SHAM_BASE_EASIL1 0
++#define RFBI_BASE_EASIL1 0
++#define DISC_BASE_EASIL1 0
++#define DSS_BASE_EASIL1 0
++#define MLB_BASE_EASIL1 0
++#define IPI_BASE_EASIL1 0
++#define PDMA_BASE_EASIL1 0
++#define SDMA_BASE_EASIL1 0
++#define SDRC_BASE_EASIL1 0
++#define ST_BASE_EASIL1 0
++#define SMS_BASE_EASIL1 0
++#define WDT1_BASE_EASIL1 0
++#define INTC1_BASE_EASIL1 0
++#define INTC2_BASE_EASIL1 0
++#define MMU1_BASE_EASIL1 0
++#define GPMC_BASE_EASIL1 0
++#define GPT_BASE_EASIL1 0
++#define WTR_BASE_EASIL1 0
++#define MBSP2_BASE_EASIL1 0
++#define I2C1_BASE_EASIL1 0
++#define I2C2_BASE_EASIL1 0
++#define T32K1_BASE_EASIL1 0
++#define PRCM1_BASE_EASIL1 0
++
++#define AES1_BASE_EASIL1 0
++#define C2CF1_BASE_EASIL1 0
++#define DSPF1_BASE_EASIL1 0
++#define FAC1_BASE_EASIL1 0
++#define GPMF1_BASE_EASIL1 0
++#define GPIO1_BASE_EASIL1 0
++#define HDQW1_BASE_EASIL1 0
++#define PKA1_BASE_EASIL1 0
++
++#define IMA_BASE_EASIL1  0
++#define IM_BASE_EASIL1  0
++#define IMTM_BASE_EASIL1  0
++#define IVAF_BASE_EASIL1  0
++#define LRCR_BASE_EASIL1  0
++#define LRCS_BASE_EASIL1  0
++#define RAMF_BASE_EASIL1  0
++#define ROMF_BASE_EASIL1  0
++#define TML_BASE_EASIL1  0
++#define TM_BASE_EASIL1  0
++
++#endif	/* __EASIBASE_H */
+diff --git a/drivers/dsp/bridge/hw/EasiGlobal.h b/drivers/dsp/bridge/hw/EasiGlobal.h
+new file mode 100644
+index 0000000..b6045fd
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/EasiGlobal.h
+@@ -0,0 +1,42 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/EasiGlobal.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifndef __EASIGLOBAL_H
++#define __EASIGLOBAL_H
++#include <linux/types.h>
++
++/*
++ * DEFINE:        READ_ONLY, WRITE_ONLY &  READ_WRITE
++ *
++ * DESCRIPTION: Defines used to describe register types for EASI-checker tests.
++ */
++
++#define READ_ONLY    1
++#define WRITE_ONLY   2
++#define READ_WRITE   3
++
++/*
++ * MACRO:        _DEBUG_LEVEL_1_EASI
++ *
++ * DESCRIPTION:  A MACRO which can be used to indicate that a particular beach
++ *               register access function was called.
++ *
++ * NOTE:         We currently dont use this functionality.
++ */
++#define _DEBUG_LEVEL_1_EASI(easiNum)     ((void)0)
++
++#endif	/* __EASIGLOBAL_H */
++
+diff --git a/drivers/dsp/bridge/hw/GlobalTypes.h b/drivers/dsp/bridge/hw/GlobalTypes.h
+new file mode 100644
+index 0000000..ac410f5
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/GlobalTypes.h
+@@ -0,0 +1,328 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/GlobalTypes.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== GlobalTypes.h ========
++ *  Description:
++ *      Global HW definitions
++ *
++ *! Revision History:
++ *! ================
++ *! 16 Feb 2003 sb: Initial version
++ */
++#ifndef __GLOBALTYPES_H
++#define __GLOBALTYPES_H
++
++/*
++ * Definition: TRUE, FALSE
++ *
++ * DESCRIPTION:  Boolean Definitions
++ */
++#ifndef TRUE
++#define FALSE	0
++#define TRUE	(!(FALSE))
++#endif
++
++/*
++ * Definition: NULL
++ *
++ * DESCRIPTION:  Invalid pointer
++ */
++#ifndef NULL
++#define NULL	(void *)0
++#endif
++
++/*
++ * Definition: RET_CODE_BASE
++ *
++ * DESCRIPTION:  Base value for return code offsets
++ */
++#define RET_CODE_BASE	0
++
++/*
++ * Definition: *BIT_OFFSET
++ *
++ * DESCRIPTION:  offset in bytes from start of 32-bit word.
++ */
++#define LOWER_16BIT_OFFSET	  0
++#define UPPER_16BIT_OFFSET	  2
++
++#define LOWER_8BIT_OFFSET	   0
++#define LOWER_MIDDLE_8BIT_OFFSET    1
++#define UPPER_MIDDLE_8BIT_OFFSET    2
++#define UPPER_8BIT_OFFSET	   3
++
++#define LOWER_8BIT_OF16_OFFSET      0
++#define UPPER_8BIT_OF16_OFFSET      1
++
++/*
++ * Definition: *BIT_SHIFT
++ *
++ * DESCRIPTION:  offset in bits from start of 32-bit word.
++ */
++#define LOWER_16BIT_SHIFT	  0
++#define UPPER_16BIT_SHIFT	  16
++
++#define LOWER_8BIT_SHIFT	   0
++#define LOWER_MIDDLE_8BIT_SHIFT    8
++#define UPPER_MIDDLE_8BIT_SHIFT    16
++#define UPPER_8BIT_SHIFT	   24
++
++#define LOWER_8BIT_OF16_SHIFT      0
++#define UPPER_8BIT_OF16_SHIFT      8
++
++
++/*
++ * Definition: LOWER_16BIT_MASK
++ *
++ * DESCRIPTION: 16 bit mask used for inclusion of lower 16 bits i.e. mask out
++ *		the upper 16 bits
++ */
++#define LOWER_16BIT_MASK	0x0000FFFF
++
++
++/*
++ * Definition: LOWER_8BIT_MASK
++ *
++ * DESCRIPTION: 8 bit masks used for inclusion of 8 bits i.e. mask out
++ *		the upper 16 bits
++ */
++#define LOWER_8BIT_MASK	   0x000000FF
++
++/*
++ * Definition: RETURN_32BITS_FROM_16LOWER_AND_16UPPER(lower16Bits, upper16Bits)
++ *
++ * DESCRIPTION: Returns a 32 bit value given a 16 bit lower value and a 16
++ *		bit upper value
++ */
++#define RETURN_32BITS_FROM_16LOWER_AND_16UPPER(lower16Bits,upper16Bits)\
++    (((((u32)lower16Bits)  & LOWER_16BIT_MASK)) | \
++     (((((u32)upper16Bits) & LOWER_16BIT_MASK) << UPPER_16BIT_SHIFT)))
++
++/*
++ * Definition: RETURN_16BITS_FROM_8LOWER_AND_8UPPER(lower16Bits, upper16Bits)
++ *
++ * DESCRIPTION:  Returns a 16 bit value given a 8 bit lower value and a 8
++ *	       bit upper value
++ */
++#define RETURN_16BITS_FROM_8LOWER_AND_8UPPER(lower8Bits,upper8Bits)\
++    (((((u32)lower8Bits)  & LOWER_8BIT_MASK)) | \
++     (((((u32)upper8Bits) & LOWER_8BIT_MASK) << UPPER_8BIT_OF16_SHIFT)))
++
++/*
++ * Definition: RETURN_32BITS_FROM_4_8BIT_VALUES(lower8Bits, lowerMiddle8Bits,
++ * 					lowerUpper8Bits, upper8Bits)
++ *
++ * DESCRIPTION:  Returns a 32 bit value given four 8 bit values
++ */
++#define RETURN_32BITS_FROM_4_8BIT_VALUES(lower8Bits, lowerMiddle8Bits,\
++	lowerUpper8Bits, upper8Bits)\
++	(((((u32)lower8Bits) & LOWER_8BIT_MASK)) | \
++	(((((u32)lowerMiddle8Bits) & LOWER_8BIT_MASK) <<\
++		LOWER_MIDDLE_8BIT_SHIFT)) | \
++	(((((u32)lowerUpper8Bits) & LOWER_8BIT_MASK) <<\
++		UPPER_MIDDLE_8BIT_SHIFT)) | \
++	(((((u32)upper8Bits) & LOWER_8BIT_MASK) <<\
++		UPPER_8BIT_SHIFT)))
++
++/*
++ * Definition: READ_LOWER_16BITS_OF_32(value32bits)
++ *
++ * DESCRIPTION:  Returns a 16 lower bits of 32bit value
++ */
++#define READ_LOWER_16BITS_OF_32(value32bits)\
++    ((u16)((u32)(value32bits) & LOWER_16BIT_MASK))
++
++/*
++ * Definition: READ_UPPER_16BITS_OF_32(value32bits)
++ *
++ * DESCRIPTION:  Returns a 16 lower bits of 32bit value
++ */
++#define READ_UPPER_16BITS_OF_32(value32bits)\
++	(((u16)((u32)(value32bits) >> UPPER_16BIT_SHIFT)) &\
++	LOWER_16BIT_MASK)
++
++
++/*
++ * Definition: READ_LOWER_8BITS_OF_32(value32bits)
++ *
++ * DESCRIPTION:  Returns a 8 lower bits of 32bit value
++ */
++#define READ_LOWER_8BITS_OF_32(value32bits)\
++    ((u8)((u32)(value32bits) & LOWER_8BIT_MASK))
++
++/*
++ * Definition: READ_LOWER_MIDDLE_8BITS_OF_32(value32bits)
++ *
++ * DESCRIPTION:  Returns a 8 lower middle bits of 32bit value
++ */
++#define READ_LOWER_MIDDLE_8BITS_OF_32(value32bits)\
++	(((u8)((u32)(value32bits) >> LOWER_MIDDLE_8BIT_SHIFT)) &\
++	LOWER_8BIT_MASK)
++
++/*
++ * Definition: READ_LOWER_MIDDLE_8BITS_OF_32(value32bits)
++ *
++ * DESCRIPTION:  Returns a 8 lower middle bits of 32bit value
++ */
++#define READ_UPPER_MIDDLE_8BITS_OF_32(value32bits)\
++	(((u8)((u32)(value32bits) >> LOWER_MIDDLE_8BIT_SHIFT)) &\
++	LOWER_8BIT_MASK)
++
++/*
++ * Definition: READ_UPPER_8BITS_OF_32(value32bits)
++ *
++ * DESCRIPTION:  Returns a 8 upper bits of 32bit value
++ */
++#define READ_UPPER_8BITS_OF_32(value32bits)\
++    (((u8)((u32)(value32bits) >> UPPER_8BIT_SHIFT)) & LOWER_8BIT_MASK)
++
++
++/*
++ * Definition: READ_LOWER_8BITS_OF_16(value16bits)
++ *
++ * DESCRIPTION:  Returns a 8 lower bits of 16bit value
++ */
++#define READ_LOWER_8BITS_OF_16(value16bits)\
++    ((u8)((u16)(value16bits) & LOWER_8BIT_MASK))
++
++/*
++ * Definition: READ_UPPER_8BITS_OF_16(value32bits)
++ *
++ * DESCRIPTION:  Returns a 8 upper bits of 16bit value
++ */
++#define READ_UPPER_8BITS_OF_16(value16bits)\
++    (((u8)((u32)(value16bits) >> UPPER_8BIT_SHIFT)) & LOWER_8BIT_MASK)
++
++/* 8 bit tpyes */
++typedef signed   char  WORD8;
++
++/* UWORD16:  16 bit tpyes */
++
++
++/* REG_UWORD8, REG_WORD8: 8 bit register types */
++typedef volatile unsigned char  REG_UWORD8;
++typedef volatile signed   char  REG_WORD8;
++
++/* REG_UWORD16, REG_WORD16: 16 bit register types */
++#ifndef OMAPBRIDGE_TYPES
++typedef volatile unsigned short REG_UWORD16;
++#endif
++typedef volatile	  short REG_WORD16;
++
++/* REG_UWORD32, REG_WORD32: 32 bit register types */
++typedef volatile unsigned long  REG_UWORD32;
++
++/* FLOAT
++ *
++ * Type to be used for floating point calculation. Note that floating point
++ * calculation is very CPU expensive, and you should only  use if you
++ * absolutely need this. */
++#ifndef OMAPBRIDGE_TYPES
++typedef float  FLOAT;
++#endif
++
++/* boolean_t:  Boolean Type True, False */
++/* ReturnCode_t:  Return codes to be returned by all library functions */
++typedef enum ReturnCode_label {
++    RET_OK = 0,
++    RET_FAIL = -1,
++    RET_BAD_NULL_PARAM = -2,
++    RET_PARAM_OUT_OF_RANGE = -3,
++    RET_INVALID_ID = -4,
++    RET_EMPTY = -5,
++    RET_FULL = -6,
++    RET_TIMEOUT = -7,
++    RET_INVALID_OPERATION = -8,
++
++    /* Add new error codes at end of above list */
++
++    RET_NUM_RET_CODES     /* this should ALWAYS be LAST entry */
++} ReturnCode_t, *pReturnCode_t;
++
++/* MACRO: RD_MEM_8, WR_MEM_8
++ *
++ * DESCRIPTION:  32 bit memory access macros
++ */
++#define RD_MEM_8(addr)	((u8)(*((u8 *)(addr))))
++#define WR_MEM_8(addr, data)	(*((u8 *)(addr)) = (u8)(data))
++
++/* MACRO: RD_MEM_8_VOLATILE, WR_MEM_8_VOLATILE
++ *
++ * DESCRIPTION:  8 bit register access macros
++ */
++#define RD_MEM_8_VOLATILE(addr)	((u8)(*((REG_UWORD8 *)(addr))))
++#define WR_MEM_8_VOLATILE(addr, data) (*((REG_UWORD8 *)(addr)) = (u8)(data))
++
++
++/*
++ * MACRO: RD_MEM_16, WR_MEM_16
++ *
++ * DESCRIPTION:  16 bit memory access macros
++ */
++#define RD_MEM_16(addr)	((u16)(*((u16 *)(addr))))
++#define WR_MEM_16(addr, data)	(*((u16 *)(addr)) = (u16)(data))
++
++/*
++ * MACRO: RD_MEM_16_VOLATILE, WR_MEM_16_VOLATILE
++ *
++ * DESCRIPTION:  16 bit register access macros
++ */
++#define RD_MEM_16_VOLATILE(addr)	((u16)(*((REG_UWORD16 *)(addr))))
++#define WR_MEM_16_VOLATILE(addr, data)	(*((REG_UWORD16 *)(addr)) =\
++					(u16)(data))
++
++/*
++ * MACRO: RD_MEM_32, WR_MEM_32
++ *
++ * DESCRIPTION:  32 bit memory access macros
++ */
++#define RD_MEM_32(addr)	((u32)(*((u32 *)(addr))))
++#define WR_MEM_32(addr, data)	(*((u32 *)(addr)) = (u32)(data))
++
++/*
++ * MACRO: RD_MEM_32_VOLATILE, WR_MEM_32_VOLATILE
++ *
++ * DESCRIPTION:  32 bit register access macros
++ */
++#define RD_MEM_32_VOLATILE(addr)	((u32)(*((REG_UWORD32 *)(addr))))
++#define WR_MEM_32_VOLATILE(addr, data)	(*((REG_UWORD32 *)(addr)) =\
++					(u32)(data))
++
++/* Not sure if this all belongs here */
++
++#define CHECK_RETURN_VALUE(actualValue, expectedValue,  returnCodeIfMismatch,\
++	spyCodeIfMisMatch)
++#define CHECK_RETURN_VALUE_RET(actualValue, expectedValue, returnCodeIfMismatch)
++#define CHECK_RETURN_VALUE_RES(actualValue, expectedValue, spyCodeIfMisMatch)
++#define CHECK_RETURN_VALUE_RET_VOID(actualValue, expectedValue,\
++	spyCodeIfMisMatch)
++
++#define CHECK_INPUT_PARAM(actualValue, invalidValue, returnCodeIfMismatch,\
++	spyCodeIfMisMatch)
++#define CHECK_INPUT_PARAM_NO_SPY(actualValue, invalidValue,\
++	returnCodeIfMismatch)
++#define CHECK_INPUT_RANGE(actualValue, minValidValue, maxValidValue,\
++	returnCodeIfMismatch, spyCodeIfMisMatch)
++#define CHECK_INPUT_RANGE_NO_SPY(actualValue, minValidValue, maxValidValue,\
++	returnCodeIfMismatch)
++#define CHECK_INPUT_RANGE_MIN0(actualValue, maxValidValue,\
++	returnCodeIfMismatch, spyCodeIfMisMatch)
++#define CHECK_INPUT_RANGE_NO_SPY_MIN0(actualValue, maxValidValue,\
++	returnCodeIfMismatch)
++
++#endif	/* __GLOBALTYPES_H */
+diff --git a/drivers/dsp/bridge/hw/IPIAccInt.h b/drivers/dsp/bridge/hw/IPIAccInt.h
+new file mode 100644
+index 0000000..e1dcca1
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/IPIAccInt.h
+@@ -0,0 +1,41 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/IPIAccInt.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifndef _IPI_ACC_INT_H
++#define _IPI_ACC_INT_H
++
++/* Bitfield mask and offset declarations */
++#define SYSC_IVA2BOOTMOD_OFFSET                   0x404
++#define SYSC_IVA2BOOTADDR_OFFSET                0x400
++#define SYSC_IVA2BOOTADDR_MASK                 0xfffffc00
++
++
++/* The following represent the enumerated values for each bitfield */
++
++enum IPIIPI_SYSCONFIGAutoIdleE {
++	IPIIPI_SYSCONFIGAutoIdleclkfree = 0x0000,
++	IPIIPI_SYSCONFIGAutoIdleautoclkgate = 0x0001
++} ;
++
++enum IPIIPI_ENTRYElemSizeValueE {
++	IPIIPI_ENTRYElemSizeValueElemSz8b = 0x0000,
++	IPIIPI_ENTRYElemSizeValueElemSz16b = 0x0001,
++	IPIIPI_ENTRYElemSizeValueElemSz32b = 0x0002,
++	IPIIPI_ENTRYElemSizeValueReserved = 0x0003
++} ;
++
++#endif				/* _IPI_ACC_INT_H */
++/* EOF */
+diff --git a/drivers/dsp/bridge/hw/IVA2RegAcM.h b/drivers/dsp/bridge/hw/IVA2RegAcM.h
+new file mode 100644
+index 0000000..2d7034d
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/IVA2RegAcM.h
+@@ -0,0 +1,28 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/dspss/IVA1RegAcM.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++
++#ifndef _IVA2_REG_ACM_H
++#define _IVA2_REG_ACM_H
++
++#include <GlobalTypes.h>
++#include <EasiGlobal.h>
++
++#define SYSC_IVA2BOOTMOD_OFFSET	    0x404
++#define SYSC_IVA2BOOTADDR_OFFSET	    0x400
++
++#endif
+diff --git a/drivers/dsp/bridge/hw/MLBAccInt.h b/drivers/dsp/bridge/hw/MLBAccInt.h
+new file mode 100644
+index 0000000..e8a7fef
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/MLBAccInt.h
+@@ -0,0 +1,132 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/mbox/MLBAccInt.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++#ifndef _MLB_ACC_INT_H
++#define _MLB_ACC_INT_H
++
++/* Mappings of level 1 EASI function numbers to function names */
++
++#define EASIL1_MLBMAILBOX_SYSCONFIGReadRegister32   (MLB_BASE_EASIL1 + 3)
++#define EASIL1_MLBMAILBOX_SYSCONFIGWriteRegister32  (MLB_BASE_EASIL1 + 4)
++#define EASIL1_MLBMAILBOX_SYSCONFIGSIdleModeRead32   (MLB_BASE_EASIL1 + 7)
++#define EASIL1_MLBMAILBOX_SYSCONFIGSIdleModeWrite32  (MLB_BASE_EASIL1 + 17)
++#define EASIL1_MLBMAILBOX_SYSCONFIGSoftResetWrite32 (MLB_BASE_EASIL1 + 29)
++#define EASIL1_MLBMAILBOX_SYSCONFIGAutoIdleRead32 \
++						(MLB_BASE_EASIL1 + 33)
++#define EASIL1_MLBMAILBOX_SYSCONFIGAutoIdleWrite32   (MLB_BASE_EASIL1 + 39)
++#define EASIL1_MLBMAILBOX_SYSSTATUSResetDoneRead32  (MLB_BASE_EASIL1 + 44)
++#define EASIL1_MLBMAILBOX_MESSAGE___0_15ReadRegister32 \
++						(MLB_BASE_EASIL1 + 50)
++#define EASIL1_MLBMAILBOX_MESSAGE___0_15WriteRegister32  \
++						(MLB_BASE_EASIL1 + 51)
++#define EASIL1_MLBMAILBOX_FIFOSTATUS___0_15ReadRegister32  \
++						(MLB_BASE_EASIL1 + 56)
++#define EASIL1_MLBMAILBOX_FIFOSTATUS___0_15FifoFullMBmRead32 \
++						(MLB_BASE_EASIL1 + 57)
++#define EASIL1_MLBMAILBOX_MSGSTATUS___0_15NbOfMsgMBmRead32  \
++						(MLB_BASE_EASIL1 + 60)
++#define EASIL1_MLBMAILBOX_IRQSTATUS___0_3ReadRegister32  \
++						(MLB_BASE_EASIL1 + 62)
++#define EASIL1_MLBMAILBOX_IRQSTATUS___0_3WriteRegister32 \
++						(MLB_BASE_EASIL1 + 63)
++#define EASIL1_MLBMAILBOX_IRQENABLE___0_3ReadRegister32    \
++						(MLB_BASE_EASIL1 + 192)
++#define EASIL1_MLBMAILBOX_IRQENABLE___0_3WriteRegister32   \
++						(MLB_BASE_EASIL1 + 193)
++
++/* Register set MAILBOX_MESSAGE___REGSET_0_15 address offset, bank address
++ * increment and number of banks */
++
++#define MLB_MAILBOX_MESSAGE___REGSET_0_15_OFFSET    (u32)(0x0040)
++#define MLB_MAILBOX_MESSAGE___REGSET_0_15_STEP   (u32)(0x0004)
++
++/* Register offset address definitions relative to register set
++ * MAILBOX_MESSAGE___REGSET_0_15 */
++
++#define MLB_MAILBOX_MESSAGE___0_15_OFFSET   (u32)(0x0)
++
++
++/* Register set MAILBOX_FIFOSTATUS___REGSET_0_15 address offset, bank address
++ * increment and number of banks */
++
++#define MLB_MAILBOX_FIFOSTATUS___REGSET_0_15_OFFSET  (u32)(0x0080)
++#define MLB_MAILBOX_FIFOSTATUS___REGSET_0_15_STEP   (u32)(0x0004)
++
++/* Register offset address definitions relative to register set
++ * MAILBOX_FIFOSTATUS___REGSET_0_15 */
++
++#define MLB_MAILBOX_FIFOSTATUS___0_15_OFFSET    (u32)(0x0)
++
++
++/* Register set MAILBOX_MSGSTATUS___REGSET_0_15 address offset, bank address
++ * increment and number of banks */
++
++#define MLB_MAILBOX_MSGSTATUS___REGSET_0_15_OFFSET  (u32)(0x00c0)
++#define MLB_MAILBOX_MSGSTATUS___REGSET_0_15_STEP    (u32)(0x0004)
++
++/* Register offset address definitions relative to register set
++ * MAILBOX_MSGSTATUS___REGSET_0_15 */
++
++#define MLB_MAILBOX_MSGSTATUS___0_15_OFFSET    (u32)(0x0)
++
++
++/* Register set MAILBOX_IRQSTATUS___REGSET_0_3 address offset, bank address
++ * increment and number of banks */
++
++#define MLB_MAILBOX_IRQSTATUS___REGSET_0_3_OFFSET        (u32)(0x0100)
++#define MLB_MAILBOX_IRQSTATUS___REGSET_0_3_STEP          (u32)(0x0008)
++
++/* Register offset address definitions relative to register set
++ * MAILBOX_IRQSTATUS___REGSET_0_3 */
++
++#define MLB_MAILBOX_IRQSTATUS___0_3_OFFSET        (u32)(0x0)
++
++
++/* Register set MAILBOX_IRQENABLE___REGSET_0_3 address offset, bank address
++ * increment and number of banks */
++
++#define MLB_MAILBOX_IRQENABLE___REGSET_0_3_OFFSET     (u32)(0x0104)
++#define MLB_MAILBOX_IRQENABLE___REGSET_0_3_STEP     (u32)(0x0008)
++
++/* Register offset address definitions relative to register set
++ * MAILBOX_IRQENABLE___REGSET_0_3 */
++
++#define MLB_MAILBOX_IRQENABLE___0_3_OFFSET          (u32)(0x0)
++
++
++/* Register offset address definitions */
++
++#define MLB_MAILBOX_SYSCONFIG_OFFSET            (u32)(0x10)
++#define MLB_MAILBOX_SYSSTATUS_OFFSET            (u32)(0x14)
++
++
++/* Bitfield mask and offset declarations */
++
++#define MLB_MAILBOX_SYSCONFIG_SIdleMode_MASK        (u32)(0x18)
++#define MLB_MAILBOX_SYSCONFIG_SIdleMode_OFFSET      (u32)(3)
++#define MLB_MAILBOX_SYSCONFIG_SoftReset_MASK        (u32)(0x2)
++#define MLB_MAILBOX_SYSCONFIG_SoftReset_OFFSET      (u32)(1)
++#define MLB_MAILBOX_SYSCONFIG_AutoIdle_MASK          (u32)(0x1)
++#define MLB_MAILBOX_SYSCONFIG_AutoIdle_OFFSET        (u32)(0)
++#define MLB_MAILBOX_SYSSTATUS_ResetDone_MASK         (u32)(0x1)
++#define MLB_MAILBOX_SYSSTATUS_ResetDone_OFFSET         (u32)(0)
++#define MLB_MAILBOX_FIFOSTATUS___0_15_FifoFullMBm_MASK   (u32)(0x1)
++#define MLB_MAILBOX_FIFOSTATUS___0_15_FifoFullMBm_OFFSET  (u32)(0)
++#define MLB_MAILBOX_MSGSTATUS___0_15_NbOfMsgMBm_MASK    (u32)(0x7f)
++#define MLB_MAILBOX_MSGSTATUS___0_15_NbOfMsgMBm_OFFSET    (u32)(0)
++
++#endif /* _MLB_ACC_INT_H */
+diff --git a/drivers/dsp/bridge/hw/MLBRegAcM.h b/drivers/dsp/bridge/hw/MLBRegAcM.h
+new file mode 100644
+index 0000000..f9108c2
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/MLBRegAcM.h
+@@ -0,0 +1,200 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/mbox/MLBRegAcM.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifndef _MLB_REG_ACM_H
++#define _MLB_REG_ACM_H
++
++#include <GlobalTypes.h>
++#include <EasiGlobal.h>
++#include "MLBAccInt.h"
++
++#if defined(USE_LEVEL_1_MACROS)
++
++#define MLBMAILBOX_SYSCONFIGReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSCONFIGReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+ \
++      MLB_MAILBOX_SYSCONFIG_OFFSET))
++
++
++#define MLBMAILBOX_SYSCONFIGWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MLB_MAILBOX_SYSCONFIG_OFFSET;\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSCONFIGWriteRegister32);\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define MLBMAILBOX_SYSCONFIGSIdleModeRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSCONFIGSIdleModeRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++      (MLB_MAILBOX_SYSCONFIG_OFFSET)))) &\
++      MLB_MAILBOX_SYSCONFIG_SIdleMode_MASK) >>\
++      MLB_MAILBOX_SYSCONFIG_SIdleMode_OFFSET))
++
++
++#define MLBMAILBOX_SYSCONFIGSIdleModeWrite32(baseAddress, value)\
++{\
++    const u32 offset = MLB_MAILBOX_SYSCONFIG_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE(((u32)(baseAddress)) +\
++			    offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSCONFIGSIdleModeWrite32);\
++    data &= ~(MLB_MAILBOX_SYSCONFIG_SIdleMode_MASK);\
++    newValue <<= MLB_MAILBOX_SYSCONFIG_SIdleMode_OFFSET;\
++    newValue &= MLB_MAILBOX_SYSCONFIG_SIdleMode_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define MLBMAILBOX_SYSCONFIGSoftResetWrite32(baseAddress, value)\
++{\
++    const u32 offset = MLB_MAILBOX_SYSCONFIG_OFFSET;\
++    register u32 data =\
++    RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSCONFIGSoftResetWrite32);\
++    data &= ~(MLB_MAILBOX_SYSCONFIG_SoftReset_MASK);\
++    newValue <<= MLB_MAILBOX_SYSCONFIG_SoftReset_OFFSET;\
++    newValue &= MLB_MAILBOX_SYSCONFIG_SoftReset_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define MLBMAILBOX_SYSCONFIGAutoIdleRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSCONFIGAutoIdleRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++      (MLB_MAILBOX_SYSCONFIG_OFFSET)))) &\
++      MLB_MAILBOX_SYSCONFIG_AutoIdle_MASK) >>\
++      MLB_MAILBOX_SYSCONFIG_AutoIdle_OFFSET))
++
++
++#define MLBMAILBOX_SYSCONFIGAutoIdleWrite32(baseAddress, value)\
++{\
++    const u32 offset = MLB_MAILBOX_SYSCONFIG_OFFSET;\
++    register u32 data =\
++    RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSCONFIGAutoIdleWrite32);\
++    data &= ~(MLB_MAILBOX_SYSCONFIG_AutoIdle_MASK);\
++    newValue <<= MLB_MAILBOX_SYSCONFIG_AutoIdle_OFFSET;\
++    newValue &= MLB_MAILBOX_SYSCONFIG_AutoIdle_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define MLBMAILBOX_SYSSTATUSResetDoneRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_SYSSTATUSResetDoneRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++      (MLB_MAILBOX_SYSSTATUS_OFFSET)))) &\
++      MLB_MAILBOX_SYSSTATUS_ResetDone_MASK) >>\
++      MLB_MAILBOX_SYSSTATUS_ResetDone_OFFSET))
++
++
++#define MLBMAILBOX_MESSAGE___0_15ReadRegister32(baseAddress, bank)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_MESSAGE___0_15ReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+\
++      (MLB_MAILBOX_MESSAGE___REGSET_0_15_OFFSET +\
++      MLB_MAILBOX_MESSAGE___0_15_OFFSET+(\
++      (bank)*MLB_MAILBOX_MESSAGE___REGSET_0_15_STEP))))
++
++
++#define MLBMAILBOX_MESSAGE___0_15WriteRegister32(baseAddress, bank, value)\
++{\
++    const u32 offset = MLB_MAILBOX_MESSAGE___REGSET_0_15_OFFSET +\
++    MLB_MAILBOX_MESSAGE___0_15_OFFSET +\
++    ((bank)*MLB_MAILBOX_MESSAGE___REGSET_0_15_STEP);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_MESSAGE___0_15WriteRegister32);\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define MLBMAILBOX_FIFOSTATUS___0_15ReadRegister32(baseAddress, bank)\
++    (_DEBUG_LEVEL_1_EASI(\
++      EASIL1_MLBMAILBOX_FIFOSTATUS___0_15ReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+\
++      (MLB_MAILBOX_FIFOSTATUS___REGSET_0_15_OFFSET +\
++      MLB_MAILBOX_FIFOSTATUS___0_15_OFFSET+\
++      ((bank)*MLB_MAILBOX_FIFOSTATUS___REGSET_0_15_STEP))))
++
++
++#define MLBMAILBOX_FIFOSTATUS___0_15FifoFullMBmRead32(baseAddress, bank)\
++    (_DEBUG_LEVEL_1_EASI(\
++      EASIL1_MLBMAILBOX_FIFOSTATUS___0_15FifoFullMBmRead32),\
++      (((RD_MEM_32_VOLATILE(((u32)(baseAddress))+\
++      (MLB_MAILBOX_FIFOSTATUS___REGSET_0_15_OFFSET +\
++      MLB_MAILBOX_FIFOSTATUS___0_15_OFFSET+\
++      ((bank)*MLB_MAILBOX_FIFOSTATUS___REGSET_0_15_STEP)))) &\
++      MLB_MAILBOX_FIFOSTATUS___0_15_FifoFullMBm_MASK) >>\
++      MLB_MAILBOX_FIFOSTATUS___0_15_FifoFullMBm_OFFSET))
++
++
++#define MLBMAILBOX_MSGSTATUS___0_15NbOfMsgMBmRead32(baseAddress, bank)\
++    (_DEBUG_LEVEL_1_EASI(\
++      EASIL1_MLBMAILBOX_MSGSTATUS___0_15NbOfMsgMBmRead32),\
++      (((RD_MEM_32_VOLATILE(((u32)(baseAddress))+\
++      (MLB_MAILBOX_MSGSTATUS___REGSET_0_15_OFFSET +\
++      MLB_MAILBOX_MSGSTATUS___0_15_OFFSET+\
++      ((bank)*MLB_MAILBOX_MSGSTATUS___REGSET_0_15_STEP)))) &\
++      MLB_MAILBOX_MSGSTATUS___0_15_NbOfMsgMBm_MASK) >>\
++      MLB_MAILBOX_MSGSTATUS___0_15_NbOfMsgMBm_OFFSET))
++
++
++#define MLBMAILBOX_IRQSTATUS___0_3ReadRegister32(baseAddress, bank)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_IRQSTATUS___0_3ReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+\
++      (MLB_MAILBOX_IRQSTATUS___REGSET_0_3_OFFSET +\
++      MLB_MAILBOX_IRQSTATUS___0_3_OFFSET+\
++      ((bank)*MLB_MAILBOX_IRQSTATUS___REGSET_0_3_STEP))))
++
++
++#define MLBMAILBOX_IRQSTATUS___0_3WriteRegister32(baseAddress, bank, value)\
++{\
++    const u32 offset = MLB_MAILBOX_IRQSTATUS___REGSET_0_3_OFFSET +\
++    MLB_MAILBOX_IRQSTATUS___0_3_OFFSET +\
++    ((bank)*MLB_MAILBOX_IRQSTATUS___REGSET_0_3_STEP);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_IRQSTATUS___0_3WriteRegister32);\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define MLBMAILBOX_IRQENABLE___0_3ReadRegister32(baseAddress, bank)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_IRQENABLE___0_3ReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+\
++      (MLB_MAILBOX_IRQENABLE___REGSET_0_3_OFFSET +\
++      MLB_MAILBOX_IRQENABLE___0_3_OFFSET+\
++       ((bank)*MLB_MAILBOX_IRQENABLE___REGSET_0_3_STEP))))
++
++
++#define MLBMAILBOX_IRQENABLE___0_3WriteRegister32(baseAddress, bank, value)\
++{\
++    const u32 offset = MLB_MAILBOX_IRQENABLE___REGSET_0_3_OFFSET +\
++      MLB_MAILBOX_IRQENABLE___0_3_OFFSET +\
++      ((bank)*MLB_MAILBOX_IRQENABLE___REGSET_0_3_STEP);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MLBMAILBOX_IRQENABLE___0_3WriteRegister32);\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#endif	/* USE_LEVEL_1_MACROS */
++
++#endif /* _MLB_REG_ACM_H */
+diff --git a/drivers/dsp/bridge/hw/MMUAccInt.h b/drivers/dsp/bridge/hw/MMUAccInt.h
+new file mode 100644
+index 0000000..6be9d75
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/MMUAccInt.h
+@@ -0,0 +1,79 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/mmu/MMUAccInt.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifndef _MMU_ACC_INT_H
++#define _MMU_ACC_INT_H
++
++/* Mappings of level 1 EASI function numbers to function names */
++
++#define EASIL1_MMUMMU_SYSCONFIGReadRegister32 (MMU_BASE_EASIL1 + 3)
++#define EASIL1_MMUMMU_SYSCONFIGIdleModeWrite32  (MMU_BASE_EASIL1 + 17)
++#define EASIL1_MMUMMU_SYSCONFIGAutoIdleWrite32    (MMU_BASE_EASIL1 + 39)
++#define EASIL1_MMUMMU_IRQSTATUSWriteRegister32   (MMU_BASE_EASIL1 + 51)
++#define EASIL1_MMUMMU_IRQENABLEReadRegister32 (MMU_BASE_EASIL1 + 102)
++#define EASIL1_MMUMMU_IRQENABLEWriteRegister32 (MMU_BASE_EASIL1 + 103)
++#define EASIL1_MMUMMU_WALKING_STTWLRunningRead32 (MMU_BASE_EASIL1 + 156)
++#define EASIL1_MMUMMU_CNTLTWLEnableRead32 (MMU_BASE_EASIL1 + 174)
++#define EASIL1_MMUMMU_CNTLTWLEnableWrite32   (MMU_BASE_EASIL1 + 180)
++#define EASIL1_MMUMMU_CNTLMMUEnableWrite32     (MMU_BASE_EASIL1 + 190)
++#define EASIL1_MMUMMU_FAULT_ADReadRegister32   (MMU_BASE_EASIL1 + 194)
++#define EASIL1_MMUMMU_TTBWriteRegister32  (MMU_BASE_EASIL1 + 198)
++#define EASIL1_MMUMMU_LOCKReadRegister32   (MMU_BASE_EASIL1 + 203)
++#define EASIL1_MMUMMU_LOCKWriteRegister32  (MMU_BASE_EASIL1 + 204)
++#define EASIL1_MMUMMU_LOCKBaseValueRead32  (MMU_BASE_EASIL1 + 205)
++#define EASIL1_MMUMMU_LOCKCurrentVictimRead32 (MMU_BASE_EASIL1 + 209)
++#define EASIL1_MMUMMU_LOCKCurrentVictimWrite32 (MMU_BASE_EASIL1 + 211)
++#define EASIL1_MMUMMU_LOCKCurrentVictimSet32  (MMU_BASE_EASIL1 + 212)
++#define EASIL1_MMUMMU_LD_TLBReadRegister32    (MMU_BASE_EASIL1 + 213)
++#define EASIL1_MMUMMU_LD_TLBWriteRegister32   (MMU_BASE_EASIL1 + 214)
++#define EASIL1_MMUMMU_CAMWriteRegister32   (MMU_BASE_EASIL1 + 226)
++#define EASIL1_MMUMMU_RAMWriteRegister32 (MMU_BASE_EASIL1 + 268)
++#define EASIL1_MMUMMU_GFLUSHGlobalFlushWrite32 (MMU_BASE_EASIL1 + 317)
++#define EASIL1_MMUMMU_FLUSH_ENTRYWriteRegister32  (MMU_BASE_EASIL1 + 322)
++
++/* Register offset address definitions */
++#define MMU_MMU_SYSCONFIG_OFFSET   0x10
++#define MMU_MMU_IRQSTATUS_OFFSET  0x18
++#define MMU_MMU_IRQENABLE_OFFSET    0x1c
++#define MMU_MMU_WALKING_ST_OFFSET 0x40
++#define MMU_MMU_CNTL_OFFSET   0x44
++#define MMU_MMU_FAULT_AD_OFFSET  0x48
++#define MMU_MMU_TTB_OFFSET  0x4c
++#define MMU_MMU_LOCK_OFFSET   0x50
++#define MMU_MMU_LD_TLB_OFFSET  0x54
++#define MMU_MMU_CAM_OFFSET   0x58
++#define MMU_MMU_RAM_OFFSET   0x5c
++#define MMU_MMU_GFLUSH_OFFSET  0x60
++#define MMU_MMU_FLUSH_ENTRY_OFFSET  0x64
++/* Bitfield mask and offset declarations */
++#define MMU_MMU_SYSCONFIG_IdleMode_MASK  0x18
++#define MMU_MMU_SYSCONFIG_IdleMode_OFFSET  3
++#define MMU_MMU_SYSCONFIG_AutoIdle_MASK  0x1
++#define MMU_MMU_SYSCONFIG_AutoIdle_OFFSET   0
++#define MMU_MMU_WALKING_ST_TWLRunning_MASK 0x1
++#define MMU_MMU_WALKING_ST_TWLRunning_OFFSET  0
++#define MMU_MMU_CNTL_TWLEnable_MASK 0x4
++#define MMU_MMU_CNTL_TWLEnable_OFFSET 2
++#define MMU_MMU_CNTL_MMUEnable_MASK    0x2
++#define MMU_MMU_CNTL_MMUEnable_OFFSET   1
++#define MMU_MMU_LOCK_BaseValue_MASK 0xfc00
++#define MMU_MMU_LOCK_BaseValue_OFFSET   10
++#define MMU_MMU_LOCK_CurrentVictim_MASK   0x3f0
++#define MMU_MMU_LOCK_CurrentVictim_OFFSET    4
++#define MMU_MMU_GFLUSH_GlobalFlush_MASK 0x1
++#define MMU_MMU_GFLUSH_GlobalFlush_OFFSET   0
++
++#endif /* _MMU_ACC_INT_H */
+diff --git a/drivers/dsp/bridge/hw/MMURegAcM.h b/drivers/dsp/bridge/hw/MMURegAcM.h
+new file mode 100644
+index 0000000..fb3095c
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/MMURegAcM.h
+@@ -0,0 +1,267 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/mmu/MMURegAcM.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++#ifndef _MMU_REG_ACM_H
++#define _MMU_REG_ACM_H
++
++#include <GlobalTypes.h>
++
++#include <EasiGlobal.h>
++
++#include "MMUAccInt.h"
++
++#if defined(USE_LEVEL_1_MACROS)
++
++
++#define MMUMMU_SYSCONFIGReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_SYSCONFIGReadRegister32),\
++      RD_MEM_32_VOLATILE((baseAddress)+MMU_MMU_SYSCONFIG_OFFSET))
++
++
++#define MMUMMU_SYSCONFIGIdleModeWrite32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_SYSCONFIG_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((baseAddress)+offset);\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_SYSCONFIGIdleModeWrite32);\
++    data &= ~(MMU_MMU_SYSCONFIG_IdleMode_MASK);\
++    newValue <<= MMU_MMU_SYSCONFIG_IdleMode_OFFSET;\
++    newValue &= MMU_MMU_SYSCONFIG_IdleMode_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE(baseAddress+offset, newValue);\
++}
++
++
++#define MMUMMU_SYSCONFIGAutoIdleWrite32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_SYSCONFIG_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((baseAddress)+offset);\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_SYSCONFIGAutoIdleWrite32);\
++    data &= ~(MMU_MMU_SYSCONFIG_AutoIdle_MASK);\
++    newValue <<= MMU_MMU_SYSCONFIG_AutoIdle_OFFSET;\
++    newValue &= MMU_MMU_SYSCONFIG_AutoIdle_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE(baseAddress+offset, newValue);\
++}
++
++
++#define MMUMMU_IRQSTATUSReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_IRQSTATUSReadRegister32),\
++      RD_MEM_32_VOLATILE((baseAddress)+MMU_MMU_IRQSTATUS_OFFSET))
++
++
++#define MMUMMU_IRQSTATUSWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_IRQSTATUS_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_IRQSTATUSWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#define MMUMMU_IRQENABLEReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_IRQENABLEReadRegister32),\
++      RD_MEM_32_VOLATILE((baseAddress)+MMU_MMU_IRQENABLE_OFFSET))
++
++
++#define MMUMMU_IRQENABLEWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_IRQENABLE_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_IRQENABLEWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#define MMUMMU_WALKING_STTWLRunningRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_WALKING_STTWLRunningRead32),\
++      (((RD_MEM_32_VOLATILE(((baseAddress)+(MMU_MMU_WALKING_ST_OFFSET))))\
++      & MMU_MMU_WALKING_ST_TWLRunning_MASK) >>\
++      MMU_MMU_WALKING_ST_TWLRunning_OFFSET))
++
++
++#define MMUMMU_CNTLTWLEnableRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_CNTLTWLEnableRead32),\
++      (((RD_MEM_32_VOLATILE(((baseAddress)+(MMU_MMU_CNTL_OFFSET)))) &\
++      MMU_MMU_CNTL_TWLEnable_MASK) >>\
++      MMU_MMU_CNTL_TWLEnable_OFFSET))
++
++
++#define MMUMMU_CNTLTWLEnableWrite32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_CNTL_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((baseAddress)+offset);\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_CNTLTWLEnableWrite32);\
++    data &= ~(MMU_MMU_CNTL_TWLEnable_MASK);\
++    newValue <<= MMU_MMU_CNTL_TWLEnable_OFFSET;\
++    newValue &= MMU_MMU_CNTL_TWLEnable_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE(baseAddress+offset, newValue);\
++}
++
++
++#define MMUMMU_CNTLMMUEnableWrite32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_CNTL_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((baseAddress)+offset);\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_CNTLMMUEnableWrite32);\
++    data &= ~(MMU_MMU_CNTL_MMUEnable_MASK);\
++    newValue <<= MMU_MMU_CNTL_MMUEnable_OFFSET;\
++    newValue &= MMU_MMU_CNTL_MMUEnable_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE(baseAddress+offset, newValue);\
++}
++
++
++#define MMUMMU_FAULT_ADReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_FAULT_ADReadRegister32),\
++      RD_MEM_32_VOLATILE((baseAddress)+MMU_MMU_FAULT_AD_OFFSET))
++
++
++#define MMUMMU_TTBWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_TTB_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_TTBWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#define MMUMMU_LOCKReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LOCKReadRegister32),\
++      RD_MEM_32_VOLATILE((baseAddress)+MMU_MMU_LOCK_OFFSET))
++
++
++#define MMUMMU_LOCKWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_LOCK_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LOCKWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#define MMUMMU_LOCKBaseValueRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LOCKBaseValueRead32),\
++      (((RD_MEM_32_VOLATILE(((baseAddress)+(MMU_MMU_LOCK_OFFSET)))) &\
++      MMU_MMU_LOCK_BaseValue_MASK) >>\
++      MMU_MMU_LOCK_BaseValue_OFFSET))
++
++
++#define MMUMMU_LOCKBaseValueWrite32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_LOCK_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((baseAddress)+offset);\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LOCKBaseValueWrite32);\
++    data &= ~(MMU_MMU_LOCK_BaseValue_MASK);\
++    newValue <<= MMU_MMU_LOCK_BaseValue_OFFSET;\
++    newValue &= MMU_MMU_LOCK_BaseValue_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE(baseAddress+offset, newValue);\
++}
++
++
++#define MMUMMU_LOCKCurrentVictimRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LOCKCurrentVictimRead32),\
++      (((RD_MEM_32_VOLATILE(((baseAddress)+(MMU_MMU_LOCK_OFFSET)))) &\
++      MMU_MMU_LOCK_CurrentVictim_MASK) >>\
++      MMU_MMU_LOCK_CurrentVictim_OFFSET))
++
++
++#define MMUMMU_LOCKCurrentVictimWrite32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_LOCK_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((baseAddress)+offset);\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LOCKCurrentVictimWrite32);\
++    data &= ~(MMU_MMU_LOCK_CurrentVictim_MASK);\
++    newValue <<= MMU_MMU_LOCK_CurrentVictim_OFFSET;\
++    newValue &= MMU_MMU_LOCK_CurrentVictim_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE(baseAddress+offset, newValue);\
++}
++
++
++#define MMUMMU_LOCKCurrentVictimSet32(var, value)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LOCKCurrentVictimSet32),\
++      (((var) & ~(MMU_MMU_LOCK_CurrentVictim_MASK)) |\
++      (((value) << MMU_MMU_LOCK_CurrentVictim_OFFSET) &\
++      MMU_MMU_LOCK_CurrentVictim_MASK)))
++
++
++#define MMUMMU_LD_TLBReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LD_TLBReadRegister32),\
++      RD_MEM_32_VOLATILE((baseAddress)+MMU_MMU_LD_TLB_OFFSET))
++
++
++#define MMUMMU_LD_TLBWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_LD_TLB_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_LD_TLBWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#define MMUMMU_CAMWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_CAM_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_CAMWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#define MMUMMU_RAMWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_RAM_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_RAMWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#define MMUMMU_GFLUSHGlobalFlushWrite32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_GFLUSH_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((baseAddress)+offset);\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_GFLUSHGlobalFlushWrite32);\
++    data &= ~(MMU_MMU_GFLUSH_GlobalFlush_MASK);\
++    newValue <<= MMU_MMU_GFLUSH_GlobalFlush_OFFSET;\
++    newValue &= MMU_MMU_GFLUSH_GlobalFlush_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE(baseAddress+offset, newValue);\
++}
++
++
++#define MMUMMU_FLUSH_ENTRYWriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = MMU_MMU_FLUSH_ENTRY_OFFSET;\
++    register u32 newValue = (value);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_MMUMMU_FLUSH_ENTRYWriteRegister32);\
++    WR_MEM_32_VOLATILE((baseAddress)+offset, newValue);\
++}
++
++
++#endif	/* USE_LEVEL_1_MACROS */
++
++#endif /* _MMU_REG_ACM_H */
+diff --git a/drivers/dsp/bridge/hw/PRCMAccInt.h b/drivers/dsp/bridge/hw/PRCMAccInt.h
+new file mode 100644
+index 0000000..d315dff
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/PRCMAccInt.h
+@@ -0,0 +1,300 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/prcm/PRCMAccInt.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifndef _PRCM_ACC_INT_H
++#define _PRCM_ACC_INT_H
++
++/* Mappings of level 1 EASI function numbers to function names */
++
++#define EASIL1_PRCMPRCM_CLKCFG_CTRLValid_configWriteClk_valid32  \
++						(PRCM_BASE_EASIL1 + 349)
++#define EASIL1_PRCMCM_FCLKEN1_COREReadRegister32	(PRCM_BASE_EASIL1 + 743)
++#define EASIL1_PRCMCM_FCLKEN1_COREEN_GPT8Write32	(PRCM_BASE_EASIL1 + 951)
++#define EASIL1_PRCMCM_FCLKEN1_COREEN_GPT7Write32	(PRCM_BASE_EASIL1 + 961)
++#define EASIL1_PRCMCM_ICLKEN1_COREReadRegister32	\
++						(PRCM_BASE_EASIL1 + 1087)
++#define EASIL1_PRCMCM_ICLKEN1_COREEN_MAILBOXESWrite32	\
++						(PRCM_BASE_EASIL1 + 1105)
++#define EASIL1_PRCMCM_ICLKEN1_COREEN_GPT8Write32	\
++						(PRCM_BASE_EASIL1 + 1305)
++#define EASIL1_PRCMCM_ICLKEN1_COREEN_GPT7Write32	\
++						(PRCM_BASE_EASIL1 + 1315)
++#define EASIL1_PRCMCM_CLKSEL1_CORECLKSEL_L3ReadIssel132	\
++						(PRCM_BASE_EASIL1 + 2261)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT8Write32k32	\
++						(PRCM_BASE_EASIL1 + 2364)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT8WriteSys32	\
++						(PRCM_BASE_EASIL1 + 2365)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT8WriteExt32	\
++						(PRCM_BASE_EASIL1 + 2366)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT7Write32k32	\
++						(PRCM_BASE_EASIL1 + 2380)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT7WriteSys32	\
++						(PRCM_BASE_EASIL1 + 2381)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT7WriteExt32	\
++						(PRCM_BASE_EASIL1 + 2382)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT6WriteSys32	\
++						(PRCM_BASE_EASIL1 + 2397)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT6WriteExt32	\
++						(PRCM_BASE_EASIL1 + 2398)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT5WriteSys32	\
++						(PRCM_BASE_EASIL1 + 2413)
++#define EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT5WriteExt32	\
++						(PRCM_BASE_EASIL1 + 2414)
++#define EASIL1_PRCMCM_CLKSEL1_PLLAPLLs_ClkinRead32	\
++						(PRCM_BASE_EASIL1 + 3747)
++#define EASIL1_PRCMCM_FCLKEN_DSPEN_DSPWrite32	(PRCM_BASE_EASIL1 + 3834)
++#define EASIL1_PRCMCM_ICLKEN_DSPEN_DSP_IPIWrite32	\
++						(PRCM_BASE_EASIL1 + 3846)
++#define EASIL1_PRCMCM_IDLEST_DSPReadRegister32	(PRCM_BASE_EASIL1 + 3850)
++#define EASIL1_PRCMCM_IDLEST_DSPST_IPIRead32	(PRCM_BASE_EASIL1 + 3857)
++#define EASIL1_PRCMCM_IDLEST_DSPST_DSPRead32	(PRCM_BASE_EASIL1 + 3863)
++#define EASIL1_PRCMCM_AUTOIDLE_DSPAUTO_DSP_IPIWrite32	\
++						(PRCM_BASE_EASIL1 + 3877)
++#define EASIL1_PRCMCM_CLKSEL_DSPSYNC_DSPWrite32	(PRCM_BASE_EASIL1 + 3927)
++#define EASIL1_PRCMCM_CLKSEL_DSPCLKSEL_DSP_IFWrite32	\
++						(PRCM_BASE_EASIL1 + 3941)
++#define EASIL1_PRCMCM_CLKSEL_DSPCLKSEL_DSPWrite32	\
++						(PRCM_BASE_EASIL1 + 3965)
++#define EASIL1_PRCMCM_CLKSTCTRL_DSPAutostate_DSPRead32	\
++						(PRCM_BASE_EASIL1 + 3987)
++#define EASIL1_PRCMCM_CLKSTCTRL_DSPAutostate_DSPWrite32	\
++						(PRCM_BASE_EASIL1 + 3993)
++#define EASIL1_PRCMRM_RSTCTRL_DSPReadRegister32	(PRCM_BASE_EASIL1 + 3997)
++#define EASIL1_PRCMRM_RSTCTRL_DSPRST1_DSPWrite32	\
++						(PRCM_BASE_EASIL1 + 4025)
++#define EASIL1_PRCMRM_RSTST_DSPReadRegister32	(PRCM_BASE_EASIL1 + 4029)
++#define EASIL1_PRCMRM_RSTST_DSPWriteRegister32	(PRCM_BASE_EASIL1 + 4030)
++#define EASIL1_PRCMPM_PWSTCTRL_DSPForceStateWrite32	\
++						(PRCM_BASE_EASIL1 + 4165)
++#define EASIL1_PRCMPM_PWSTCTRL_DSPPowerStateWriteRET32	\
++						(PRCM_BASE_EASIL1 + 4193)
++#define EASIL1_PRCMPM_PWSTST_DSPReadRegister32	(PRCM_BASE_EASIL1 + 4197)
++#define EASIL1_PRCMPM_PWSTST_DSPInTransitionRead32	\
++						(PRCM_BASE_EASIL1 + 4198)
++#define EASIL1_PRCMPM_PWSTST_DSPPowerStateStGet32	\
++						(PRCM_BASE_EASIL1 + 4235)
++#define EASIL1_CM_FCLKEN_PER_GPT5WriteRegister32	\
++						(PRCM_BASE_EASIL1 + 4368)
++#define EASIL1_CM_ICLKEN_PER_GPT5WriteRegister32	\
++						(PRCM_BASE_EASIL1 + 4370)
++#define EASIL1_CM_CLKSEL_PER_GPT5Write32k32	(PRCM_BASE_EASIL1 + 4372)
++#define EASIL1_CM_CLKSEL_PER_GPT6Write32k32	(PRCM_BASE_EASIL1 + 4373)
++#define EASIL1_PRCMCM_CLKSTCTRL_IVA2WriteRegister32	\
++						(PRCM_BASE_EASIL1 + 4374)
++#define EASIL1_PRCMPM_PWSTCTRL_IVA2PowerStateWriteON32	\
++						(PRCM_BASE_EASIL1 + 4375)
++#define EASIL1_PRCMPM_PWSTCTRL_IVA2PowerStateWriteOFF32	\
++						(PRCM_BASE_EASIL1 + 4376)
++#define EASIL1_PRCMPM_PWSTST_IVA2InTransitionRead32	\
++						(PRCM_BASE_EASIL1 + 4377)
++#define EASIL1_PRCMPM_PWSTST_IVA2PowerStateStGet32	\
++						(PRCM_BASE_EASIL1 + 4378)
++#define EASIL1_PRCMPM_PWSTST_IVA2ReadRegister32	(PRCM_BASE_EASIL1 + 4379)
++
++/* Register offset address definitions */
++
++#define PRCM_PRCM_CLKCFG_CTRL_OFFSET        (u32)(0x80)
++#define PRCM_CM_FCLKEN1_CORE_OFFSET          (u32)(0x200)
++#define PRCM_CM_ICLKEN1_CORE_OFFSET          (u32)(0x210)
++#define PRCM_CM_CLKSEL2_CORE_OFFSET          (u32)(0x244)
++#define PRCM_CM_CLKSEL1_PLL_OFFSET           (u32)(0x540)
++#define PRCM_CM_ICLKEN_DSP_OFFSET            (u32)(0x810)
++#define PRCM_CM_IDLEST_DSP_OFFSET            (u32)(0x820)
++#define PRCM_CM_AUTOIDLE_DSP_OFFSET          (u32)(0x830)
++#define PRCM_CM_CLKSEL_DSP_OFFSET            (u32)(0x840)
++#define PRCM_CM_CLKSTCTRL_DSP_OFFSET         (u32)(0x848)
++#define PRCM_RM_RSTCTRL_DSP_OFFSET           (u32)(0x850)
++#define PRCM_RM_RSTST_DSP_OFFSET             (u32)(0x858)
++#define PRCM_PM_PWSTCTRL_DSP_OFFSET          (u32)(0x8e0)
++#define PRCM_PM_PWSTST_DSP_OFFSET            (u32)(0x8e4)
++#define PRCM_PM_PWSTST_IVA2_OFFSET            (u32)(0xE4)
++#define PRCM_PM_PWSTCTRL_IVA2_OFFSET          (u32)(0xE0)
++#define PRCM_CM_CLKSTCTRL_IVA2_OFFSET         (u32)(0x48)
++#define CM_CLKSEL_PER_OFFSET                            (u32)(0x40)
++
++/* Bitfield mask and offset declarations */
++
++#define PRCM_PRCM_CLKCFG_CTRL_Valid_config_MASK         (u32)(0x1)
++#define PRCM_PRCM_CLKCFG_CTRL_Valid_config_OFFSET       (u32)(0)
++
++#define PRCM_CM_FCLKEN1_CORE_EN_GPT8_MASK               (u32)(0x400)
++#define PRCM_CM_FCLKEN1_CORE_EN_GPT8_OFFSET             (u32)(10)
++
++#define PRCM_CM_FCLKEN1_CORE_EN_GPT7_MASK               (u32)(0x200)
++#define PRCM_CM_FCLKEN1_CORE_EN_GPT7_OFFSET             (u32)(9)
++
++#define PRCM_CM_ICLKEN1_CORE_EN_GPT8_MASK               (u32)(0x400)
++#define PRCM_CM_ICLKEN1_CORE_EN_GPT8_OFFSET             (u32)(10)
++
++#define PRCM_CM_ICLKEN1_CORE_EN_GPT7_MASK               (u32)(0x200)
++#define PRCM_CM_ICLKEN1_CORE_EN_GPT7_OFFSET             (u32)(9)
++
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_MASK           (u32)(0xc000)
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_OFFSET         (u32)(14)
++
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_MASK           (u32)(0x3000)
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_OFFSET         (u32)(12)
++
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT6_MASK           (u32)(0xc00)
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT6_OFFSET         (u32)(10)
++
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT5_MASK           (u32)(0x300)
++#define PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT5_OFFSET         (u32)(8)
++
++#define PRCM_CM_CLKSEL1_PLL_APLLs_Clkin_MASK            (u32)(0x3800000)
++#define PRCM_CM_CLKSEL1_PLL_APLLs_Clkin_OFFSET          (u32)(23)
++
++#define PRCM_CM_ICLKEN_DSP_EN_DSP_IPI_MASK              (u32)(0x2)
++#define PRCM_CM_ICLKEN_DSP_EN_DSP_IPI_OFFSET            (u32)(1)
++
++#define PRCM_CM_IDLEST_DSP_ST_IPI_MASK                  (u32)(0x2)
++#define PRCM_CM_IDLEST_DSP_ST_IPI_OFFSET                (u32)(1)
++
++#define PRCM_CM_AUTOIDLE_DSP_AUTO_DSP_IPI_MASK          (u32)(0x2)
++#define PRCM_CM_AUTOIDLE_DSP_AUTO_DSP_IPI_OFFSET        (u32)(1)
++
++#define PRCM_CM_CLKSEL_DSP_SYNC_DSP_MASK                (u32)(0x80)
++#define PRCM_CM_CLKSEL_DSP_SYNC_DSP_OFFSET              (u32)(7)
++
++#define PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_IF_MASK           (u32)(0x60)
++#define PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_IF_OFFSET         (u32)(5)
++
++#define PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_MASK              (u32)(0x1f)
++#define PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_OFFSET            (u32)(0)
++
++#define PRCM_CM_CLKSTCTRL_DSP_Autostate_DSP_MASK        (u32)(0x1)
++#define PRCM_CM_CLKSTCTRL_DSP_Autostate_DSP_OFFSET      (u32)(0)
++
++#define PRCM_PM_PWSTCTRL_DSP_ForceState_MASK            (u32)(0x40000)
++#define PRCM_PM_PWSTCTRL_DSP_ForceState_OFFSET          (u32)(18)
++
++#define PRCM_PM_PWSTCTRL_DSP_PowerState_MASK            (u32)(0x3)
++#define PRCM_PM_PWSTCTRL_DSP_PowerState_OFFSET          (u32)(0)
++
++#define PRCM_PM_PWSTCTRL_IVA2_PowerState_MASK            (u32)(0x3)
++#define PRCM_PM_PWSTCTRL_IVA2_PowerState_OFFSET          (u32)(0)
++
++#define PRCM_PM_PWSTST_DSP_InTransition_MASK            (u32)(0x100000)
++#define PRCM_PM_PWSTST_DSP_InTransition_OFFSET          (u32)(20)
++
++#define PRCM_PM_PWSTST_IVA2_InTransition_MASK            (u32)(0x100000)
++#define PRCM_PM_PWSTST_IVA2_InTransition_OFFSET          (u32)(20)
++
++#define PRCM_PM_PWSTST_DSP_PowerStateSt_MASK            (u32)(0x3)
++#define PRCM_PM_PWSTST_DSP_PowerStateSt_OFFSET          (u32)(0)
++
++#define PRCM_PM_PWSTST_IVA2_PowerStateSt_MASK            (u32)(0x3)
++#define PRCM_PM_PWSTST_IVA2_PowerStateSt_OFFSET          (u32)(0)
++
++#define CM_FCLKEN_PER_OFFSET		(u32)(0x0)
++#define CM_FCLKEN_PER_GPT5_OFFSET         (u32)(6)
++#define CM_FCLKEN_PER_GPT5_MASK     (u32)(0x40)
++
++#define CM_FCLKEN_PER_GPT6_OFFSET   (u32)(7)
++#define CM_FCLKEN_PER_GPT6_MASK      (u32)(0x80)
++
++#define CM_ICLKEN_PER_OFFSET		(u32)(0x10)
++#define CM_ICLKEN_PER_GPT5_OFFSET  (u32)(6)
++#define CM_ICLKEN_PER_GPT5_MASK     (u32)(0x40)
++
++#define CM_ICLKEN_PER_GPT6_OFFSET  (u32)(7)
++#define CM_ICLKEN_PER_GPT6_MASK     (u32)(0x80)
++
++#define CM_CLKSEL_PER_GPT5_OFFSET   (u32)(3)
++#define CM_CLKSEL_PER_GPT5_MASK      (u32)(0x8)
++
++#define CM_CLKSEL_PER_GPT6_OFFSET   (u32)(4)
++#define CM_CLKSEL_PER_GPT6_MASK       (u32)(0x10)
++
++
++#define CM_FCLKEN_IVA2_OFFSET		(u32)(0x0)
++#define CM_FCLKEN_IVA2_EN_MASK	(u32)(0x1)
++#define CM_FCLKEN_IVA2_EN_OFFSET	(u32)(0x0)
++
++#define CM_IDLEST_IVA2_OFFSET 		(u32)(0x20)
++#define CM_IDLEST_IVA2_ST_IVA2_MASK (u32) (0x01)
++#define CM_IDLEST_IVA2_ST_IVA2_OFFSET (u32) (0x00)
++
++#define CM_FCLKEN1_CORE_OFFSET 	(u32)(0xA00)
++
++#define CM_ICLKEN1_CORE_OFFSET  	(u32)(0xA10)
++#define CM_ICLKEN1_CORE_EN_MAILBOXES_MASK  (u32)(0x00000080)   /* bit 7 */
++#define CM_ICLKEN1_CORE_EN_MAILBOXES_OFFSET	(u32)(7)
++
++#define CM_CLKSTCTRL_IVA2_OFFSET (u32)(0x0)
++#define CM_CLKSTCTRL_IVA2_MASK    (u32)(0x3)
++
++
++#define PRM_RSTCTRL_IVA2_OFFSET  	(u32)(0x50)
++#define PRM_RSTCTRL_IVA2_RST1_MASK	(u32)(0x1)
++#define PRM_RSTCTRL_IVA2_RST1_OFFSET	(u32)(0x0)
++#define PRM_RSTCTRL_IVA2_RST2_MASK	(u32)(0x2)
++#define PRM_RSTCTRL_IVA2_RST2_OFFSET	(u32)(0x1)
++#define PRM_RSTCTRL_IVA2_RST3_MASK	(u32)(0x4)
++#define PRM_RSTCTRL_IVA2_RST3_OFFSET	(u32)(0x2)
++
++
++/* The following represent the enumerated values for each bitfield */
++
++enum PRCMPRCM_CLKCFG_CTRLValid_configE {
++    PRCMPRCM_CLKCFG_CTRLValid_configUpdated = 0x0000,
++    PRCMPRCM_CLKCFG_CTRLValid_configClk_valid = 0x0001
++} ;
++
++enum PRCMCM_CLKSEL2_CORECLKSEL_GPT8E {
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT832k = 0x0000,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT8Sys = 0x0001,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT8Ext = 0x0002,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT8Reserved = 0x0003
++} ;
++
++enum PRCMCM_CLKSEL2_CORECLKSEL_GPT7E {
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT732k = 0x0000,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT7Sys = 0x0001,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT7Ext = 0x0002,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT7Reserved = 0x0003
++} ;
++
++enum PRCMCM_CLKSEL2_CORECLKSEL_GPT6E {
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT632k = 0x0000,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT6Sys = 0x0001,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT6Ext = 0x0002,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT6Reserved = 0x0003
++} ;
++
++enum PRCMCM_CLKSEL2_CORECLKSEL_GPT5E {
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT532k = 0x0000,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT5Sys = 0x0001,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT5Ext = 0x0002,
++    PRCMCM_CLKSEL2_CORECLKSEL_GPT5Reserved = 0x0003
++} ;
++
++enum PRCMPM_PWSTCTRL_DSPPowerStateE {
++    PRCMPM_PWSTCTRL_DSPPowerStateON = 0x0000,
++    PRCMPM_PWSTCTRL_DSPPowerStateRET = 0x0001,
++    PRCMPM_PWSTCTRL_DSPPowerStateReserved = 0x0002,
++    PRCMPM_PWSTCTRL_DSPPowerStateOFF = 0x0003
++} ;
++
++enum PRCMPM_PWSTCTRL_IVA2PowerStateE {
++    PRCMPM_PWSTCTRL_IVA2PowerStateON = 0x0003,
++    PRCMPM_PWSTCTRL_IVA2PowerStateRET = 0x0001,
++    PRCMPM_PWSTCTRL_IVA2PowerStateReserved = 0x0002,
++    PRCMPM_PWSTCTRL_IVA2PowerStateOFF = 0x0000
++} ;
++
++#endif /* _PRCM_ACC_INT_H */
+diff --git a/drivers/dsp/bridge/hw/PRCMRegAcM.h b/drivers/dsp/bridge/hw/PRCMRegAcM.h
+new file mode 100644
+index 0000000..99c2f07
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/PRCMRegAcM.h
+@@ -0,0 +1,669 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/prcm/PRCMRegAcM.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#ifndef _PRCM_REG_ACM_H
++#define _PRCM_REG_ACM_H
++
++#include <GlobalTypes.h>
++
++#include <EasiGlobal.h>
++
++#include "PRCMAccInt.h"
++
++#if defined(USE_LEVEL_1_MACROS)
++
++#define PRCMPRCM_CLKCFG_CTRLValid_configWriteClk_valid32(baseAddress)\
++{\
++    const u32 offset = PRCM_PRCM_CLKCFG_CTRL_OFFSET;\
++    const u32 newValue = \
++	(u32)PRCMPRCM_CLKCFG_CTRLValid_configClk_valid <<\
++      PRCM_PRCM_CLKCFG_CTRL_Valid_config_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(\
++      EASIL1_PRCMPRCM_CLKCFG_CTRLValid_configWriteClk_valid32);\
++    data &= ~(PRCM_PRCM_CLKCFG_CTRL_Valid_config_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define CM_FCLKEN_PERReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_FCLKEN1_COREReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+CM_FCLKEN_PER_OFFSET))
++
++
++#define CM_ICLKEN_PERReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_FCLKEN1_COREReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+CM_ICLKEN_PER_OFFSET))
++
++
++#define CM_FCLKEN_PER_GPT5WriteRegister32(baseAddress,value)\
++{\
++    const u32 offset = CM_FCLKEN_PER_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_CM_FCLKEN_PER_GPT5WriteRegister32);\
++   data &= ~(CM_FCLKEN_PER_GPT5_MASK);\
++   newValue <<= CM_FCLKEN_PER_GPT5_OFFSET;\
++   newValue &= CM_FCLKEN_PER_GPT5_MASK;\
++   newValue |= data;\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define CM_FCLKEN_PER_GPT6WriteRegister32(baseAddress,value)\
++{\
++    const u32 offset = CM_FCLKEN_PER_OFFSET;\
++    register u32 data =\
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_CM_FCLKEN_PER_GPT5WriteRegister32);\
++   data &= ~(CM_FCLKEN_PER_GPT6_MASK);\
++   newValue <<= CM_FCLKEN_PER_GPT6_OFFSET;\
++   newValue &= CM_FCLKEN_PER_GPT6_MASK;\
++   newValue |= data;\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define CM_ICLKEN_PER_GPT5WriteRegister32(baseAddress,value)\
++{\
++    const u32 offset = CM_ICLKEN_PER_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_CM_ICLKEN_PER_GPT5WriteRegister32);\
++   data &= ~(CM_ICLKEN_PER_GPT5_MASK);\
++   newValue <<= CM_ICLKEN_PER_GPT5_OFFSET;\
++   newValue &= CM_ICLKEN_PER_GPT5_MASK;\
++   newValue |= data;\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define CM_ICLKEN_PER_GPT6WriteRegister32(baseAddress,value)\
++{\
++    const u32 offset = CM_ICLKEN_PER_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_CM_ICLKEN_PER_GPT5WriteRegister32);\
++   data &= ~(CM_ICLKEN_PER_GPT6_MASK);\
++   newValue <<= CM_ICLKEN_PER_GPT6_OFFSET;\
++   newValue &= CM_ICLKEN_PER_GPT6_MASK;\
++   newValue |= data;\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define CM_FCLKEN1_COREReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_FCLKEN1_COREReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+CM_FCLKEN1_CORE_OFFSET))
++
++
++#define PRCMCM_FCLKEN1_COREEN_GPT8Write32(baseAddress,value)\
++{\
++    const u32 offset = PRCM_CM_FCLKEN1_CORE_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_FCLKEN1_COREEN_GPT8Write32);\
++    data &= ~(PRCM_CM_FCLKEN1_CORE_EN_GPT8_MASK);\
++    newValue <<= PRCM_CM_FCLKEN1_CORE_EN_GPT8_OFFSET;\
++    newValue &= PRCM_CM_FCLKEN1_CORE_EN_GPT8_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_FCLKEN1_COREEN_GPT7Write32(baseAddress,value)\
++{\
++    const u32 offset = PRCM_CM_FCLKEN1_CORE_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_FCLKEN1_COREEN_GPT7Write32);\
++    data &= ~(PRCM_CM_FCLKEN1_CORE_EN_GPT7_MASK);\
++    newValue <<= PRCM_CM_FCLKEN1_CORE_EN_GPT7_OFFSET;\
++    newValue &= PRCM_CM_FCLKEN1_CORE_EN_GPT7_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define CM_ICLKEN1_COREReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_ICLKEN1_COREReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+CM_ICLKEN1_CORE_OFFSET))
++
++
++#define  CM_ICLKEN1_COREEN_MAILBOXESWrite32(baseAddress, value)\
++{\
++    const u32 offset = CM_ICLKEN1_CORE_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_ICLKEN1_COREEN_MAILBOXESWrite32);\
++    data &= ~(CM_ICLKEN1_CORE_EN_MAILBOXES_MASK);\
++    newValue <<= CM_ICLKEN1_CORE_EN_MAILBOXES_OFFSET;\
++    newValue &= CM_ICLKEN1_CORE_EN_MAILBOXES_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_ICLKEN1_COREEN_GPT8Write32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_ICLKEN1_CORE_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_ICLKEN1_COREEN_GPT8Write32);\
++    data &= ~(PRCM_CM_ICLKEN1_CORE_EN_GPT8_MASK);\
++    newValue <<= PRCM_CM_ICLKEN1_CORE_EN_GPT8_OFFSET;\
++    newValue &= PRCM_CM_ICLKEN1_CORE_EN_GPT8_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_ICLKEN1_COREEN_GPT7Write32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_ICLKEN1_CORE_OFFSET;\
++    register u32 data =\
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_ICLKEN1_COREEN_GPT7Write32);\
++    data &= ~(PRCM_CM_ICLKEN1_CORE_EN_GPT7_MASK);\
++    newValue <<= PRCM_CM_ICLKEN1_CORE_EN_GPT7_OFFSET;\
++    newValue &= PRCM_CM_ICLKEN1_CORE_EN_GPT7_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT8Write32k32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT832k <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT8Write32k32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT8WriteSys32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT8Sys <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT8WriteSys32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT8WriteExt32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT8Ext <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT8WriteExt32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT8_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT7Write32k32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT732k <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT7Write32k32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT7WriteSys32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT7Sys <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT7WriteSys32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT7WriteExt32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT7Ext <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT7WriteExt32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT7_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT6WriteSys32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT6Sys <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT6_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT6WriteSys32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT6_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT6WriteExt32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT6Ext <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT6_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT6WriteExt32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT6_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define CM_CLKSEL_PER_GPT5Write32k32(baseAddress)\
++{\
++    const u32 offset = CM_CLKSEL_PER_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT532k <<\
++      CM_CLKSEL_PER_GPT5_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_CM_CLKSEL_PER_GPT5Write32k32);\
++    data &= ~(CM_CLKSEL_PER_GPT5_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define CM_CLKSEL_PER_GPT6Write32k32(baseAddress)\
++{\
++    const u32 offset = CM_CLKSEL_PER_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT532k <<\
++      CM_CLKSEL_PER_GPT6_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_CM_CLKSEL_PER_GPT6Write32k32);\
++    data &= ~(CM_CLKSEL_PER_GPT6_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT5WriteSys32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT5Sys <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT5_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT5WriteSys32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT5_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL2_CORECLKSEL_GPT5WriteExt32(baseAddress)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL2_CORE_OFFSET;\
++    const u32 newValue = (u32)PRCMCM_CLKSEL2_CORECLKSEL_GPT5Ext <<\
++      PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT5_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL2_CORECLKSEL_GPT5WriteExt32);\
++    data &= ~(PRCM_CM_CLKSEL2_CORE_CLKSEL_GPT5_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMCM_CLKSEL1_PLLAPLLs_ClkinRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL1_PLLAPLLs_ClkinRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++	(PRCM_CM_CLKSEL1_PLL_OFFSET)))) &\
++      PRCM_CM_CLKSEL1_PLL_APLLs_Clkin_MASK) >>\
++      PRCM_CM_CLKSEL1_PLL_APLLs_Clkin_OFFSET))
++
++
++#define CM_FCLKEN_IVA2EN_DSPWrite32(baseAddress,value)\
++{\
++    const u32 offset = CM_FCLKEN_IVA2_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_FCLKEN_DSPEN_DSPWrite32);\
++    data &= ~(CM_FCLKEN_IVA2_EN_MASK);\
++    newValue <<= CM_FCLKEN_IVA2_EN_OFFSET;\
++    newValue &= CM_FCLKEN_IVA2_EN_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_ICLKEN_DSPEN_DSP_IPIWrite32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_ICLKEN_DSP_OFFSET;\
++    register u32 data = \
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_ICLKEN_DSPEN_DSP_IPIWrite32);\
++    data &= ~(PRCM_CM_ICLKEN_DSP_EN_DSP_IPI_MASK);\
++    newValue <<= PRCM_CM_ICLKEN_DSP_EN_DSP_IPI_OFFSET;\
++    newValue &= PRCM_CM_ICLKEN_DSP_EN_DSP_IPI_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_IDLEST_DSPReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_IDLEST_DSPReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+PRCM_CM_IDLEST_DSP_OFFSET))
++
++
++#define PRCMCM_IDLEST_DSPST_IPIRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_IDLEST_DSPST_IPIRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++	(PRCM_CM_IDLEST_DSP_OFFSET)))) &\
++      PRCM_CM_IDLEST_DSP_ST_IPI_MASK) >>\
++      PRCM_CM_IDLEST_DSP_ST_IPI_OFFSET))
++
++
++#define PRM_IDLEST_IVA2ST_IVA2Read32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_IDLEST_DSPST_DSPRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++	  (CM_IDLEST_IVA2_OFFSET)))) &\
++      CM_IDLEST_IVA2_ST_IVA2_MASK) >>\
++      CM_IDLEST_IVA2_ST_IVA2_OFFSET))
++
++
++#define PRCMCM_AUTOIDLE_DSPAUTO_DSP_IPIWrite32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_AUTOIDLE_DSP_OFFSET;\
++    register u32 data =\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_AUTOIDLE_DSPAUTO_DSP_IPIWrite32);\
++    data &= ~(PRCM_CM_AUTOIDLE_DSP_AUTO_DSP_IPI_MASK);\
++    newValue <<= PRCM_CM_AUTOIDLE_DSP_AUTO_DSP_IPI_OFFSET;\
++    newValue &= PRCM_CM_AUTOIDLE_DSP_AUTO_DSP_IPI_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_CLKSEL_DSPSYNC_DSPWrite32(baseAddress,value)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL_DSP_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL_DSPSYNC_DSPWrite32);\
++    data &= ~(PRCM_CM_CLKSEL_DSP_SYNC_DSP_MASK);\
++    newValue <<= PRCM_CM_CLKSEL_DSP_SYNC_DSP_OFFSET;\
++    newValue &= PRCM_CM_CLKSEL_DSP_SYNC_DSP_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_CLKSEL_DSPCLKSEL_DSP_IFWrite32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL_DSP_OFFSET;\
++    register u32 data = \
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL_DSPCLKSEL_DSP_IFWrite32);\
++    data &= ~(PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_IF_MASK);\
++    newValue <<= PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_IF_OFFSET;\
++    newValue &= PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_IF_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_CLKSEL_DSPCLKSEL_DSPWrite32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_CLKSEL_DSP_OFFSET;\
++    register u32 data = \
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSEL_DSPCLKSEL_DSPWrite32);\
++    data &= ~(PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_MASK);\
++    newValue <<= PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_OFFSET;\
++    newValue &= PRCM_CM_CLKSEL_DSP_CLKSEL_DSP_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_CLKSTCTRL_IVA2WriteRegister32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_CLKSTCTRL_IVA2_OFFSET;\
++    register u32 data = \
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSTCTRL_IVA2WriteRegister32);\
++    data &= ~(CM_CLKSTCTRL_IVA2_MASK);\
++    newValue <<= CM_CLKSTCTRL_IVA2_OFFSET;\
++    newValue &= CM_CLKSTCTRL_IVA2_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMCM_CLKSTCTRL_DSPAutostate_DSPRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSTCTRL_DSPAutostate_DSPRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++	(PRCM_CM_CLKSTCTRL_DSP_OFFSET)))) &\
++      PRCM_CM_CLKSTCTRL_DSP_Autostate_DSP_MASK) >>\
++      PRCM_CM_CLKSTCTRL_DSP_Autostate_DSP_OFFSET))
++
++
++#define PRCMCM_CLKSTCTRL_DSPAutostate_DSPWrite32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_CM_CLKSTCTRL_DSP_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMCM_CLKSTCTRL_DSPAutostate_DSPWrite32);\
++    data &= ~(PRCM_CM_CLKSTCTRL_DSP_Autostate_DSP_MASK);\
++    newValue <<= PRCM_CM_CLKSTCTRL_DSP_Autostate_DSP_OFFSET;\
++    newValue &= PRCM_CM_CLKSTCTRL_DSP_Autostate_DSP_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMRM_RSTCTRL_DSPReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMRM_RSTCTRL_DSPReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+PRCM_RM_RSTCTRL_DSP_OFFSET))
++
++
++#define PRM_RSTCTRL_IVA2RST1_DSPWrite32(baseAddress,value)\
++{\
++    const u32 offset = PRM_RSTCTRL_IVA2_OFFSET;\
++    register u32 data =\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMRM_RSTCTRL_DSPRST1_DSPWrite32);\
++    data &= ~(PRM_RSTCTRL_IVA2_RST1_MASK);\
++    newValue <<= PRM_RSTCTRL_IVA2_RST1_OFFSET;\
++    newValue &= PRM_RSTCTRL_IVA2_RST1_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRM_RSTCTRL_IVA2RST2_DSPWrite32(baseAddress,value)\
++{\
++    const u32 offset = PRM_RSTCTRL_IVA2_OFFSET;\
++    register u32 data =\
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMRM_RSTCTRL_DSPRST1_DSPWrite32);\
++    data &= ~(PRM_RSTCTRL_IVA2_RST2_MASK);\
++    newValue <<= PRM_RSTCTRL_IVA2_RST2_OFFSET;\
++    newValue &= PRM_RSTCTRL_IVA2_RST2_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRM_RSTCTRL_IVA2RST3_DSPWrite32(baseAddress,value)\
++{\
++    const u32 offset = PRM_RSTCTRL_IVA2_OFFSET;\
++    register u32 data =\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMRM_RSTCTRL_DSPRST1_DSPWrite32);\
++    data &= ~(PRM_RSTCTRL_IVA2_RST3_MASK);\
++    newValue <<= PRM_RSTCTRL_IVA2_RST3_OFFSET;\
++    newValue &= PRM_RSTCTRL_IVA2_RST3_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMRM_RSTST_DSPReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMRM_RSTST_DSPReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+PRCM_RM_RSTST_DSP_OFFSET))
++
++
++#define PRCMRM_RSTST_DSPWriteRegister32(baseAddress,value)\
++{\
++    const u32 offset = PRCM_RM_RSTST_DSP_OFFSET;\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMRM_RSTST_DSPWriteRegister32);\
++    WR_MEM_32_VOLATILE(((u32)(baseAddress))+offset, newValue);\
++}
++
++
++#define PRCMPM_PWSTCTRL_DSPForceStateWrite32(baseAddress, value)\
++{\
++    const u32 offset = PRCM_PM_PWSTCTRL_DSP_OFFSET;\
++    register u32 data = \
++	RD_MEM_32_VOLATILE(((u32)(baseAddress))+offset);\
++    register u32 newValue = ((u32)(value));\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTCTRL_DSPForceStateWrite32);\
++    data &= ~(PRCM_PM_PWSTCTRL_DSP_ForceState_MASK);\
++    newValue <<= PRCM_PM_PWSTCTRL_DSP_ForceState_OFFSET;\
++    newValue &= PRCM_PM_PWSTCTRL_DSP_ForceState_MASK;\
++    newValue |= data;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, newValue);\
++}
++
++
++#define PRCMPM_PWSTCTRL_IVA2PowerStateWriteON32(baseAddress)\
++{\
++    const u32 offset = PRCM_PM_PWSTCTRL_IVA2_OFFSET;\
++    const u32 newValue = (u32)PRCMPM_PWSTCTRL_IVA2PowerStateON <<\
++      PRCM_PM_PWSTCTRL_IVA2_PowerState_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTCTRL_IVA2PowerStateWriteON32);\
++    data &= ~(PRCM_PM_PWSTCTRL_IVA2_PowerState_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMPM_PWSTCTRL_IVA2PowerStateWriteOFF32(baseAddress)\
++{\
++    const u32 offset = PRCM_PM_PWSTCTRL_IVA2_OFFSET;\
++    const u32 newValue = (u32)PRCMPM_PWSTCTRL_IVA2PowerStateOFF <<\
++      PRCM_PM_PWSTCTRL_IVA2_PowerState_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTCTRL_IVA2PowerStateWriteOFF32);\
++    data &= ~(PRCM_PM_PWSTCTRL_IVA2_PowerState_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMPM_PWSTCTRL_DSPPowerStateWriteRET32(baseAddress)\
++{\
++    const u32 offset = PRCM_PM_PWSTCTRL_DSP_OFFSET;\
++    const u32 newValue = (u32)PRCMPM_PWSTCTRL_DSPPowerStateRET <<\
++      PRCM_PM_PWSTCTRL_DSP_PowerState_OFFSET;\
++    register u32 data = RD_MEM_32_VOLATILE((u32)(baseAddress)+offset);\
++    _DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTCTRL_DSPPowerStateWriteRET32);\
++    data &= ~(PRCM_PM_PWSTCTRL_DSP_PowerState_MASK);\
++    data |= newValue;\
++    WR_MEM_32_VOLATILE((u32)(baseAddress)+offset, data);\
++}
++
++
++#define PRCMPM_PWSTST_DSPReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTST_DSPReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+PRCM_PM_PWSTST_DSP_OFFSET))
++
++
++#define PRCMPM_PWSTST_IVA2ReadRegister32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTST_IVA2ReadRegister32),\
++      RD_MEM_32_VOLATILE(((u32)(baseAddress))+PRCM_PM_PWSTST_IVA2_OFFSET))
++
++
++#define PRCMPM_PWSTST_DSPInTransitionRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTST_DSPInTransitionRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++	(PRCM_PM_PWSTST_DSP_OFFSET)))) &\
++      PRCM_PM_PWSTST_DSP_InTransition_MASK) >>\
++      PRCM_PM_PWSTST_DSP_InTransition_OFFSET))
++
++
++#define PRCMPM_PWSTST_IVA2InTransitionRead32(baseAddress)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTST_IVA2InTransitionRead32),\
++      (((RD_MEM_32_VOLATILE((((u32)(baseAddress))+\
++	(PRCM_PM_PWSTST_IVA2_OFFSET)))) &\
++      PRCM_PM_PWSTST_IVA2_InTransition_MASK) >>\
++      PRCM_PM_PWSTST_IVA2_InTransition_OFFSET))
++
++
++#define PRCMPM_PWSTST_DSPPowerStateStGet32(var)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTST_DSPPowerStateStGet32),\
++      (u32)((((u32)(var)) & PRCM_PM_PWSTST_DSP_PowerStateSt_MASK) >>\
++	PRCM_PM_PWSTST_DSP_PowerStateSt_OFFSET))
++
++
++#define PRCMPM_PWSTST_IVA2PowerStateStGet32(var)\
++    (_DEBUG_LEVEL_1_EASI(EASIL1_PRCMPM_PWSTST_IVA2PowerStateStGet32),\
++      (u32)((((u32)(var)) & PRCM_PM_PWSTST_IVA2_PowerStateSt_MASK) >>\
++      PRCM_PM_PWSTST_IVA2_PowerStateSt_OFFSET))
++
++
++#endif  /* USE_LEVEL_1_MACROS */
++
++#endif /* _PRCM_REG_ACM_H */
+diff --git a/drivers/dsp/bridge/hw/hw_defs.h b/drivers/dsp/bridge/hw/hw_defs.h
+new file mode 100644
+index 0000000..69a27b3
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_defs.h
+@@ -0,0 +1,73 @@
++/*
++ * linux/drivers/dsp/bridge/hw/common/inc/hw_defs.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== hw_defs.h ========
++ *  Description:
++ *      Global HW definitions
++ *
++ *! Revision History:
++ *! ================
++ *! 19 Apr 2004 sb: Added generic page size, endianness and element size defns
++ *! 16 Feb 2003 sb: Initial version
++ */
++#ifndef __HW_DEFS_H
++#define __HW_DEFS_H
++
++#include <GlobalTypes.h>
++
++/* Page size */
++#define HW_PAGE_SIZE_4KB   0x1000
++#define HW_PAGE_SIZE_64KB  0x10000
++#define HW_PAGE_SIZE_1MB   0x100000
++#define HW_PAGE_SIZE_16MB  0x1000000
++
++/* HW_STATUS:  return type for HW API */
++typedef long HW_STATUS;
++
++/* HW_SetClear_t:  Enumerated Type used to set and clear any bit */
++enum HW_SetClear_t {
++    HW_CLEAR,
++    HW_SET
++} ;
++
++/* HW_Endianism_t:  Enumerated Type used to specify the endianism
++ *		Do NOT change these values. They are used as bit fields. */
++enum HW_Endianism_t {
++    HW_LITTLE_ENDIAN,
++    HW_BIG_ENDIAN
++
++} ;
++
++/* HW_ElementSize_t:  Enumerated Type used to specify the element size
++ *		Do NOT change these values. They are used as bit fields. */
++enum HW_ElementSize_t {
++    HW_ELEM_SIZE_8BIT,
++    HW_ELEM_SIZE_16BIT,
++    HW_ELEM_SIZE_32BIT,
++    HW_ELEM_SIZE_64BIT
++
++} ;
++
++/* HW_IdleMode_t:  Enumerated Type used to specify Idle modes */
++	enum HW_IdleMode_t {
++		HW_FORCE_IDLE,
++		HW_NO_IDLE,
++		HW_SMART_IDLE
++	} ;
++
++#endif  /* __HW_DEFS_H */
+diff --git a/drivers/dsp/bridge/hw/hw_dspssC64P.c b/drivers/dsp/bridge/hw/hw_dspssC64P.c
+new file mode 100644
+index 0000000..2411b51
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_dspssC64P.c
+@@ -0,0 +1,55 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/dspss/hw_dspss64P.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*
++ *  ======== hw_dspss64P.c ========
++ *  Description:
++ *      API definitions to configure DSP Subsystem modules like IPI
++ *
++ *! Revision History:
++ *! ================
++ *! 19 Apr 2004 sb: Implemented HW_DSPSS_IPIEndianismSet
++ *! 16 Feb 2003 sb: Initial version
++ */
++
++/* PROJECT SPECIFIC INCLUDE FILES */
++#include <GlobalTypes.h>
++#include <hw_defs.h>
++#include <hw_dspssC64P.h>
++#include <IVA2RegAcM.h>
++#include <IPIAccInt.h>
++
++/* HW FUNCTIONS */
++HW_STATUS HW_DSPSS_BootModeSet(const u32 baseAddress,
++		      enum HW_DSPSYSC_BootMode_t bootMode,
++		      const u32 bootAddress)
++{
++	HW_STATUS status = RET_OK;
++	u32 offset = SYSC_IVA2BOOTMOD_OFFSET;
++	u32 alignedBootAddr;
++
++	/* if Boot mode it DIRECT BOOT, check that the bootAddress is
++	 * aligned to atleast 1K :: TODO */
++	WR_MEM_32_VOLATILE((baseAddress) + offset, bootMode);
++
++	offset = SYSC_IVA2BOOTADDR_OFFSET;
++
++	alignedBootAddr = bootAddress & SYSC_IVA2BOOTADDR_MASK;
++
++	WR_MEM_32_VOLATILE((baseAddress) + offset, alignedBootAddr);
++
++	return status;
++}
+diff --git a/drivers/dsp/bridge/hw/hw_dspssC64P.h b/drivers/dsp/bridge/hw/hw_dspssC64P.h
+new file mode 100644
+index 0000000..3a5f820
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_dspssC64P.h
+@@ -0,0 +1,48 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/hw_dspssC64P.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== hw_dspss.h ========
++ *  Description:
++ *      DSP Subsystem API declarations
++ *
++ *! Revision History:
++ *! ================
++ *! 19-Apr-2004 sb: Removed redundant argument from HW_DSPSS_IPIEndianismSet
++ *!		    Moved endianness and element size to generic hw_defs.h
++ *! 16 Feb 2003 sb: Initial version
++ */
++
++#ifndef __HW_DSPSS_H
++#define __HW_DSPSS_H
++#include <linux/types.h>
++
++	enum HW_DSPSYSC_BootMode_t {
++		HW_DSPSYSC_DIRECTBOOT = 0x0,
++		HW_DSPSYSC_IDLEBOOT = 0x1,
++		HW_DSPSYSC_SELFLOOPBOOT = 0x2,
++		HW_DSPSYSC_USRBOOTSTRAP = 0x3,
++		HW_DSPSYSC_DEFAULTRESTORE = 0x4
++	} ;
++
++#define HW_DSP_IDLEBOOT_ADDR   0x007E0000
++
++	extern HW_STATUS HW_DSPSS_BootModeSet(const u32 baseAddress,
++					enum HW_DSPSYSC_BootMode_t bootMode,
++					const u32 bootAddress);
++
++#endif				/* __HW_DSPSS_H */
+diff --git a/drivers/dsp/bridge/hw/hw_mbox.c b/drivers/dsp/bridge/hw/hw_mbox.c
+new file mode 100644
+index 0000000..ec1fc04
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_mbox.c
+@@ -0,0 +1,255 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/mbox/hw_mbox.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== hw_mbox.c ========
++ *  Description:
++ *      Mailbox messaging & configuration API definitions
++ *
++ *! Revision History:
++ *! ================
++ *! 16 Feb 2003 sb: Initial version
++ */
++
++#include <GlobalTypes.h>
++#include "MLBRegAcM.h"
++#include <hw_defs.h>
++#include <hw_mbox.h>
++
++/* width in bits of MBOX Id */
++#define HW_MBOX_ID_WIDTH	   2
++
++struct MAILBOX_CONTEXT mboxsetting = {0, 0, 0};
++
++/* Saves the mailbox context */
++HW_STATUS HW_MBOX_saveSettings(u32 baseAddress)
++{
++	HW_STATUS status = RET_OK;
++
++	mboxsetting.sysconfig = MLBMAILBOX_SYSCONFIGReadRegister32(baseAddress);
++	/* Get current enable status */
++	mboxsetting.irqEnable0 = MLBMAILBOX_IRQENABLE___0_3ReadRegister32
++				 (baseAddress, HW_MBOX_U0_ARM);
++	mboxsetting.irqEnable1 = MLBMAILBOX_IRQENABLE___0_3ReadRegister32
++				 (baseAddress, HW_MBOX_U1_DSP1);
++	return status;
++}
++
++/* Restores the mailbox context */
++HW_STATUS HW_MBOX_restoreSettings(u32 baseAddress)
++{
++	 HW_STATUS status = RET_OK;
++	/* Restor IRQ enable status */
++	MLBMAILBOX_IRQENABLE___0_3WriteRegister32(baseAddress, HW_MBOX_U0_ARM,
++						 mboxsetting.irqEnable0);
++	MLBMAILBOX_IRQENABLE___0_3WriteRegister32(baseAddress, HW_MBOX_U1_DSP1,
++						 mboxsetting.irqEnable1);
++	/* Restore Sysconfig register */
++	MLBMAILBOX_SYSCONFIGWriteRegister32(baseAddress, mboxsetting.sysconfig);
++	return status;
++}
++
++/* Reads a u32 from the sub module message box Specified. if there are no
++ * messages in the mailbox then and error is returned. */
++HW_STATUS HW_MBOX_MsgRead(const u32 baseAddress, const HW_MBOX_Id_t mailBoxId,
++				u32 *const pReadValue)
++{
++	HW_STATUS status = RET_OK;
++
++	/* Check input parameters */
++	CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++		      RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_PARAM(pReadValue, NULL, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++		      RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(mailBoxId, HW_MBOX_ID_MAX, RET_INVALID_ID,
++			   RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++
++	/* Read 32-bit message in mail box */
++	*pReadValue = MLBMAILBOX_MESSAGE___0_15ReadRegister32(baseAddress,
++							 (u32)mailBoxId);
++
++	return status;
++}
++
++/* Writes a u32 from the sub module message box Specified. */
++HW_STATUS HW_MBOX_MsgWrite(const u32 baseAddress, const HW_MBOX_Id_t mailBoxId,
++			const u32 writeValue)
++{
++	HW_STATUS status = RET_OK;
++
++	/* Check input parameters */
++	CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++			RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(mailBoxId, HW_MBOX_ID_MAX, RET_INVALID_ID,
++			RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++
++	/* Write 32-bit value to mailbox */
++	MLBMAILBOX_MESSAGE___0_15WriteRegister32(baseAddress, (u32)mailBoxId,
++					    (u32)writeValue);
++
++	return status;
++}
++
++/* Reads the full status register for mailbox. */
++HW_STATUS HW_MBOX_IsFull(const u32 baseAddress, const HW_MBOX_Id_t mailBoxId,
++			u32 *const pIsFull)
++{
++	HW_STATUS status = RET_OK;
++	u32 fullStatus;
++
++	/* Check input parameters */
++	CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++			RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_PARAM(pIsFull,  NULL, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++			RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(mailBoxId, HW_MBOX_ID_MAX, RET_INVALID_ID,
++			RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++
++	/* read the is full status parameter for Mailbox */
++	fullStatus = MLBMAILBOX_FIFOSTATUS___0_15FifoFullMBmRead32(baseAddress,
++							(u32)mailBoxId);
++
++	/* fill in return parameter */
++	*pIsFull = (fullStatus & 0xFF);
++
++	return status;
++}
++
++/* Gets number of messages in a specified mailbox. */
++HW_STATUS HW_MBOX_NumMsgGet(const u32 baseAddress, const HW_MBOX_Id_t mailBoxId,
++				u32 *const pNumMsg)
++{
++	HW_STATUS status = RET_OK;
++
++	/* Check input parameters */
++	CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++		      RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_PARAM(pNumMsg,  NULL, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++		      RES_INVALID_INPUT_PARAM);
++
++	CHECK_INPUT_RANGE_MIN0(mailBoxId, HW_MBOX_ID_MAX, RET_INVALID_ID,
++			   RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++
++	/* Get number of messages available for MailBox */
++	*pNumMsg = MLBMAILBOX_MSGSTATUS___0_15NbOfMsgMBmRead32(baseAddress,
++							  (u32)mailBoxId);
++
++	return status;
++}
++
++/* Enables the specified IRQ. */
++HW_STATUS HW_MBOX_EventEnable(const u32	baseAddress,
++				const HW_MBOX_Id_t mailBoxId,
++				const HW_MBOX_UserId_t userId,
++				const u32 events)
++{
++	HW_STATUS status = RET_OK;
++	u32 irqEnableReg;
++
++	/* Check input parameters */
++	CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++			  RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(mailBoxId, HW_MBOX_ID_MAX, RET_INVALID_ID,
++			 RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(enableIrq, HW_MBOX_INT_MAX, RET_INVALID_ID,
++			 RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(userId, HW_MBOX_USER_MAX, RET_INVALID_ID,
++			 RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++
++	/* Get current enable status */
++	irqEnableReg = MLBMAILBOX_IRQENABLE___0_3ReadRegister32(baseAddress,
++							     (u32)userId);
++
++	/* update enable value */
++	irqEnableReg |= ((u32)(events)) << (((u32)(mailBoxId)) *
++			HW_MBOX_ID_WIDTH);
++
++	/* write new enable status */
++	MLBMAILBOX_IRQENABLE___0_3WriteRegister32(baseAddress, (u32)userId,
++						 (u32)irqEnableReg);
++
++	mboxsetting.sysconfig = MLBMAILBOX_SYSCONFIGReadRegister32(baseAddress);
++	/* Get current enable status */
++	mboxsetting.irqEnable0 = MLBMAILBOX_IRQENABLE___0_3ReadRegister32
++				(baseAddress, HW_MBOX_U0_ARM);
++	mboxsetting.irqEnable1 = MLBMAILBOX_IRQENABLE___0_3ReadRegister32
++				(baseAddress, HW_MBOX_U1_DSP1);
++	return status;
++}
++
++/* Disables the specified IRQ. */
++HW_STATUS HW_MBOX_EventDisable(const u32 baseAddress,
++				const HW_MBOX_Id_t mailBoxId,
++				const HW_MBOX_UserId_t userId,
++				const u32 events)
++{
++	HW_STATUS status = RET_OK;
++	u32 irqDisableReg;
++
++	/* Check input parameters */
++	CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++		      RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(mailBoxId, HW_MBOX_ID_MAX, RET_INVALID_ID,
++		     RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(disableIrq, HW_MBOX_INT_MAX, RET_INVALID_ID,
++		     RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(userId, HW_MBOX_USER_MAX, RET_INVALID_ID,
++		     RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++
++	/* Get current enable status */
++	irqDisableReg = MLBMAILBOX_IRQENABLE___0_3ReadRegister32(baseAddress,
++		    (u32)userId);
++
++	/* update enable value */
++	irqDisableReg &= ~((u32)(events)) << (((u32)(mailBoxId)) *
++		     HW_MBOX_ID_WIDTH);
++
++	/* write new enable status */
++	MLBMAILBOX_IRQENABLE___0_3WriteRegister32(baseAddress, (u32)userId,
++					     (u32)irqDisableReg);
++
++	return status;
++}
++
++/* Sets the status of the specified IRQ. */
++HW_STATUS HW_MBOX_EventAck(const u32 baseAddress, const HW_MBOX_Id_t mailBoxId,
++			const HW_MBOX_UserId_t userId, const u32 event)
++{
++	HW_STATUS status = RET_OK;
++	u32 irqStatusReg;
++
++	/* Check input parameters */
++	CHECK_INPUT_PARAM(baseAddress,   0, RET_BAD_NULL_PARAM, RES_MBOX_BASE +
++		      RES_INVALID_INPUT_PARAM);
++
++	CHECK_INPUT_RANGE_MIN0(irqStatus, HW_MBOX_INT_MAX, RET_INVALID_ID,
++		     RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(mailBoxId, HW_MBOX_ID_MAX, RET_INVALID_ID,
++		     RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++	CHECK_INPUT_RANGE_MIN0(userId, HW_MBOX_USER_MAX, RET_INVALID_ID,
++		     RES_MBOX_BASE + RES_INVALID_INPUT_PARAM);
++
++	/* calculate status to write */
++	irqStatusReg = ((u32)event) << (((u32)(mailBoxId)) *
++		   HW_MBOX_ID_WIDTH);
++
++	/* clear Irq Status for specified mailbox/User Id */
++	MLBMAILBOX_IRQSTATUS___0_3WriteRegister32(baseAddress, (u32)userId,
++					     (u32)irqStatusReg);
++
++	return status;
++}
+diff --git a/drivers/dsp/bridge/hw/hw_mbox.h b/drivers/dsp/bridge/hw/hw_mbox.h
+new file mode 100644
+index 0000000..7579378
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_mbox.h
+@@ -0,0 +1,358 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/hw_mbox.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*
++ *  ======== hw_mbox.h ========
++ *  Description:
++ *      HW Mailbox API and types definitions
++ *
++ *! Revision History:
++ *! ================
++ *! 16 Feb 2003 sb: Initial version
++ */
++#ifndef __MBOX_H
++#define __MBOX_H
++
++/* Bitmasks for Mailbox interrupt sources */
++#define HW_MBOX_INT_NEW_MSG    0x1
++#define HW_MBOX_INT_NOT_FULL   0x2
++#define HW_MBOX_INT_ALL	0x3
++
++/* Maximum number of messages that mailbox can hald at a time. */
++#define HW_MBOX_MAX_NUM_MESSAGES   4
++
++/* HW_MBOX_Id_t: Enumerated Type used to specify Mailbox Sub Module Id Number */
++typedef enum HW_MBOX_Id_label {
++    HW_MBOX_ID_0,
++    HW_MBOX_ID_1,
++    HW_MBOX_ID_2,
++    HW_MBOX_ID_3,
++    HW_MBOX_ID_4,
++    HW_MBOX_ID_5
++
++} HW_MBOX_Id_t, *pHW_MBOX_Id_t;
++
++/* HW_MBOX_UserId_t:  Enumerated Type used to specify Mail box User Id */
++typedef enum HW_MBOX_UserId_label {
++    HW_MBOX_U0_ARM,
++    HW_MBOX_U1_DSP1,
++    HW_MBOX_U2_DSP2,
++    HW_MBOX_U3_ARM
++
++} HW_MBOX_UserId_t, *pHW_MBOX_UserId_t;
++
++/* Mailbox context settings */
++struct MAILBOX_CONTEXT {
++	u32 sysconfig;
++	u32 irqEnable0;
++	u32 irqEnable1;
++};
++
++/*
++* FUNCTION      : HW_MBOX_MsgRead
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*   Description : Base Address of instance of Mailbox module
++*
++*   Identifier  : mailBoxId
++*   Type	: const HW_MBOX_Id_t
++*   Description : Mail Box Sub module Id to read
++*
++* OUTPUTS:
++*
++*   Identifier  : pReadValue
++*   Type	: u32 *const
++*   Description : Value read from MailBox
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  Address/ptr Paramater was set to 0/NULL
++*		 RET_INVALID_ID      Invalid Id used
++*		 RET_EMPTY	   Mailbox empty
++*
++* PURPOSE:      : this function reads a u32 from the sub module message
++*		 box Specified. if there are no messages in the mailbox
++*		 then and error is returned.
++*/
++extern HW_STATUS HW_MBOX_MsgRead(const u32 baseAddress,
++				const HW_MBOX_Id_t mailBoxId,
++				u32 *const pReadValue);
++
++/*
++* FUNCTION      : HW_MBOX_MsgWrite
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*   Description : Base Address of instance of Mailbox module
++*
++*   Identifier  : mailBoxId
++*   Type	: const HW_MBOX_Id_t
++*   Description : Mail Box Sub module Id to write
++*
++*   Identifier  : writeValue
++*   Type	: const u32
++*   Description : Value to write to MailBox
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  Address/pointer Paramater was set to 0/NULL
++*		 RET_INVALID_ID      Invalid Id used
++*
++* PURPOSE:      : this function writes a u32 from the sub module message
++*		 box Specified.
++*/
++extern HW_STATUS HW_MBOX_MsgWrite(
++		      const u32	 baseAddress,
++		      const HW_MBOX_Id_t   mailBoxId,
++		      const u32	 writeValue
++		  );
++
++/*
++* FUNCTION      : HW_MBOX_IsFull
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*   Description : Base Address of instance of Mailbox module
++*
++*   Identifier  : mailBoxId
++*   Type	: const HW_MBOX_Id_t
++*   Description : Mail Box Sub module Id to check
++*
++* OUTPUTS:
++*
++*   Identifier  : pIsFull
++*   Type	: u32 *const
++*   Description : false means mail box not Full
++*		 true means mailbox full.
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  Address/pointer Paramater was set to 0/NULL
++*		 RET_INVALID_ID      Invalid Id used
++*
++* PURPOSE:      : this function reads the full status register for mailbox.
++*/
++extern HW_STATUS HW_MBOX_IsFull(
++		      const u32	 baseAddress,
++		      const HW_MBOX_Id_t   mailBoxId,
++		      u32 *const	pIsFull
++		  );
++
++/*
++* FUNCTION      : HW_MBOX_NumMsgGet
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*   Description : Base Address of instance of Mailbox module
++*
++*   Identifier  : mailBoxId
++*   Type	: const HW_MBOX_Id_t
++*   Description : Mail Box Sub module Id to get num messages
++*
++* OUTPUTS:
++*
++*   Identifier  : pNumMsg
++*   Type	: u32 *const
++*   Description : Number of messages in mailbox
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  Address/pointer Paramater was set to 0/NULL
++*		 RET_INVALID_ID      Inavlid ID input at parameter
++*
++* PURPOSE:      : this function gets number of messages in a specified mailbox.
++*/
++extern HW_STATUS HW_MBOX_NumMsgGet(
++		      const u32	 baseAddress,
++		      const HW_MBOX_Id_t   mailBoxId,
++		      u32 *const	pNumMsg
++		  );
++
++/*
++* FUNCTION      : HW_MBOX_EventEnable
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*		 RET_BAD_NULL_PARAM  Address/pointer Paramater was set to 0/NULL
++*
++*   Identifier  : mailBoxId
++*   Type	: const HW_MBOX_Id_t
++*   Description : Mail Box Sub module Id to enable
++*
++*   Identifier  : userId
++*   Type	: const HW_MBOX_UserId_t
++*   Description : Mail box User Id to enable
++*
++*   Identifier  : enableIrq
++*   Type	: const u32
++*   Description : Irq value to enable
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  A Pointer Paramater was set to NULL
++*		 RET_INVALID_ID      Invalid Id used
++*
++* PURPOSE:      : this function enables the specified IRQ.
++*/
++extern HW_STATUS HW_MBOX_EventEnable(
++		      const u32	     baseAddress,
++		      const HW_MBOX_Id_t       mailBoxId,
++		      const HW_MBOX_UserId_t   userId,
++		      const u32	     events
++		  );
++
++/*
++* FUNCTION      : HW_MBOX_EventDisable
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*		 RET_BAD_NULL_PARAM  Address/pointer Paramater was set to 0/NULL
++*
++*   Identifier  : mailBoxId
++*   Type	: const HW_MBOX_Id_t
++*   Description : Mail Box Sub module Id to disable
++*
++*   Identifier  : userId
++*   Type	: const HW_MBOX_UserId_t
++*   Description : Mail box User Id to disable
++*
++*   Identifier  : enableIrq
++*   Type	: const u32
++*   Description : Irq value to disable
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  A Pointer Paramater was set to NULL
++*		 RET_INVALID_ID      Invalid Id used
++*
++* PURPOSE:      : this function disables the specified IRQ.
++*/
++extern HW_STATUS HW_MBOX_EventDisable(
++		      const u32	     baseAddress,
++		      const HW_MBOX_Id_t       mailBoxId,
++		      const HW_MBOX_UserId_t   userId,
++		      const u32	     events
++		  );
++
++/*
++* FUNCTION      : HW_MBOX_EventAck
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*   Description : Base Address of instance of Mailbox module
++*
++*   Identifier  : mailBoxId
++*   Type	: const HW_MBOX_Id_t
++*   Description : Mail Box Sub module Id to set
++*
++*   Identifier  : userId
++*   Type	: const HW_MBOX_UserId_t
++*   Description : Mail box User Id to set
++*
++*   Identifier  : irqStatus
++*   Type	: const u32
++*   Description : The value to write IRQ status
++*
++* OUTPUTS:
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  Address Paramater was set to 0
++*		 RET_INVALID_ID      Invalid Id used
++*
++* PURPOSE:      : this function sets the status of the specified IRQ.
++*/
++extern HW_STATUS HW_MBOX_EventAck(
++		      const u32	      baseAddress,
++		      const HW_MBOX_Id_t	mailBoxId,
++		      const HW_MBOX_UserId_t    userId,
++		      const u32	      event
++		  );
++
++/*
++* FUNCTION      : HW_MBOX_saveSettings
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*   Description : Base Address of instance of Mailbox module
++*
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  Address/pointer Paramater was set to 0/NULL
++*		 RET_INVALID_ID      Invalid Id used
++*		 RET_EMPTY	   Mailbox empty
++*
++* PURPOSE:      : this function saves the context of mailbox
++*/
++extern HW_STATUS HW_MBOX_saveSettings(u32    baseAddres);
++
++/*
++* FUNCTION      : HW_MBOX_restoreSettings
++*
++* INPUTS:
++*
++*   Identifier  : baseAddress
++*   Type	: const u32
++*   Description : Base Address of instance of Mailbox module
++*
++*
++* RETURNS:
++*
++*   Type	: ReturnCode_t
++*   Description : RET_OK	      No errors occured
++*		 RET_BAD_NULL_PARAM  Address/pointer Paramater was set to 0/NULL
++*		 RET_INVALID_ID      Invalid Id used
++*		 RET_EMPTY	   Mailbox empty
++*
++* PURPOSE:      : this function restores the context of mailbox
++*/
++extern HW_STATUS HW_MBOX_restoreSettings(u32    baseAddres);
++
++#endif  /* __MBOX_H */
+diff --git a/drivers/dsp/bridge/hw/hw_mmu.c b/drivers/dsp/bridge/hw/hw_mmu.c
+new file mode 100644
+index 0000000..e79728a
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_mmu.c
+@@ -0,0 +1,607 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/mmu/hw_mmu.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*
++ *  ======== hw_mmu.c ========
++ *  Description:
++ *      API definitions to setup MMU TLB and PTE
++ *
++ *! Revision History:
++ *! ================
++ *! 19-Apr-2004 sb  TLBAdd and TLBFlush input the page size in bytes instead
++		    of an enum. TLBAdd inputs mapping attributes struct instead
++		    of individual arguments.
++		    Removed MMU.h and other cosmetic updates.
++ *! 08-Mar-2004 sb  Added the Page Table Management APIs
++ *! 16 Feb 2003 sb: Initial version
++ */
++
++#include <GlobalTypes.h>
++#include "MMURegAcM.h"
++#include <hw_defs.h>
++#include <hw_mmu.h>
++#include <linux/types.h>
++
++#define MMU_BASE_VAL_MASK	0xFC00
++#define MMU_PAGE_MAX	     3
++#define MMU_ELEMENTSIZE_MAX      3
++#define MMU_ADDR_MASK	    0xFFFFF000
++#define MMU_TTB_MASK	     0xFFFFC000
++#define MMU_SECTION_ADDR_MASK    0xFFF00000
++#define MMU_SSECTION_ADDR_MASK   0xFF000000
++#define MMU_PAGE_TABLE_MASK      0xFFFFFC00
++#define MMU_LARGE_PAGE_MASK      0xFFFF0000
++#define MMU_SMALL_PAGE_MASK      0xFFFFF000
++
++#define MMU_LOAD_TLB	0x00000001
++
++/* HW_MMUPageSize_t:  Enumerated Type used to specify the MMU Page Size(SLSS) */
++enum HW_MMUPageSize_t {
++    HW_MMU_SECTION,
++    HW_MMU_LARGE_PAGE,
++    HW_MMU_SMALL_PAGE,
++    HW_MMU_SUPERSECTION
++} ;
++
++/*
++* FUNCTION	      : MMU_FlushEntry
++*
++* INPUTS:
++*
++*       Identifier      : baseAddress
++*       Type		: const u32
++*       Description     : Base Address of instance of MMU module
++*
++* RETURNS:
++*
++*       Type		: HW_STATUS
++*       Description     : RET_OK		 -- No errors occured
++*			 RET_BAD_NULL_PARAM     -- A Pointer
++*						Paramater was set to NULL
++*
++* PURPOSE:	      : Flush the TLB entry pointed by the
++*			lock counter register
++*			even if this entry is set protected
++*
++* METHOD:	       : Check the Input parameter and Flush a
++*			 single entry in the TLB.
++*/
++static HW_STATUS MMU_FlushEntry(const u32 baseAddress);
++
++/*
++* FUNCTION	      : MMU_SetCAMEntry
++*
++* INPUTS:
++*
++*       Identifier      : baseAddress
++*       TypE		: const u32
++*       Description     : Base Address of instance of MMU module
++*
++*       Identifier      : pageSize
++*       TypE		: const u32
++*       Description     : It indicates the page size
++*
++*       Identifier      : preservedBit
++*       Type		: const u32
++*       Description     : It indicates the TLB entry is preserved entry
++*							or not
++*
++*       Identifier      : validBit
++*       Type		: const u32
++*       Description     : It indicates the TLB entry is valid entry or not
++*
++*
++*       Identifier      : virtualAddrTag
++*       Type	    	: const u32
++*       Description     : virtual Address
++*
++* RETURNS:
++*
++*       Type	    	: HW_STATUS
++*       Description     : RET_OK		 -- No errors occured
++*			 RET_BAD_NULL_PARAM     -- A Pointer Paramater
++*						   was set to NULL
++*			 RET_PARAM_OUT_OF_RANGE -- Input Parameter out
++*						   of Range
++*
++* PURPOSE:	      	: Set MMU_CAM reg
++*
++* METHOD:	       	: Check the Input parameters and set the CAM entry.
++*/
++static HW_STATUS MMU_SetCAMEntry(const u32    baseAddress,
++				   const u32    pageSize,
++				   const u32    preservedBit,
++				   const u32    validBit,
++				   const u32    virtualAddrTag);
++
++/*
++* FUNCTION	      : MMU_SetRAMEntry
++*
++* INPUTS:
++*
++*       Identifier      : baseAddress
++*       Type	    	: const u32
++*       Description     : Base Address of instance of MMU module
++*
++*       Identifier      : physicalAddr
++*       Type	    	: const u32
++*       Description     : Physical Address to which the corresponding
++*			 virtual   Address shouldpoint
++*
++*       Identifier      : endianism
++*       Type	    	: HW_Endianism_t
++*       Description     : endianism for the given page
++*
++*       Identifier      : elementSize
++*       Type	    	: HW_ElementSize_t
++*       Description     : The element size ( 8,16, 32 or 64 bit)
++*
++*       Identifier      : mixedSize
++*       Type	    	: HW_MMUMixedSize_t
++*       Description     : Element Size to follow CPU or TLB
++*
++* RETURNS:
++*
++*       Type	    	: HW_STATUS
++*       Description     : RET_OK		 -- No errors occured
++*			 RET_BAD_NULL_PARAM     -- A Pointer Paramater
++*							was set to NULL
++*			 RET_PARAM_OUT_OF_RANGE -- Input Parameter
++*							out of Range
++*
++* PURPOSE:	      : Set MMU_CAM reg
++*
++* METHOD:	       : Check the Input parameters and set the RAM entry.
++*/
++static HW_STATUS MMU_SetRAMEntry(const u32	baseAddress,
++				   const u32	physicalAddr,
++				   enum HW_Endianism_t      endianism,
++				   enum HW_ElementSize_t    elementSize,
++				   enum HW_MMUMixedSize_t   mixedSize);
++
++/* HW FUNCTIONS */
++
++HW_STATUS HW_MMU_Enable(const u32 baseAddress)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_CNTLMMUEnableWrite32(baseAddress, HW_SET);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_Disable(const u32 baseAddress)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_CNTLMMUEnableWrite32(baseAddress, HW_CLEAR);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_NumLockedSet(const u32 baseAddress,
++				u32 numLockedEntries)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_LOCKBaseValueWrite32(baseAddress, numLockedEntries);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_VictimNumSet(const u32 baseAddress,
++				u32 victimEntryNum)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_LOCKCurrentVictimWrite32(baseAddress, victimEntryNum);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_TLBFlushAll(const u32 baseAddress)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_GFLUSHGlobalFlushWrite32(baseAddress, HW_SET);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_EventAck(const u32 baseAddress, u32 irqMask)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_IRQSTATUSWriteRegister32(baseAddress, irqMask);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_EventDisable(const u32 baseAddress,
++				u32 irqMask)
++{
++    HW_STATUS status = RET_OK;
++    u32 irqReg;
++
++    irqReg = MMUMMU_IRQENABLEReadRegister32(baseAddress);
++
++    MMUMMU_IRQENABLEWriteRegister32(baseAddress, irqReg & ~irqMask);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_EventEnable(const u32 baseAddress, u32 irqMask)
++{
++    HW_STATUS status = RET_OK;
++    u32 irqReg;
++
++    irqReg = MMUMMU_IRQENABLEReadRegister32(baseAddress);
++
++    MMUMMU_IRQENABLEWriteRegister32(baseAddress, irqReg | irqMask);
++
++    return status;
++}
++
++
++HW_STATUS HW_MMU_EventStatus(const u32 baseAddress, u32 *irqMask)
++{
++    HW_STATUS status = RET_OK;
++
++    *irqMask = MMUMMU_IRQSTATUSReadRegister32(baseAddress);
++
++    return status;
++}
++
++
++HW_STATUS HW_MMU_FaultAddrRead(const u32 baseAddress, u32 *addr)
++{
++    HW_STATUS status = RET_OK;
++
++    /*Check the input Parameters*/
++    CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM,
++		      RES_MMU_BASE + RES_INVALID_INPUT_PARAM);
++
++    /* read values from register */
++    *addr = MMUMMU_FAULT_ADReadRegister32(baseAddress);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_TTBSet(const u32 baseAddress, u32 TTBPhysAddr)
++{
++    HW_STATUS status = RET_OK;
++    u32 loadTTB;
++
++   /*Check the input Parameters*/
++   CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM,
++		     RES_MMU_BASE + RES_INVALID_INPUT_PARAM);
++
++   loadTTB = TTBPhysAddr & ~0x7FUL;
++   /* write values to register */
++   MMUMMU_TTBWriteRegister32(baseAddress, loadTTB);
++
++   return status;
++}
++
++HW_STATUS HW_MMU_TWLEnable(const u32 baseAddress)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_CNTLTWLEnableWrite32(baseAddress, HW_SET);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_TWLDisable(const u32 baseAddress)
++{
++    HW_STATUS status = RET_OK;
++
++    MMUMMU_CNTLTWLEnableWrite32(baseAddress, HW_CLEAR);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_TLBFlush(const u32 baseAddress, u32 virtualAddr,
++			     u32 pageSize)
++{
++    HW_STATUS status = RET_OK;
++    u32 virtualAddrTag;
++    enum HW_MMUPageSize_t pgSizeBits;
++
++    switch (pageSize) {
++    case HW_PAGE_SIZE_4KB:
++	pgSizeBits = HW_MMU_SMALL_PAGE;
++	break;
++
++    case HW_PAGE_SIZE_64KB:
++	pgSizeBits = HW_MMU_LARGE_PAGE;
++	break;
++
++    case HW_PAGE_SIZE_1MB:
++	pgSizeBits = HW_MMU_SECTION;
++	break;
++
++    case HW_PAGE_SIZE_16MB:
++	pgSizeBits = HW_MMU_SUPERSECTION;
++	break;
++
++    default:
++	return RET_FAIL;
++    }
++
++    /* Generate the 20-bit tag from virtual address */
++    virtualAddrTag = ((virtualAddr & MMU_ADDR_MASK) >> 12);
++
++    MMU_SetCAMEntry(baseAddress, pgSizeBits, 0, 0, virtualAddrTag);
++
++    MMU_FlushEntry(baseAddress);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_TLBAdd(const u32	baseAddress,
++			   u32	      physicalAddr,
++			   u32	      virtualAddr,
++			   u32	      pageSize,
++			   u32	      entryNum,
++			   struct HW_MMUMapAttrs_t    *mapAttrs,
++			   enum HW_SetClear_t       preservedBit,
++			   enum HW_SetClear_t       validBit)
++{
++    HW_STATUS  status = RET_OK;
++    u32 lockReg;
++    u32 virtualAddrTag;
++    enum HW_MMUPageSize_t mmuPgSize;
++
++    /*Check the input Parameters*/
++    CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM,
++		      RES_MMU_BASE + RES_INVALID_INPUT_PARAM);
++    CHECK_INPUT_RANGE_MIN0(pageSize, MMU_PAGE_MAX, RET_PARAM_OUT_OF_RANGE,
++			   RES_MMU_BASE + RES_INVALID_INPUT_PARAM);
++    CHECK_INPUT_RANGE_MIN0(mapAttrs->elementSize, MMU_ELEMENTSIZE_MAX,
++			RET_PARAM_OUT_OF_RANGE, RES_MMU_BASE +
++			RES_INVALID_INPUT_PARAM);
++
++    switch (pageSize) {
++    case HW_PAGE_SIZE_4KB:
++	mmuPgSize = HW_MMU_SMALL_PAGE;
++	break;
++
++    case HW_PAGE_SIZE_64KB:
++	mmuPgSize = HW_MMU_LARGE_PAGE;
++	break;
++
++    case HW_PAGE_SIZE_1MB:
++	mmuPgSize = HW_MMU_SECTION;
++	break;
++
++    case HW_PAGE_SIZE_16MB:
++	mmuPgSize = HW_MMU_SUPERSECTION;
++	break;
++
++    default:
++	return RET_FAIL;
++    }
++
++    lockReg = MMUMMU_LOCKReadRegister32(baseAddress);
++
++    /* Generate the 20-bit tag from virtual address */
++    virtualAddrTag = ((virtualAddr & MMU_ADDR_MASK) >> 12);
++
++    /* Write the fields in the CAM Entry Register */
++    MMU_SetCAMEntry(baseAddress,  mmuPgSize, preservedBit, validBit,
++		    virtualAddrTag);
++
++    /* Write the different fields of the RAM Entry Register */
++    /* endianism of the page,Element Size of the page (8, 16, 32, 64 bit)*/
++    MMU_SetRAMEntry(baseAddress, physicalAddr, mapAttrs->endianism,
++		    mapAttrs->elementSize, mapAttrs->mixedSize);
++
++    /* Update the MMU Lock Register */
++    /* currentVictim between lockedBaseValue and (MMU_Entries_Number - 1)*/
++    MMUMMU_LOCKCurrentVictimWrite32(baseAddress, entryNum);
++
++    /* Enable loading of an entry in TLB by writing 1
++	   into LD_TLB_REG register */
++    MMUMMU_LD_TLBWriteRegister32(baseAddress, MMU_LOAD_TLB);
++
++
++    MMUMMU_LOCKWriteRegister32(baseAddress, lockReg);
++
++    return status;
++}
++
++HW_STATUS HW_MMU_PteSet(const u32	pgTblVa,
++			   u32	      physicalAddr,
++			   u32	      virtualAddr,
++			   u32	      pageSize,
++			   struct HW_MMUMapAttrs_t    *mapAttrs)
++{
++    HW_STATUS status = RET_OK;
++    u32 pteAddr, pteVal;
++    s32 numEntries = 1;
++
++    switch (pageSize) {
++    case HW_PAGE_SIZE_4KB:
++	pteAddr = HW_MMU_PteAddrL2(pgTblVa,
++				    virtualAddr & MMU_SMALL_PAGE_MASK);
++	pteVal = ((physicalAddr & MMU_SMALL_PAGE_MASK) |
++		    (mapAttrs->endianism << 9) |
++		    (mapAttrs->elementSize << 4) |
++		    (mapAttrs->mixedSize << 11) | 2
++		  );
++	break;
++
++    case HW_PAGE_SIZE_64KB:
++	numEntries = 16;
++	pteAddr = HW_MMU_PteAddrL2(pgTblVa,
++				    virtualAddr & MMU_LARGE_PAGE_MASK);
++	pteVal = ((physicalAddr & MMU_LARGE_PAGE_MASK) |
++		    (mapAttrs->endianism << 9) |
++		    (mapAttrs->elementSize << 4) |
++		    (mapAttrs->mixedSize << 11) | 1
++		  );
++	break;
++
++    case HW_PAGE_SIZE_1MB:
++	pteAddr = HW_MMU_PteAddrL1(pgTblVa,
++				    virtualAddr & MMU_SECTION_ADDR_MASK);
++	pteVal = ((((physicalAddr & MMU_SECTION_ADDR_MASK) |
++		     (mapAttrs->endianism << 15) |
++		     (mapAttrs->elementSize << 10) |
++		     (mapAttrs->mixedSize << 17)) &
++		     ~0x40000) | 0x2
++		 );
++	break;
++
++    case HW_PAGE_SIZE_16MB:
++	numEntries = 16;
++	pteAddr = HW_MMU_PteAddrL1(pgTblVa,
++				    virtualAddr & MMU_SSECTION_ADDR_MASK);
++	pteVal = (((physicalAddr & MMU_SSECTION_ADDR_MASK) |
++		      (mapAttrs->endianism << 15) |
++		      (mapAttrs->elementSize << 10) |
++		      (mapAttrs->mixedSize << 17)
++		    ) | 0x40000 | 0x2
++		  );
++	break;
++
++    case HW_MMU_COARSE_PAGE_SIZE:
++	pteAddr = HW_MMU_PteAddrL1(pgTblVa,
++				    virtualAddr & MMU_SECTION_ADDR_MASK);
++	pteVal = (physicalAddr & MMU_PAGE_TABLE_MASK) | 1;
++	break;
++
++    default:
++	return RET_FAIL;
++    }
++
++    while (--numEntries >= 0)
++	((u32 *)pteAddr)[numEntries] = pteVal;
++
++    return status;
++}
++
++HW_STATUS HW_MMU_PteClear(const u32  pgTblVa,
++			     u32	virtualAddr,
++			     u32	pgSize)
++{
++    HW_STATUS status = RET_OK;
++    u32 pteAddr;
++    s32 numEntries = 1;
++
++    switch (pgSize) {
++    case HW_PAGE_SIZE_4KB:
++	pteAddr = HW_MMU_PteAddrL2(pgTblVa,
++				    virtualAddr & MMU_SMALL_PAGE_MASK);
++	break;
++
++    case HW_PAGE_SIZE_64KB:
++	numEntries = 16;
++	pteAddr = HW_MMU_PteAddrL2(pgTblVa,
++				    virtualAddr & MMU_LARGE_PAGE_MASK);
++	break;
++
++    case HW_PAGE_SIZE_1MB:
++    case HW_MMU_COARSE_PAGE_SIZE:
++	pteAddr = HW_MMU_PteAddrL1(pgTblVa,
++				    virtualAddr & MMU_SECTION_ADDR_MASK);
++	break;
++
++    case HW_PAGE_SIZE_16MB:
++	numEntries = 16;
++	pteAddr = HW_MMU_PteAddrL1(pgTblVa,
++				    virtualAddr & MMU_SSECTION_ADDR_MASK);
++	break;
++
++    default:
++	return RET_FAIL;
++    }
++
++    while (--numEntries >= 0)
++	((u32 *)pteAddr)[numEntries] = 0;
++
++    return status;
++}
++
++/* MMU_FlushEntry */
++static HW_STATUS MMU_FlushEntry(const u32 baseAddress)
++{
++   HW_STATUS status = RET_OK;
++   u32 flushEntryData = 0x1;
++
++   /*Check the input Parameters*/
++   CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM,
++		     RES_MMU_BASE + RES_INVALID_INPUT_PARAM);
++
++   /* write values to register */
++   MMUMMU_FLUSH_ENTRYWriteRegister32(baseAddress, flushEntryData);
++
++   return status;
++}
++
++/* MMU_SetCAMEntry */
++static HW_STATUS MMU_SetCAMEntry(const u32    baseAddress,
++				   const u32    pageSize,
++				   const u32    preservedBit,
++				   const u32    validBit,
++				   const u32    virtualAddrTag)
++{
++   HW_STATUS status = RET_OK;
++   u32 mmuCamReg;
++
++   /*Check the input Parameters*/
++   CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM,
++		     RES_MMU_BASE + RES_INVALID_INPUT_PARAM);
++
++   mmuCamReg = (virtualAddrTag << 12);
++   mmuCamReg = (mmuCamReg) | (pageSize) |  (validBit << 2) |
++	       (preservedBit << 3) ;
++
++   /* write values to register */
++   MMUMMU_CAMWriteRegister32(baseAddress, mmuCamReg);
++
++   return status;
++}
++
++/* MMU_SetRAMEntry */
++static HW_STATUS MMU_SetRAMEntry(const u32       baseAddress,
++				   const u32       physicalAddr,
++				   enum HW_Endianism_t     endianism,
++				   enum HW_ElementSize_t   elementSize,
++				   enum HW_MMUMixedSize_t  mixedSize)
++{
++   HW_STATUS status = RET_OK;
++   u32 mmuRamReg;
++
++   /*Check the input Parameters*/
++   CHECK_INPUT_PARAM(baseAddress, 0, RET_BAD_NULL_PARAM,
++		     RES_MMU_BASE + RES_INVALID_INPUT_PARAM);
++   CHECK_INPUT_RANGE_MIN0(elementSize, MMU_ELEMENTSIZE_MAX,
++		   RET_PARAM_OUT_OF_RANGE, RES_MMU_BASE +
++		   RES_INVALID_INPUT_PARAM);
++
++
++   mmuRamReg = (physicalAddr & MMU_ADDR_MASK);
++   mmuRamReg = (mmuRamReg) | ((endianism << 9) |  (elementSize << 7) |
++	       (mixedSize << 6));
++
++   /* write values to register */
++   MMUMMU_RAMWriteRegister32(baseAddress, mmuRamReg);
++
++   return status;
++
++}
+diff --git a/drivers/dsp/bridge/hw/hw_mmu.h b/drivers/dsp/bridge/hw/hw_mmu.h
+new file mode 100644
+index 0000000..8784276
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_mmu.h
+@@ -0,0 +1,178 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/hw_mmu.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== hw_mmu.h ========
++ *  Description:
++ *      MMU types and API declarations
++ *
++ *! Revision History:
++ *! ================
++ *! 19-Apr-2004 sb  Moved & renamed endianness, page size, element size
++		    TLBAdd takes in MMUMapAttrs instead of separate arguments
++ *! 08-Mar-2004 sb  Added the Page Table management APIs
++ *! 16 Feb 2003 sb: Initial version
++ */
++#ifndef __HW_MMU_H
++#define __HW_MMU_H
++
++#include <linux/types.h>
++
++/* Bitmasks for interrupt sources */
++#define HW_MMU_TRANSLATION_FAULT   0x2
++#define HW_MMU_ALL_INTERRUPTS      0x1F
++
++#define HW_MMU_COARSE_PAGE_SIZE 0x400
++
++/* HW_MMUMixedSize_t:  Enumerated Type used to specify whether to follow
++			CPU/TLB Element size */
++enum HW_MMUMixedSize_t {
++	HW_MMU_TLBES,
++	HW_MMU_CPUES
++
++} ;
++
++/* HW_MMUMapAttrs_t:  Struct containing MMU mapping attributes */
++struct HW_MMUMapAttrs_t {
++	enum HW_Endianism_t     endianism;
++	enum HW_ElementSize_t   elementSize;
++	enum HW_MMUMixedSize_t  mixedSize;
++} ;
++
++extern HW_STATUS HW_MMU_Enable(const u32 baseAddress);
++
++extern HW_STATUS HW_MMU_Disable(const u32 baseAddress);
++
++extern HW_STATUS HW_MMU_NumLockedSet(const u32 baseAddress,
++					u32 numLockedEntries);
++
++extern HW_STATUS HW_MMU_VictimNumSet(const u32 baseAddress,
++					u32 victimEntryNum);
++
++/* For MMU faults */
++extern HW_STATUS HW_MMU_EventAck(const u32 baseAddress,
++				    u32 irqMask);
++
++extern HW_STATUS HW_MMU_EventDisable(const u32 baseAddress,
++					u32 irqMask);
++
++extern HW_STATUS HW_MMU_EventEnable(const u32 baseAddress,
++				       u32 irqMask);
++
++extern HW_STATUS HW_MMU_EventStatus(const u32 baseAddress,
++				       u32 *irqMask);
++
++extern HW_STATUS HW_MMU_FaultAddrRead(const u32 baseAddress,
++					 u32 *addr);
++
++/* Set the TT base address */
++extern HW_STATUS HW_MMU_TTBSet(const u32 baseAddress,
++				  u32 TTBPhysAddr);
++
++extern HW_STATUS HW_MMU_TWLEnable(const u32 baseAddress);
++
++extern HW_STATUS HW_MMU_TWLDisable(const u32 baseAddress);
++
++extern HW_STATUS HW_MMU_TLBFlush(const u32 baseAddress,
++				    u32 virtualAddr,
++				    u32 pageSize);
++
++extern HW_STATUS HW_MMU_TLBFlushAll(const u32 baseAddress);
++
++extern HW_STATUS HW_MMU_TLBAdd(const u32     baseAddress,
++				  u32	   physicalAddr,
++				  u32	   virtualAddr,
++				  u32	   pageSize,
++				  u32	    entryNum,
++				  struct HW_MMUMapAttrs_t *mapAttrs,
++				  enum HW_SetClear_t    preservedBit,
++				  enum HW_SetClear_t    validBit);
++
++
++/* For PTEs */
++extern HW_STATUS HW_MMU_PteSet(const u32     pgTblVa,
++				  u32	   physicalAddr,
++				  u32	   virtualAddr,
++				  u32	   pageSize,
++				  struct HW_MMUMapAttrs_t *mapAttrs);
++
++extern HW_STATUS HW_MMU_PteClear(const u32   pgTblVa,
++				    u32	 pgSize,
++				    u32	 virtualAddr);
++
++static inline u32 HW_MMU_PteAddrL1(u32 L1_base, u32 va)
++{
++	u32 pteAddr;
++	u32 VA_31_to_20;
++
++	VA_31_to_20  = va >> (20 - 2); /* Left-shift by 2 here itself */
++	VA_31_to_20 &= 0xFFFFFFFCUL;
++	pteAddr = L1_base + VA_31_to_20;
++
++	return pteAddr;
++}
++
++static inline u32 HW_MMU_PteAddrL2(u32 L2_base, u32 va)
++{
++	u32 pteAddr;
++
++	pteAddr = (L2_base & 0xFFFFFC00) | ((va >> 10) & 0x3FC);
++
++	return pteAddr;
++}
++
++static inline u32 HW_MMU_PteCoarseL1(u32 pteVal)
++{
++	u32 pteCoarse;
++
++	pteCoarse = pteVal & 0xFFFFFC00;
++
++	return pteCoarse;
++}
++
++static inline u32 HW_MMU_PteSizeL1(u32 pteVal)
++{
++	u32 pteSize = 0;
++
++	if ((pteVal & 0x3) == 0x1) {
++		/* Points to L2 PT */
++		pteSize = HW_MMU_COARSE_PAGE_SIZE;
++	}
++
++	if ((pteVal & 0x3) == 0x2) {
++		if (pteVal & (1 << 18))
++			pteSize = HW_PAGE_SIZE_16MB;
++		else
++			pteSize = HW_PAGE_SIZE_1MB;
++	}
++
++	return pteSize;
++}
++
++static inline u32 HW_MMU_PteSizeL2(u32 pteVal)
++{
++    u32 pteSize = 0;
++
++    if (pteVal & 0x2)
++	pteSize = HW_PAGE_SIZE_4KB;
++    else if (pteVal & 0x1)
++	pteSize = HW_PAGE_SIZE_64KB;
++
++    return pteSize;
++}
++
++#endif  /* __HW_MMU_H */
+diff --git a/drivers/dsp/bridge/hw/hw_prcm.c b/drivers/dsp/bridge/hw/hw_prcm.c
+new file mode 100644
+index 0000000..ed1f3c7
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_prcm.c
+@@ -0,0 +1,167 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/prcm/hw_prcm.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*
++ *  ======== hw_prcm.c ========
++ *  Description:
++ *      API definitions to configure PRCM (Power, Reset & Clocks Manager)
++ *
++ *! Revision History:
++ *! ================
++ *! 16 Feb 2003 sb: Initial version
++ */
++
++#include <GlobalTypes.h>
++#include "PRCMRegAcM.h"
++#include <hw_defs.h>
++#include <hw_prcm.h>
++
++static HW_STATUS HW_RST_WriteVal(const u32 baseAddress,
++				    enum HW_RstModule_t r,
++				    enum HW_SetClear_t val);
++
++HW_STATUS HW_RST_Reset(const u32 baseAddress, enum HW_RstModule_t r)
++{
++	return HW_RST_WriteVal(baseAddress, r, HW_SET);
++}
++
++HW_STATUS HW_RST_UnReset(const u32 baseAddress, enum HW_RstModule_t r)
++{
++	return HW_RST_WriteVal(baseAddress, r, HW_CLEAR);
++}
++
++static HW_STATUS HW_RST_WriteVal(const u32 baseAddress,
++				    enum HW_RstModule_t r,
++				    enum HW_SetClear_t val)
++{
++	HW_STATUS status = RET_OK;
++
++	switch (r) {
++	case HW_RST1_IVA2:
++	    PRM_RSTCTRL_IVA2RST1_DSPWrite32(baseAddress, val);
++	    break;
++	case HW_RST2_IVA2:
++	    PRM_RSTCTRL_IVA2RST2_DSPWrite32(baseAddress, val);
++	    break;
++	case HW_RST3_IVA2:
++	    PRM_RSTCTRL_IVA2RST3_DSPWrite32(baseAddress, val);
++	    break;
++	default:
++	    status = RET_FAIL;
++	    break;
++	}
++	return status;
++}
++
++HW_STATUS HW_PWR_IVA2StateGet(const u32 baseAddress, enum HW_PwrModule_t p,
++				enum HW_PwrState_t *value)
++{
++	HW_STATUS status = RET_OK;
++	u32 temp;
++
++	switch (p) {
++	case HW_PWR_DOMAIN_DSP:
++		/* wait until Transition is complete */
++		do {
++			/* mdelay(1); */
++			temp = PRCMPM_PWSTST_IVA2InTransitionRead32
++				(baseAddress);
++
++		} while (temp);
++
++		temp = PRCMPM_PWSTST_IVA2ReadRegister32(baseAddress);
++		*value = PRCMPM_PWSTST_IVA2PowerStateStGet32(temp);
++		break;
++
++	default:
++		status = RET_FAIL;
++		break;
++	}
++	return status;
++}
++
++HW_STATUS HW_PWRST_IVA2RegGet(const u32 baseAddress, u32 *value)
++{
++	HW_STATUS status = RET_OK;
++
++	*value = PRCMPM_PWSTST_IVA2ReadRegister32(baseAddress);
++
++	return status;
++}
++
++
++HW_STATUS HW_PWR_IVA2PowerStateSet(const u32 baseAddress,
++				     enum HW_PwrModule_t p,
++				     enum HW_PwrState_t value)
++{
++	HW_STATUS status = RET_OK;
++
++	switch (p) {
++	case HW_PWR_DOMAIN_DSP:
++		switch (value) {
++		case HW_PWR_STATE_ON:
++			PRCMPM_PWSTCTRL_IVA2PowerStateWriteON32(baseAddress);
++			break;
++		case HW_PWR_STATE_RET:
++			PRCMPM_PWSTCTRL_DSPPowerStateWriteRET32(baseAddress);
++			break;
++		case HW_PWR_STATE_OFF:
++			PRCMPM_PWSTCTRL_IVA2PowerStateWriteOFF32(baseAddress);
++			break;
++		default:
++			status = RET_FAIL;
++			break;
++		}
++		break;
++
++	default:
++		status = RET_FAIL;
++		break;
++	}
++
++	return status;
++}
++
++HW_STATUS HW_PWR_CLKCTRL_IVA2RegSet(const u32 baseAddress,
++				      enum HW_TransitionState_t val)
++{
++	HW_STATUS status = RET_OK;
++
++	PRCMCM_CLKSTCTRL_IVA2WriteRegister32(baseAddress, val);
++
++	return status;
++
++}
++
++HW_STATUS HW_RSTST_RegGet(const u32 baseAddress, enum HW_RstModule_t m,
++			    u32 *value)
++{
++	HW_STATUS status = RET_OK;
++
++	*value = PRCMRM_RSTST_DSPReadRegister32(baseAddress);
++
++	return status;
++}
++
++HW_STATUS HW_RSTCTRL_RegGet(const u32 baseAddress, enum HW_RstModule_t m,
++			      u32 *value)
++{
++	HW_STATUS status = RET_OK;
++
++	*value = PRCMRM_RSTCTRL_DSPReadRegister32(baseAddress);
++
++	return status;
++}
+diff --git a/drivers/dsp/bridge/hw/hw_prcm.h b/drivers/dsp/bridge/hw/hw_prcm.h
+new file mode 100644
+index 0000000..d3aa199
+--- /dev/null
++++ b/drivers/dsp/bridge/hw/hw_prcm.h
+@@ -0,0 +1,168 @@
++/*
++ * linux/drivers/dsp/bridge/hw/omap3/inc/hw_prcm.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2007 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*
++ *  ======== hw_prcm.h ========
++ *  Description:
++ *      PRCM types and API declarations
++ *
++ *! Revision History:
++ *! ================
++ *! 16 Feb 2003 sb: Initial version
++ */
++
++#ifndef __HW_PRCM_H
++#define __HW_PRCM_H
++
++/* HW_ClkModule:  Enumerated Type used to specify the clock domain */
++
++enum HW_ClkModule_t {
++/* DSP Domain */
++    HW_CLK_DSP_CPU,
++    HW_CLK_DSP_IPI_MMU,
++    HW_CLK_IVA_ARM,
++    HW_CLK_IVA_COP,	/* IVA Coprocessor */
++
++/* Core Domain */
++    HW_CLK_FN_WDT4,	/* Functional Clock */
++    HW_CLK_FN_WDT3,
++    HW_CLK_FN_UART2,
++    HW_CLK_FN_UART1,
++    HW_CLK_GPT5,
++    HW_CLK_GPT6,
++    HW_CLK_GPT7,
++    HW_CLK_GPT8,
++
++    HW_CLK_IF_WDT4,	/* Interface Clock */
++    HW_CLK_IF_WDT3,
++    HW_CLK_IF_UART2,
++    HW_CLK_IF_UART1,
++    HW_CLK_IF_MBOX
++
++} ;
++
++enum HW_ClkSubsys_t {
++    HW_CLK_DSPSS,
++    HW_CLK_IVASS
++} ;
++
++/* HW_GPtimers:  General purpose timers */
++enum HW_GPtimer_t {
++    HW_GPT5 = 5,
++    HW_GPT6 = 6,
++    HW_GPT7 = 7,
++    HW_GPT8 = 8
++} ;
++
++
++/* GP timers Input clock type:  General purpose timers */
++enum HW_Clocktype_t {
++    HW_CLK_32KHz = 0,
++    HW_CLK_SYS   = 1,
++    HW_CLK_EXT   = 2
++} ;
++
++/* HW_ClkDiv:  Clock divisors */
++enum HW_ClkDiv_t {
++    HW_CLK_DIV_1 = 0x1,
++    HW_CLK_DIV_2 = 0x2,
++    HW_CLK_DIV_3 = 0x3,
++    HW_CLK_DIV_4 = 0x4,
++    HW_CLK_DIV_6 = 0x6,
++    HW_CLK_DIV_8 = 0x8,
++    HW_CLK_DIV_12 = 0xC
++} ;
++
++/* HW_RstModule:  Enumerated Type used to specify the module to be reset */
++enum HW_RstModule_t {
++    HW_RST1_IVA2,  /* Reset the DSP */
++    HW_RST2_IVA2,  /* Reset MMU and LEON HWa */
++    HW_RST3_IVA2   /* Reset LEON sequencer */
++} ;
++
++/* HW_PwrModule:  Enumerated Type used to specify the power domain */
++enum HW_PwrModule_t {
++/* Domains */
++    HW_PWR_DOMAIN_CORE,
++    HW_PWR_DOMAIN_MPU,
++    HW_PWR_DOMAIN_WAKEUP,
++    HW_PWR_DOMAIN_DSP,
++
++/* Sub-domains */
++    HW_PWR_DSP_IPI,	/* IPI = Intrusive Port Interface */
++    HW_PWR_IVA_ISP	 /* ISP = Intrusive Slave Port */
++} ;
++
++enum HW_PwrState_t {
++    HW_PWR_STATE_OFF,
++    HW_PWR_STATE_RET,
++    HW_PWR_STATE_INACT,
++    HW_PWR_STATE_ON = 3
++} ;
++
++enum HW_ForceState_t {
++    HW_FORCE_OFF,
++    HW_FORCE_ON
++} ;
++
++enum HW_IdleState_t {
++    HW_ACTIVE,
++    HW_STANDBY
++
++} ;
++
++enum HW_TransitionState_t {
++    HW_AUTOTRANS_DIS,
++    HW_SW_SUP_SLEEP,
++    HW_SW_SUP_WAKEUP,
++    HW_AUTOTRANS_EN
++} ;
++
++
++extern HW_STATUS HW_RST_Reset(const u32 baseAddress,
++				 enum HW_RstModule_t r);
++
++extern HW_STATUS HW_RST_UnReset(const u32 baseAddress,
++				   enum HW_RstModule_t r);
++
++extern HW_STATUS HW_RSTCTRL_RegGet(const u32 baseAddress,
++					     enum HW_RstModule_t p,
++					     u32 *value);
++extern HW_STATUS HW_RSTST_RegGet(const u32 baseAddress,
++					   enum HW_RstModule_t p, u32 *value);
++
++extern HW_STATUS HW_PWR_PowerStateSet(const u32 baseAddress,
++						enum HW_PwrModule_t p,
++						enum HW_PwrState_t value);
++
++extern HW_STATUS HW_CLK_SetInputClock(const u32 baseAddress,
++					enum HW_GPtimer_t gpt,
++					enum HW_Clocktype_t c);
++
++extern HW_STATUS HW_PWR_IVA2StateGet(const u32 baseAddress,
++					enum HW_PwrModule_t p,
++					enum HW_PwrState_t *value);
++
++extern HW_STATUS HW_PWRST_IVA2RegGet(const u32 baseAddress, u32 *value);
++
++extern HW_STATUS HW_PWR_IVA2PowerStateSet(const u32 baseAddress,
++					    enum HW_PwrModule_t p,
++					    enum HW_PwrState_t value);
++
++extern HW_STATUS HW_PWR_CLKCTRL_IVA2RegSet(const u32 baseAddress,
++					     enum HW_TransitionState_t val);
++
++#endif  /* __HW_PRCM_H */
+-- 
+1.6.0.3.613.g9f8f13
+

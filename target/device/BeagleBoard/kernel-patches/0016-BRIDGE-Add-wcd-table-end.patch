@@ -1,0 +1,26 @@
+From 4153606292f5dafce4a26b7c3608f46b99664d0a Mon Sep 17 00:00:00 2001
+From: Omar Ramirez Luna <x00omar@ti.com>
+Date: Fri, 22 Aug 2008 12:25:42 +0530
+Subject: [PATCH 16/43] BRIDGE: Add wcd table end
+
+Added the end of the command definitions
+
+Signed-off-by: Omar Ramirez Luna <x00omar@ti.com>
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/bridge/wcdioctl.h |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/plat-omap/include/bridge/wcdioctl.h b/arch/arm/plat-omap/include/bridge/wcdioctl.h
+index e137943..c6dd0dd 100644
+--- a/arch/arm/plat-omap/include/bridge/wcdioctl.h
++++ b/arch/arm/plat-omap/include/bridge/wcdioctl.h
+@@ -515,4 +515,5 @@ union Trapped_Args {
+ #define CMD_CMM_GETINFO_OFFSET	  (CMD_CMM_BASE_OFFSET + 3)
+ #define CMD_CMM_END_OFFSET	      CMD_CMM_GETINFO_OFFSET
+ 
++#define CMD_BASE_END_OFFSET	CMD_CMM_END_OFFSET
+ #endif				/* WCDIOCTL_ */
+-- 
+1.6.0.3.613.g9f8f13
+

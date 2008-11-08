@@ -1,0 +1,1238 @@
+From 2cf8fc36e5f0fb13f522ec41f52292fc163b408e Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Fri, 15 Aug 2008 01:55:54 +0300
+Subject: [PATCH 04/43] BRIDGE: Generic Utilities
+
+Initial port from omapzoom
+	http://omapzoom.org/gf/project/omapbridge
+
+For details,
+http://omapzoom.org/gf/project/omapbridge/docman/?subdir=3
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ drivers/dsp/bridge/gen/_gt_para.c |  107 ++++++++++++
+ drivers/dsp/bridge/gen/gb.c       |  182 +++++++++++++++++++
+ drivers/dsp/bridge/gen/gh.c       |  191 ++++++++++++++++++++
+ drivers/dsp/bridge/gen/gs.c       |  108 ++++++++++++
+ drivers/dsp/bridge/gen/gt.c       |  346 +++++++++++++++++++++++++++++++++++++
+ drivers/dsp/bridge/gen/uuidutil.c |  238 +++++++++++++++++++++++++
+ 6 files changed, 1172 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/dsp/bridge/gen/_gt_para.c
+ create mode 100644 drivers/dsp/bridge/gen/gb.c
+ create mode 100644 drivers/dsp/bridge/gen/gh.c
+ create mode 100644 drivers/dsp/bridge/gen/gs.c
+ create mode 100644 drivers/dsp/bridge/gen/gt.c
+ create mode 100644 drivers/dsp/bridge/gen/uuidutil.c
+
+diff --git a/drivers/dsp/bridge/gen/_gt_para.c b/drivers/dsp/bridge/gen/_gt_para.c
+new file mode 100644
+index 0000000..1685b3a
+--- /dev/null
++++ b/drivers/dsp/bridge/gen/_gt_para.c
+@@ -0,0 +1,107 @@
++/*
++ * linux/drivers/dsp/bridge/gen/linux/_gt_para.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== _gt_para.c ========
++ *  Description:
++ *      Configuration parameters for GT.  This file is separated from
++ *      gt.c so that GT_assert() can reference the error function without
++ *      forcing the linker to include all the code for GT_set(), GT_init(),
++ *      etc. into a fully bound image.  Thus, GT_assert() can be retained in
++ *      a program for which GT_?trace() has been compiled out.
++ *
++ *! Revision History:
++ *! ================
++ *! 24-Feb-2003 vp: Code Review Updates.
++ *! 18-Oct-2002 sb: Ported to Linux platform.
++ *! 03-Jul-2001 rr: Removed kfuncs.h because of build errors.
++ *! 07-Dec-1999 ag: Fxn error now causes a WinCE DebugBreak;
++ *! 30-Aug-1999 ag: Now uses GP_printf for printf and error.
++ *!
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <gt.h>
++
++/*  ----------------------------------- Function Prototypes */
++static void error(char *msg, ...);
++static s32 GT_nop(void);
++
++/*  ----------------------------------- Defines, Data Structures, Typedefs */
++
++struct GT_Config _GT_params = {
++	(Fxn) printk,		/* printf */
++	(Fxn) NULL,		/* procid */
++	(Fxn) GT_nop,		/* taskid */
++	(Fxn) error,		/* error */
++};
++
++/*  ----------------------------------- Globals */
++struct GT_Config *GT = &_GT_params;
++
++/*
++ *  ======== GT_nop ========
++ */
++static s32 GT_nop(void)
++{
++	return 0;
++}
++
++/*
++ * ======== error ========
++ *  purpose:
++ *      Prints error onto the standard output.
++ */
++static void error(char *fmt, ...)
++{
++	s32 arg1, arg2, arg3, arg4, arg5, arg6;
++
++	va_list va;
++
++	va_start(va, fmt);
++
++	arg1 = va_arg(va, s32);
++	arg2 = va_arg(va, s32);
++	arg3 = va_arg(va, s32);
++	arg4 = va_arg(va, s32);
++	arg5 = va_arg(va, s32);
++	arg6 = va_arg(va, s32);
++
++	va_end(va);
++
++	(*GT->PRINTFXN) ("ERROR: ");
++	(*GT->PRINTFXN) (fmt, arg1, arg2, arg3, arg4, arg5, arg6);
++
++#if (defined DEBUG) || (defined DDSP_DEBUG_PRODUCT)
++	if (in_interrupt()) {
++		printk(KERN_INFO "Not stopping after error since ISR/DPC "
++			"are disabled\n");
++	} else {
++		set_current_state(TASK_INTERRUPTIBLE);
++		flush_signals(current);
++		schedule();
++		flush_signals(current);
++		printk(KERN_INFO "Signaled in error function\n");
++	}
++#endif
++}
+diff --git a/drivers/dsp/bridge/gen/gb.c b/drivers/dsp/bridge/gen/gb.c
+new file mode 100644
+index 0000000..15cec69
+--- /dev/null
++++ b/drivers/dsp/bridge/gen/gb.c
+@@ -0,0 +1,182 @@
++/*
++ * linux/drivers/dsp/bridge/gen/gb.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== gb.c ========
++ *  Description: Generic bitmap operations.
++ *
++ *! Revision History
++ *! ================
++ *! 24-Feb-2003 vp  Code review updates.
++ *! 17-Dec-2002 map Fixed GB_minset(), GB_empty(), and GB_full(),
++ *!                 to ensure only 'len' bits are considered in the map
++ *! 18-Oct-2002 sb  Ported to Linux platform.
++ *! 06-Dec-2001 jeh Fixed bug in GB_minclear().
++ *!
++ */
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <linux/types.h>
++/*  ----------------------------------- This */
++#include <gs.h>
++#include <gb.h>
++
++typedef GB_BitNum GB_WordNum;
++
++struct GB_TMap {
++	GB_BitNum len;
++	GB_WordNum wcnt;
++	u32 *words;
++};
++
++/*
++ *  ======== GB_clear ========
++ *  purpose:
++ *      Clears a bit in the bit map.
++ */
++
++void GB_clear(struct GB_TMap *map, GB_BitNum bitn)
++{
++	u32 mask;
++
++	mask = 1L << (bitn % BITS_PER_LONG);
++	map->words[bitn / BITS_PER_LONG] &= ~mask;
++}
++
++/*
++ *  ======== GB_create ========
++ *  purpose:
++ *      Creates a bit map.
++ */
++
++struct GB_TMap *GB_create(GB_BitNum len)
++{
++	struct GB_TMap *map;
++	GB_WordNum i;
++	map = (struct GB_TMap *)GS_alloc(sizeof(struct GB_TMap));
++	if (map != NULL) {
++		map->len = len;
++		map->wcnt = len / BITS_PER_LONG + 1;
++		map->words = (u32 *)GS_alloc(map->wcnt * sizeof(u32));
++		if (map->words != NULL) {
++			for (i = 0; i < map->wcnt; i++)
++				map->words[i] = 0L;
++
++		} else {
++			GS_frees(map, sizeof(struct GB_TMap));
++			map = NULL;
++		}
++	}
++
++	return map;
++}
++
++/*
++ *  ======== GB_delete ========
++ *  purpose:
++ *      Frees a bit map.
++ */
++
++void GB_delete(struct GB_TMap *map)
++{
++	GS_frees(map->words, map->wcnt * sizeof(u32));
++	GS_frees(map, sizeof(struct GB_TMap));
++}
++
++/*
++ *  ======== GB_findandset ========
++ *  purpose:
++ *      Finds a free bit and sets it.
++ */
++GB_BitNum GB_findandset(struct GB_TMap *map)
++{
++	GB_BitNum bitn;
++
++	bitn = GB_minclear(map);
++
++	if (bitn != GB_NOBITS)
++		GB_set(map, bitn);
++
++	return bitn;
++}
++
++/*
++ *  ======== GB_minclear ========
++ *  purpose:
++ *      returns the location of the first unset bit in the bit map.
++ */
++GB_BitNum GB_minclear(struct GB_TMap *map)
++{
++	GB_BitNum bit_location = 0;
++	GB_BitNum bitAcc = 0;
++	GB_WordNum i;
++	GB_BitNum bit;
++	u32 *word;
++
++	for (word = map->words, i = 0; i < map->wcnt; word++, i++) {
++		if (~*word) {
++			for (bit = 0; bit < BITS_PER_LONG; bit++, bitAcc++) {
++				if (bitAcc == map->len)
++					return GB_NOBITS;
++
++				if (~*word & (1L << bit)) {
++					bit_location = i * BITS_PER_LONG + bit;
++					return bit_location;
++				}
++
++			}
++		} else {
++			bitAcc += BITS_PER_LONG;
++		}
++	}
++
++	return GB_NOBITS;
++}
++
++/*
++ *  ======== GB_set ========
++ *  purpose:
++ *      Sets a bit in the bit map.
++ */
++
++void GB_set(struct GB_TMap *map, GB_BitNum bitn)
++{
++	u32 mask;
++
++	mask = 1L << (bitn % BITS_PER_LONG);
++	map->words[bitn / BITS_PER_LONG] |= mask;
++}
++
++/*
++ *  ======== GB_test ========
++ *  purpose:
++ *      Returns true if the bit is set in the specified location.
++ */
++
++bool GB_test(struct GB_TMap *map, GB_BitNum bitn)
++{
++	bool state;
++	u32 mask;
++	u32 word;
++
++	mask = 1L << (bitn % BITS_PER_LONG);
++	word = map->words[bitn / BITS_PER_LONG];
++	state = word & mask ? TRUE : FALSE;
++
++	return state;
++}
+diff --git a/drivers/dsp/bridge/gen/gh.c b/drivers/dsp/bridge/gen/gh.c
+new file mode 100644
+index 0000000..c267b16
+--- /dev/null
++++ b/drivers/dsp/bridge/gen/gh.c
+@@ -0,0 +1,191 @@
++/*
++ * linux/drivers/dsp/bridge/gen/gh.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== gh.c ========
++ */
++
++#include <std.h>
++
++#include <host_os.h>
++
++#include <gs.h>
++
++#include <gh.h>
++
++struct Elem {
++	struct Elem *next;
++	u8 data[1];
++};
++
++struct GH_THashTab {
++	u16 maxBucket;
++	u16 valSize;
++	struct Elem **buckets;
++	 u16(*hash) (void *, u16);
++	 bool(*match) (void *, void *);
++	 void(*delete) (void *);
++};
++
++static void Nop(void *p);
++static s32 curInit;
++static void myfree(void *ptr, s32 size);
++
++/*
++ *  ======== GH_create ========
++ */
++
++struct GH_THashTab *GH_create(u16 maxBucket, u16 valSize,
++		u16(*hash)(void *, u16), bool(*match)(void *, void *),
++		void(*delete)(void *))
++{
++	struct GH_THashTab *hashTab;
++	u16 i;
++	hashTab = (struct GH_THashTab *)GS_alloc(sizeof(struct GH_THashTab));
++	if (hashTab == NULL)
++		return NULL;
++	hashTab->maxBucket = maxBucket;
++	hashTab->valSize = valSize;
++	hashTab->hash = hash;
++	hashTab->match = match;
++	hashTab->delete = delete == NULL ? Nop : delete;
++
++	hashTab->buckets = (struct Elem **)
++			   GS_alloc(sizeof(struct Elem *) * maxBucket);
++	if (hashTab->buckets == NULL) {
++		GH_delete(hashTab);
++		return NULL;
++	}
++
++	for (i = 0; i < maxBucket; i++)
++		hashTab->buckets[i] = NULL;
++
++	return hashTab;
++}
++
++/*
++ *  ======== GH_delete ========
++ */
++void GH_delete(struct GH_THashTab *hashTab)
++{
++	struct Elem *elem, *next;
++	u16 i;
++
++	if (hashTab != NULL) {
++		if (hashTab->buckets != NULL) {
++			for (i = 0; i < hashTab->maxBucket; i++) {
++				for (elem = hashTab->buckets[i]; elem != NULL;
++				    elem = next) {
++					next = elem->next;
++					(*hashTab->delete) (elem->data);
++					myfree(elem, sizeof(struct Elem) - 1 +
++					      hashTab->valSize);
++				}
++			}
++
++			myfree(hashTab->buckets, sizeof(struct Elem *)
++			      * hashTab->maxBucket);
++		}
++
++		myfree(hashTab, sizeof(struct GH_THashTab));
++	}
++}
++
++/*
++ *  ======== GH_exit ========
++ */
++
++void GH_exit(void)
++{
++	if (curInit-- == 1)
++		GS_exit();
++
++}
++
++/*
++ *  ======== GH_find ========
++ */
++
++void *GH_find(struct GH_THashTab *hashTab, void *key)
++{
++	struct Elem *elem;
++
++	elem = hashTab->buckets[(*hashTab->hash)(key, hashTab->maxBucket)];
++
++	for (; elem; elem = elem->next) {
++		if ((*hashTab->match)(key, elem->data))
++			return elem->data;
++	}
++
++	return NULL;
++}
++
++/*
++ *  ======== GH_init ========
++ */
++
++void GH_init(void)
++{
++	if (curInit++ == 0)
++		GS_init();
++}
++
++/*
++ *  ======== GH_insert ========
++ */
++
++void *GH_insert(struct GH_THashTab *hashTab, void *key, void *value)
++{
++	struct Elem *elem;
++	u16 i;
++	char *src, *dst;
++
++	elem = (struct Elem *)GS_alloc(sizeof(struct Elem) - 1 +
++		hashTab->valSize);
++	if (elem != NULL) {
++
++		dst = (char *)elem->data;
++		src = (char *)value;
++		for (i = 0; i < hashTab->valSize; i++)
++			*dst++ = *src++;
++
++		i = (*hashTab->hash)(key, hashTab->maxBucket);
++		elem->next = hashTab->buckets[i];
++		hashTab->buckets[i] = elem;
++
++		return elem->data;
++	}
++
++	return NULL;
++}
++
++/*
++ *  ======== Nop ========
++ */
++/* ARGSUSED */
++static void Nop(void *p)
++{
++	p = p;			/* stifle compiler warning */
++}
++
++/*
++ *  ======== myfree ========
++ */
++static void myfree(void *ptr, s32 size)
++{
++	GS_free(ptr);
++}
+diff --git a/drivers/dsp/bridge/gen/gs.c b/drivers/dsp/bridge/gen/gs.c
+new file mode 100644
+index 0000000..8aa3955
+--- /dev/null
++++ b/drivers/dsp/bridge/gen/gs.c
+@@ -0,0 +1,108 @@
++/*
++ * linux/drivers/dsp/bridge/gen/gs.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== gs.c ========
++ *  Description:
++ *      General storage memory allocator services.
++ *
++ *! Revision History
++ *! ================
++ *! 29-Sep-1999 ag:  Un-commented MEM_Init in GS_init().
++ *! 14-May-1997 mg:  Modified to use new GS API for GS_free() and GS_frees().
++ *! 06-Nov-1996 gp:  Re-commented MEM_Init in GS_init(). GS needs GS_Exit().
++ *! 21-Oct-1996 db:  Un-commented MEM_Init in GS_init().
++ *! 21-May-1996 mg:  Created from original stdlib implementation.
++ */
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <linux/types.h>
++/*  ----------------------------------- OS Adaptation Layer */
++#include <mem.h>
++
++/*  ----------------------------------- This */
++#include <gs.h>
++
++/*  ----------------------------------- Globals */
++static u32 cumsize;
++
++/*
++ *  ======== GS_alloc ========
++ *  purpose:
++ *      Allocates memory of the specified size.
++ */
++void *GS_alloc(u32 size)
++{
++	void *p;
++
++	p = MEM_Calloc(size, MEM_PAGED);
++	if (p == NULL)
++		return NULL;
++	cumsize += size;
++	return p;
++}
++
++/*
++ *  ======== GS_exit ========
++ *  purpose:
++ *      Discontinue the usage of the GS module.
++ */
++void GS_exit(void)
++{
++	MEM_Exit();
++}
++
++/*
++ *  ======== GS_free ========
++ *  purpose:
++ *      Frees the memory.
++ */
++void GS_free(void *ptr)
++{
++	MEM_Free(ptr);
++	/* ack! no size info */
++	/* cumsize -= size; */
++}
++
++/*
++ *  ======== GS_frees ========
++ *  purpose:
++ *      Frees the memory.
++ */
++void GS_frees(void *ptr, u32 size)
++{
++	MEM_Free(ptr);
++	cumsize -= size;
++}
++
++/*
++ *  ======== GS_init ========
++ *  purpose:
++ *      Initializes the GS module.
++ */
++void GS_init(void)
++{
++	static bool curInit = false;
++
++	if (curInit == false) {
++		curInit = true;
++
++		MEM_Init();
++	}
++}
+diff --git a/drivers/dsp/bridge/gen/gt.c b/drivers/dsp/bridge/gen/gt.c
+new file mode 100644
+index 0000000..dfee97e
+--- /dev/null
++++ b/drivers/dsp/bridge/gen/gt.c
+@@ -0,0 +1,346 @@
++/*
++ * linux/drivers/dsp/bridge/gen/gt.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ * ======== gt.c ========
++ * Description: This module implements the trace mechanism for bridge.
++ *
++ *! Revision History
++ *! ================
++ *! 16-May-1997 dr	Changed GT_Config member names to conform to coding
++ *!			standards.
++ *! 23-Apr-1997 ge	Check for GT->TIDFXN for NULL before calling it.
++ *! 03-Jan-1997	ge	Changed GT_Config structure member names to eliminate
++ *!			preprocessor confusion with other macros.
++ */
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++
++/*  ----------------------------------- This */
++#include <gt.h>
++
++#define GT_WILD	'*'
++
++#define GT_CLEAR	'='
++#define GT_ON		'+'
++#define GT_OFF		'-'
++
++enum GT_State {
++	GT_SEP,
++	GT_FIRST,
++	GT_SECOND,
++	GT_OP,
++	GT_DIGITS
++} ;
++
++static char *GT_1format = "%s - %d: ";
++static char *GT_2format = "%s - %d(%d): ";
++
++unsigned char *GT_tMask[GT_BOUND];
++
++static bool curInit = false;
++static char *separator;
++static unsigned char tabMem[GT_BOUND][sizeof(unsigned char) * GT_BOUND];
++
++static void error(char *string);
++static void setMask(s16 index1, s16 index2, char op, unsigned char mask);
++
++/*
++ *  ======== _GT_create ========
++ *  purpose:
++ *      Creates GT mask.
++ */
++void _GT_create(struct GT_Mask *mask, char *modName)
++{
++	mask->modName = modName;
++	mask->flags = &(GT_tMask[modName[0] - 'A'][modName[1] - 'A']);
++}
++
++/*
++ *  ======== GT_init ========
++ *  purpose:
++ *      Initializes GT module.
++ */
++#ifdef GT_init
++#undef GT_init
++#endif
++void GT_init(void)
++{
++	register unsigned char index1;
++	register unsigned char index2;
++
++	if (!curInit) {
++		curInit = true;
++
++		separator = " ,;/";
++
++		for (index1 = 0; index1 < GT_BOUND; index1++) {
++			GT_tMask[index1] = tabMem[index1];
++			for (index2 = 0; index2 < GT_BOUND; index2++) {
++				/* no tracing */
++				GT_tMask[index1][index2] = 0x00;
++			}
++		}
++	}
++}
++
++/*
++ *  ======== _GT_set ========
++ *  purpose:
++ *      Sets the trace string format.
++ */
++
++void _GT_set(char *str)
++{
++	enum GT_State state;
++	char *sep;
++	s16 index1 = GT_BOUND;	/* indicates all values */
++	s16 index2 = GT_BOUND;	/* indicates all values */
++	char op = GT_CLEAR;
++	bool maskValid;
++	s16 digit;
++	register unsigned char mask = 0x0;	/* no tracing */
++
++	if (str == NULL)
++		return;
++
++	maskValid = false;
++	state = GT_SEP;
++	while (*str != '\0') {
++		switch ((s32) state) {
++		case (s32) GT_SEP:
++			maskValid = false;
++			sep = separator;
++			while (*sep != '\0') {
++				if (*str == *sep) {
++					str++;
++					break;
++				} else {
++					sep++;
++				}
++			}
++			if (*sep == '\0')
++				state = GT_FIRST;
++
++			break;
++		case (s32) GT_FIRST:
++			if (*str == GT_WILD) {
++				/* indicates all values */
++				index1 = GT_BOUND;
++				/* indicates all values */
++				index2 = GT_BOUND;
++				state = GT_OP;
++			} else {
++				if (*str >= 'a')
++					index1 = (s16) (*str - 'a');
++				else
++					index1 = (s16) (*str - 'A');
++				if ((index1 >= 0) && (index1 < GT_BOUND))
++					state = GT_SECOND;
++				else
++					state = GT_SEP;
++			}
++			str++;
++			break;
++		case (s32) GT_SECOND:
++			if (*str == GT_WILD) {
++				index2 = GT_BOUND;   /* indicates all values */
++				state = GT_OP;
++				str++;
++			} else {
++				if (*str >= 'a')
++					index2 = (s16) (*str - 'a');
++				else
++					index2 = (s16) (*str - 'A');
++				if ((index2 >= 0) && (index2 < GT_BOUND)) {
++					state = GT_OP;
++					str++;
++				} else {
++					state = GT_SEP;
++				}
++			}
++			break;
++		case (s32) GT_OP:
++			op = *str;
++			mask = 0x0;	/* no tracing */
++			switch (op) {
++			case (s32) GT_CLEAR:
++				maskValid = true;
++			case (s32) GT_ON:
++			case (s32) GT_OFF:
++				state = GT_DIGITS;
++				str++;
++				break;
++			default:
++				state = GT_SEP;
++				break;
++			}
++			break;
++		case (s32) GT_DIGITS:
++			digit = (s16) (*str - '0');
++			if ((digit >= 0) && (digit <= 7)) {
++				mask |= (0x01 << digit);
++				maskValid = true;
++				str++;
++			} else {
++				if (maskValid == true) {
++					setMask(index1, index2, op, mask);
++					maskValid = false;
++				}
++				state = GT_SEP;
++			}
++			break;
++		default:
++			error("illegal trace mask");
++			break;
++		}
++	}
++
++	if (maskValid)
++		setMask(index1, index2, op, mask);
++}
++
++/*
++ *  ======== _GT_trace ========
++ *  purpose:
++ *      Prints the input string onto standard output
++ */
++
++s32 _GT_trace(struct GT_Mask *mask, char *format, ...)
++{
++	s32 arg1, arg2, arg3, arg4, arg5, arg6;
++	va_list va;
++
++	va_start(va, format);
++
++	arg1 = va_arg(va, s32);
++	arg2 = va_arg(va, s32);
++	arg3 = va_arg(va, s32);
++	arg4 = va_arg(va, s32);
++	arg5 = va_arg(va, s32);
++	arg6 = va_arg(va, s32);
++
++	va_end(va);
++#ifdef DEBUG
++	if (GT->PIDFXN == NULL) {
++		(*GT->PRINTFXN)(GT_1format, mask->modName, GT->TIDFXN ?
++		(*GT->TIDFXN)() : 0);
++	} else {
++		(*GT->PRINTFXN)(GT_2format, mask->modName, (*GT->PIDFXN)(),
++		GT->TIDFXN ? (*GT->TIDFXN)() : 0);
++	}
++#endif
++	(*GT->PRINTFXN)(format, arg1, arg2, arg3, arg4, arg5, arg6);
++
++	return 0;
++}
++
++/*
++ *  ======== error ========
++ *  purpose:
++ *      Prints errors onto the standard output.
++ */
++static void error(char *string)
++{
++	(*GT->PRINTFXN)("GT: %s", string);
++}
++
++/*
++ *  ======== setmask ========
++ *  purpose:
++ *      Sets mask for the GT module.
++ */
++
++static void setMask(s16 index1, s16 index2, char op, u8 mask)
++{
++	register s16 index;
++
++	if (index1 < GT_BOUND) {
++		if (index2 < GT_BOUND) {
++			switch (op) {
++			case (s32) GT_CLEAR:
++				GT_tMask[index1][index2] = mask;
++				break;
++			case (s32) GT_ON:
++				GT_tMask[index1][index2] |= mask;
++				break;
++			case (s32) GT_OFF:
++				GT_tMask[index1][index2] &= ~mask;
++				break;
++			default:
++				error("illegal trace mask");
++				break;
++			}
++		} else {
++			for (index2--; index2 >= 0; index2--) {
++				switch (op) {
++				case (s32) GT_CLEAR:
++					GT_tMask[index1][index2] = mask;
++					break;
++				case (s32) GT_ON:
++					GT_tMask[index1][index2] |= mask;
++					break;
++				case (s32) GT_OFF:
++					GT_tMask[index1][index2] &= ~mask;
++					break;
++				default:
++					error("illegal trace mask");
++					break;
++				}
++			}
++		}
++	} else {
++		for (index1--; index1 >= 0; index1--) {
++			if (index2 < GT_BOUND) {
++				switch (op) {
++				case (s32) GT_CLEAR:
++					GT_tMask[index1][index2] = mask;
++					break;
++				case (s32) GT_ON:
++					GT_tMask[index1][index2] |= mask;
++					break;
++				case (s32) GT_OFF:
++					GT_tMask[index1][index2] &= ~mask;
++					break;
++				default:
++					error("illegal trace mask");
++					break;
++				}
++			} else {
++				index = GT_BOUND;
++				for (index--; index >= 0; index--) {
++					switch (op) {
++					case (s32) GT_CLEAR:
++						GT_tMask[index1][index] = mask;
++						break;
++					case (s32) GT_ON:
++						GT_tMask[index1][index] |= mask;
++						break;
++					case (s32) GT_OFF:
++						GT_tMask[index1][index] &=
++						    ~mask;
++						break;
++					default:
++						error("illegal trace mask");
++						break;
++					}
++				}
++			}
++		}
++	}
++}
+diff --git a/drivers/dsp/bridge/gen/uuidutil.c b/drivers/dsp/bridge/gen/uuidutil.c
+new file mode 100644
+index 0000000..ac3a017
+--- /dev/null
++++ b/drivers/dsp/bridge/gen/uuidutil.c
+@@ -0,0 +1,238 @@
++/*
++ * linux/drivers/dsp/bridge/gen/linux/uuidutil.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== uuidutil.c ========
++ *  Description:
++ *  This file contains the implementation of UUID helper functions.
++ *
++ *! Revision History
++ *! ================
++ *! 23-Feb-2003 vp: Code review updates.
++ *! 18-Oct-2003 vp: Ported to Linux platform.
++ *! 31-Aug-2000 rr: UUID_UuidFromString bug fixed.
++ *! 29-Aug-2000 rr: Modified UUID_UuidFromString.
++ *! 09-Nov-2000 kc: Modified UUID_UuidFromString to simplify implementation.
++ *! 30-Oct-2000 kc: Modified UUID utility module function prefix.
++ *! 10-Aug-2000 kc: Created.
++ *!
++ */
++
++/*  ----------------------------------- Host OS  */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++
++/*  ----------------------------------- This */
++#include <uuidutil.h>
++
++/*
++ *  ======== UUID_UuidToString ========
++ *  Purpose:
++ *      Converts a struct DSP_UUID to a string.
++ *      Note: snprintf format specifier is:
++ *      %[flags] [width] [.precision] [{h | l | I64 | L}]type
++ */
++void UUID_UuidToString(IN struct DSP_UUID *pUuid, OUT char *pszUuid,
++		       IN s32 size)
++{
++	s32 i;			/* return result from snprintf. */
++
++	DBC_Require(pUuid && pszUuid);
++
++	i = snprintf(pszUuid, size,
++		     "%.8X_%.4X_%.4X_%.2X%.2X_%.2X%.2X%.2X%.2X%.2X%.2X",
++		     pUuid->ulData1, pUuid->usData2, pUuid->usData3,
++		     pUuid->ucData4, pUuid->ucData5, pUuid->ucData6[0],
++		     pUuid->ucData6[1], pUuid->ucData6[2], pUuid->ucData6[3],
++		     pUuid->ucData6[4], pUuid->ucData6[5]);
++
++	DBC_Ensure(i != -1);
++}
++
++/*
++ *  ======== htoi ========
++ *  Purpose:
++ *      Converts a hex value to a decimal integer.
++ */
++
++static int htoi(char c)
++{
++	switch (c) {
++	case '0':
++		return 0;
++	case '1':
++		return 1;
++	case '2':
++		return 2;
++	case '3':
++		return 3;
++	case '4':
++		return 4;
++	case '5':
++		return 5;
++	case '6':
++		return 6;
++	case '7':
++		return 7;
++	case '8':
++		return 8;
++	case '9':
++		return 9;
++	case 'A':
++		return 10;
++	case 'B':
++		return 11;
++	case 'C':
++		return 12;
++	case 'D':
++		return 13;
++	case 'E':
++		return 14;
++	case 'F':
++		return 15;
++	case 'a':
++		return 10;
++	case 'b':
++		return 11;
++	case 'c':
++		return 12;
++	case 'd':
++		return 13;
++	case 'e':
++		return 14;
++	case 'f':
++		return 15;
++	}
++	return 0;
++}
++
++/*
++ *  ======== UUID_UuidFromString ========
++ *  Purpose:
++ *      Converts a string to a struct DSP_UUID.
++ */
++void UUID_UuidFromString(IN char *pszUuid, OUT struct DSP_UUID *pUuid)
++{
++	char c;
++	s32 i, j;
++	s32 result;
++	char *temp = pszUuid;
++
++	result = 0;
++	for (i = 0; i < 8; i++) {
++		/* Get first character in string */
++		c = *temp;
++
++		/* Increase the results by new value */
++		result *= 16;
++		result += htoi(c);
++
++		/* Go to next character in string */
++		temp++;
++	}
++	pUuid->ulData1 = result;
++
++	/* Step over underscore */
++	temp++;
++
++	result = 0;
++	for (i = 0; i < 4; i++) {
++		/* Get first character in string */
++		c = *temp;
++
++		/* Increase the results by new value */
++		result *= 16;
++		result += htoi(c);
++
++		/* Go to next character in string */
++		temp++;
++	}
++	pUuid->usData2 = (u16)result;
++
++	/* Step over underscore */
++	temp++;
++
++	result = 0;
++	for (i = 0; i < 4; i++) {
++		/* Get first character in string */
++		c = *temp;
++
++		/* Increase the results by new value */
++		result *= 16;
++		result += htoi(c);
++
++		/* Go to next character in string */
++		temp++;
++	}
++	pUuid->usData3 = (u16)result;
++
++	/* Step over underscore */
++	temp++;
++
++	result = 0;
++	for (i = 0; i < 2; i++) {
++		/* Get first character in string */
++		c = *temp;
++
++		/* Increase the results by new value */
++		result *= 16;
++		result += htoi(c);
++
++		/* Go to next character in string */
++		temp++;
++	}
++	pUuid->ucData4 = (u8)result;
++
++	result = 0;
++	for (i = 0; i < 2; i++) {
++		/* Get first character in string */
++		c = *temp;
++
++		/* Increase the results by new value */
++		result *= 16;
++		result += htoi(c);
++
++		/* Go to next character in string */
++		temp++;
++	}
++	pUuid->ucData5 = (u8)result;
++
++	/* Step over underscore */
++	temp++;
++
++	for (j = 0; j < 6; j++) {
++		result = 0;
++		for (i = 0; i < 2; i++) {
++			/* Get first character in string */
++			c = *temp;
++
++			/* Increase the results by new value */
++			result *= 16;
++			result += htoi(c);
++
++			/* Go to next character in string */
++			temp++;
++		}
++		pUuid->ucData6[j] = (u8)result;
++	}
++}
+-- 
+1.6.0.3.613.g9f8f13
+

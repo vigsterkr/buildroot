@@ -1,0 +1,788 @@
+From 6ee1b421ac5f0884c8defc3863a2df33b841f23f Mon Sep 17 00:00:00 2001
+From: Fernando Guzman Lugo <x0095840@ti.com>
+Date: Fri, 12 Sep 2008 21:04:03 -0500
+Subject: [PATCH 24/43] BRIDGE: Module ISR removed
+
+This patch removes all the ISR wrapper functions
+
+Signed-off-by: Fernando Guzman Lugo <x0095840@ti.com>
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/bridge/_chnl_sm.h |    1 -
+ arch/arm/plat-omap/include/bridge/io_sm.h    |    3 +-
+ arch/arm/plat-omap/include/bridge/isr.h      |  154 ---------------
+ drivers/dsp/bridge/Kbuild                    |    2 +-
+ drivers/dsp/bridge/pmgr/chnl.c               |    1 -
+ drivers/dsp/bridge/services/isr.c            |  261 --------------------------
+ drivers/dsp/bridge/services/services.c       |   10 +-
+ drivers/dsp/bridge/wmd/_deh.h                |    2 -
+ drivers/dsp/bridge/wmd/io_sm.c               |   46 +++---
+ drivers/dsp/bridge/wmd/mmu_fault.c           |    6 +-
+ drivers/dsp/bridge/wmd/mmu_fault.h           |    2 +-
+ drivers/dsp/bridge/wmd/tiomap_sm.c           |    1 -
+ drivers/dsp/bridge/wmd/ue_deh.c              |   14 +-
+ 13 files changed, 39 insertions(+), 464 deletions(-)
+ delete mode 100644 arch/arm/plat-omap/include/bridge/isr.h
+ delete mode 100644 drivers/dsp/bridge/services/isr.c
+
+diff --git a/arch/arm/plat-omap/include/bridge/_chnl_sm.h b/arch/arm/plat-omap/include/bridge/_chnl_sm.h
+index fab3c6c..addcb0e 100644
+--- a/arch/arm/plat-omap/include/bridge/_chnl_sm.h
++++ b/arch/arm/plat-omap/include/bridge/_chnl_sm.h
+@@ -57,7 +57,6 @@
+ 
+ #include <wcd.h>
+ #include <wmd.h>
+-#include <isr.h>
+ #include <dpc.h>
+ 
+ #include <list.h>
+diff --git a/arch/arm/plat-omap/include/bridge/io_sm.h b/arch/arm/plat-omap/include/bridge/io_sm.h
+index 413108f..902e8e1 100644
+--- a/arch/arm/plat-omap/include/bridge/io_sm.h
++++ b/arch/arm/plat-omap/include/bridge/io_sm.h
+@@ -132,8 +132,7 @@
+  *      Interrupts are disabled and EOI for this interrupt has been sent.
+  *  Ensures:
+  */
+-	extern bool IO_ISR(IN void *pRefData);
+-
++       irqreturn_t IO_ISR(int irq, IN void *pRefData);
+ /*
+  *  ======== IO_RequestChnl ========
+  *  Purpose:
+diff --git a/arch/arm/plat-omap/include/bridge/isr.h b/arch/arm/plat-omap/include/bridge/isr.h
+deleted file mode 100644
+index fb397bb..0000000
+--- a/arch/arm/plat-omap/include/bridge/isr.h
++++ /dev/null
+@@ -1,154 +0,0 @@
+-/*
+- * bridge/inc/isr.h
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== isr.h ========
+- *  Purpose:
+- *      Interrupt services.
+- *
+- *  Public Functions:
+- *      ISR_Exit
+- *      ISR_Init
+- *      ISR_Install
+- *      ISR_Uninstall
+- *
+- *  Notes:
+- *
+- *! Revision History:
+- *! ================
+- *! 01-Mar-2004 vp:  Added IVA related functions.
+- *! 06-Feb-2003 kc:  Added ISR_MAILBOX1 (renamed from DSP_MAILBOX1).
+- *! 05-Nov-2001 kc:  Added interrupt type param to ISR_Install.
+- *! 31-Jan-2000 rr:  Comments modified after code review.
+- *! 29-Oct-1999 kc:  Moved header files to within ifdefed 'extern "C"'.
+- *! 17-Sep-1997 gp:  Added CFG_HOSTRES struct as argument to ISR_Install, thus
+- *!                  breaking backward compatibility with Ver. 1.0 mini drivers.
+- *! 18-Aug-1997 cr:  Added explicit CDECL identifiers.
+- *! 03-Feb-1996 gp:  Changed behaviour of ISR_SimulateInt.
+- *! 24-Jul-1996 gp:  Created.
+- */
+-
+-#ifndef ISR_
+-#define ISR_
+-#include <host_os.h>
+-#include <cfg.h>
+-
+-/* Interrupt Object handle: */
+-	struct ISR_IRQ;
+-
+-/* ISR install type (private) */
+-#define ISR_MAILBOX1            0x00000080	/* Arbitrary value */
+-#define ISR_MAILBOX2			0x00000081
+-
+-/* Temporary until the baseport defines it */
+-#define MAIL_U3_MPU_IRQ	34
+-/*
+- *  ======== ISR_PROC ========
+- *  Purpose:
+- *      Routine to service an interrupt.
+- *  Parameters:
+- *      pRefData:   Ptr to user data: passed in via ISR_Install.
+- *  Returns:
+- *      TRUE if the interrupt was handled; FALSE otherwise.
+- *  Requires:
+- *      ISR code must be in locked memory.
+- *      All data touched must be locked.
+- *      No resources should be acquired within the ISR.
+- *      May only call asynchrounous services.
+- *  Ensures:
+- *      This routine must not affect the state of the physical PIC.
+- *      (i.e.; don't send an EOI).
+- */
+-	typedef bool (CDECL *ISR_PROC) (void *pRefData);
+-
+-/*
+- *  ======== ISR_Exit ========
+- *  Purpose:
+- *      Discontinue usage of the ISR module.
+- *  Parameters:
+- *  Returns:
+- *  Requires:
+- *      ISR_Init() was previously called.
+- *  Ensures:
+- *      Resources acquired in ISR_Init() are freed.
+- */
+-	extern void CDECL ISR_Exit();
+-
+-/*
+- *  ======== ISR_Init ========
+- *  Purpose:
+- *      Initialize the ISR module's private state.
+- *  Parameters:
+- *  Returns:
+- *      TRUE if initialized; FALSE if error occured.
+- *  Requires:
+- *  Ensures:
+- *      A requirement for each of the other public ISR functions.
+- */
+-	extern bool CDECL ISR_Init();
+-
+-/*
+- *  ======== ISR_Install ========
+- *  Purpose:
+- *      Register an ISR for a given IRQ with the system's interrupt manager.
+- *  Parameters:
+- *      phIRQ:          Ptr to store a handle to an interrupt object.
+- *      pHostConfig:    Ptr to a host resource structure, containing both
+- *                      interrupt and bus info.
+- *      pfnISR:         ISR function.  See definition of ISR_PROC.
+- *      dwIntrType:     Type of interrupt.
+- *      pRefData:       Pointer to user-defined reference data.
+- *  Returns:
+- *      DSP_SOK:        ISR installed.
+- *      DSP_EPOINTER:   phIRQ == NULL.
+- *      DSP_EMEMORY:    Insufficient memory.
+- *      DSP_EFAIL:      Error registering the ISR for the IRQ.
+- *  Requires:
+- *      pHostConfig is a valid pointer to assigned host resources;
+- *      iIRQ number is valid for this (host) processor.
+- *      See requirements for ISR_PROC.
+- *  Ensures:
+- *      DSP_SOK:    ISR is installed, and the IRQ is unmasked. The ISR can be
+- *                  called at any time until ISR_Uninstall() is called for this
+- *                  IRQ.
+- *      else:       *phIRQ is set to NULL.
+- */
+-	extern DSP_STATUS CDECL ISR_Install(OUT struct ISR_IRQ **phIRQ,
+-					    IN CONST struct CFG_HOSTRES
+-					    *pHostConfig,
+-					    IN ISR_PROC pfnISR,
+-					    IN u32 dwIntrType,
+-					    IN void *pRefData);
+-
+-
+-
+-/*
+- *  ======== ISR_Uninstall ========
+- *  Purpose:
+- *      Deregister the ISR previously installed by ISR_Install().
+- *  Parameters:
+- *      hIRQ:           Handle to an IRQ object returned from ISR_Install().
+- *  Returns:
+- *      DSP_SOK:        Success.
+- *      DSP_EHANDLE:    Invalid hIRQ.
+- *  Requires:
+- *  Ensures:
+- *      (SUCCESS && hDPC is NULL) or DSP_EFAILED status
+- */
+-	extern DSP_STATUS CDECL ISR_Uninstall(IN struct ISR_IRQ *hIRQ);
+-
+-#endif				/* ISR_ */
+diff --git a/drivers/dsp/bridge/Kbuild b/drivers/dsp/bridge/Kbuild
+index 0c4ae40..3589186 100644
+--- a/drivers/dsp/bridge/Kbuild
++++ b/drivers/dsp/bridge/Kbuild
+@@ -2,7 +2,7 @@ obj-$(CONFIG_MPU_BRIDGE)	+= bridgedriver.o
+ 
+ libgen = gen/gb.o gen/gt.o gen/gs.o gen/gh.o gen/_gt_para.o gen/uuidutil.o
+ libservices = services/csl.o services/mem.o services/list.o services/dpc.o \
+-		services/isr.o services/kfile.o services/sync.o \
++               services/kfile.o services/sync.o \
+ 		services/clk.o services/cfg.o services/reg.o \
+ 		services/regsup.o services/prcs.o services/ntfy.o \
+ 		services/dbg.o services/services.o
+diff --git a/drivers/dsp/bridge/pmgr/chnl.c b/drivers/dsp/bridge/pmgr/chnl.c
+index 9742dac..def2080 100644
+--- a/drivers/dsp/bridge/pmgr/chnl.c
++++ b/drivers/dsp/bridge/pmgr/chnl.c
+@@ -78,7 +78,6 @@
+ #include <cfg.h>
+ #include <csl.h>
+ #include <dpc.h>
+-#include <isr.h>
+ #include <list.h>
+ #include <mem.h>
+ #include <sync.h>
+diff --git a/drivers/dsp/bridge/services/isr.c b/drivers/dsp/bridge/services/isr.c
+deleted file mode 100644
+index 781a19c..0000000
+--- a/drivers/dsp/bridge/services/isr.c
++++ /dev/null
+@@ -1,261 +0,0 @@
+-/*
+- * linux/drivers/dsp/bridge/services/isr.c
+- *
+- * DSP-BIOS Bridge driver support functions for TI OMAP processors.
+- *
+- * Copyright (C) 2005-2006 Texas Instruments, Inc.
+- *
+- * This package is free software; you can redistribute it and/or modify
+- * it under the terms of the GNU General Public License version 2 as
+- * published by the Free Software Foundation.
+- *
+- * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+- * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+- */
+-
+-
+-/*
+- *  ======== isrce.c ========
+- *  Purpose:
+- *      Interrupt services.
+- *
+- *  Public Functions:
+- *      ISR_Exit
+- *      ISR_Init
+- *      ISR_Install
+- *      ISR_Uninstall
+- *
+- *
+- *! Revision History:
+- *! ================
+- *! 06-Feb-2003 kc: Renamed DSP_MAILBOX1 to ISR_MAILBOX1.
+- *! 14-Mar-2002 rr: Added HELEN1_V1 flag while installing the interrupt.
+- *! 05-Nov-2001 kc: Updated ISR_Install to support multiple HW interrupts.
+- *! 27-Jul-2001 rr: Interrupt Id is based on x86 or ARM define.
+- *! 24-Apr-2001 ag: Replaced nkintr.h with hw.h.
+- *! 10-Oct-2000 rr: CeSetThreadPriority used instead of SetThreadPriority.
+- *! 11-Aug-2000 ag: Removed #include <stdwin.h>
+- *! 10-Aug-2000 rr: InterruptInitialize happens before the IST creation.
+- *! 15-Feb-2000 rr: InterruptInitialize return value checked.
+- *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
+- *!		 GT Changes.
+- *! 31-Jan-2000 rr: Changes after code review.Terminate thread,handle
+- *!                 modified.ISR_UnInstall frees the ISR_Object only on
+- *!                 Successful termination of the thread and the handle.
+- *! 19-Jan-2000 rr: Code Cleaned up after code review.
+- *! 06-Jan-2000 rr: Bus type included in the IRQ object. It is checked
+- *!                 during the install and uninstall.
+- *! 29-Dec-1999 rr: WaitForSingleObject removed during ISR_UnInstall
+- *! 22-Nov-1999 rr: Event gets created before CardRequestIRQ
+- *! 05-Nov-1999 rr: ISR_Install does not intialize the interrupt for PCMCIA
+- *!                 For other bus type this will happen. IST function return
+- *!                 value not checked as anyway we have to say InterruptDone
+- *! 29-Oct-1999 rr: Hardware IST is created here.
+- *! 25-Oct-1999 rr: New Isr design.
+- *! 13-Sep-1999 a0216266: Stubbed from isrnt.c.
+- */
+-
+-/*  ----------------------------------- Host OS */
+-#include <host_os.h>
+-
+-/*  ----------------------------------- DSP/BIOS Bridge */
+-#include <std.h>
+-#include <dbdefs.h>
+-#include <errbase.h>
+-
+-/*  ----------------------------------- Trace & Debug */
+-#include <dbc.h>
+-#include <gt.h>
+-
+-/*  ----------------------------------- OS Adaptation Layer */
+-#include <list.h>
+-#include <mem.h>
+-
+-/*  ----------------------------------- This */
+-#include <isr.h>
+-
+-/*  ----------------------------------- Defines, Data Structures, Typedefs */
+-#define SIGNATURE       0x5f525349	/* "ISR_" (in reverse). */
+-
+-/* The IRQ object, passed to our hardware and virtual interrupt routines: */
+-struct ISR_IRQ {
+-	u32 dwSignature;	/* Used for object validation.   */
+-	void *pRefData;		/* Argument for client's ISR.    */
+-	ISR_PROC pfnISR;	/* Client's ISR.                 */
+-
+-	u32 dwIntrID;		/* hardware intertupt identifier */
+-};
+-
+-/*  ----------------------------------- Globals & Defines */
+-#if GT_TRACE
+-static struct GT_Mask ISR_DebugMask = { NULL, NULL };	/* ISR Debug Mask */
+-#endif
+-
+-/*  ----------------------------------- Function Prototypes */
+-static irqreturn_t HardwareIST(int irq, void *hIRQ);
+-
+-/*
+- *  ======== ISR_Exit ========
+- *  Purpose:
+- *      Discontinue usage of the ISR module.
+- */
+-void ISR_Exit(void)
+-{
+-	GT_0trace(ISR_DebugMask, GT_ENTER, "Entered ISR_Exit\n");
+-}
+-
+-/*
+- *  ======== ISR_Init ========
+- *  Purpose:
+- *      Initialize the ISR module's private state.
+- */
+-bool ISR_Init(void)
+-{
+-	GT_create(&ISR_DebugMask, "IS");
+-
+-	GT_0trace(ISR_DebugMask, GT_5CLASS, "Entered ISR_Init\n");
+-
+-	return true;
+-}
+-
+-/*
+- *  ======== ISR_Install ========
+- *  Purpose:
+- *      Register an ISR for a given IRQ with the system's interrupt manager.
+- */
+-DSP_STATUS ISR_Install(OUT struct ISR_IRQ **phIRQ,
+-		       IN CONST struct CFG_HOSTRES *pHostConfig,
+-		       ISR_PROC pfnISR, u32 dwIntrType, void *pRefData)
+-{
+-	DSP_STATUS status = DSP_SOK;
+-	struct ISR_IRQ *pIRQObject = NULL;
+-
+-	DBC_Require(pHostConfig);
+-	DBC_Require(pRefData != NULL);
+-
+-	GT_5trace(ISR_DebugMask, GT_ENTER,
+-		  "Entered ISR_Install, args:" "\n\thIRQ:"
+-		  "0x%x\n\tpHostConfig: 0x%x\n\tpfnISR: 0x%x\n" "\tpRefData:"
+-		  "0x%x\n \tdwIntrType 0x%x\n", phIRQ, pHostConfig, pfnISR,
+-		  pRefData, dwIntrType);
+-
+-	if (phIRQ != NULL) {
+-		*phIRQ = NULL;
+-		/*
+-		 *  Allocate an IRQ object to store information allowing our
+-		 *  interrupt handler to dispatch to the client's interrupt
+-		 *  routines.
+-		 */
+-		MEM_AllocObject(pIRQObject, struct ISR_IRQ, SIGNATURE);
+-		if (pIRQObject != NULL) {
+-			/* Fill out the Object: */
+-			pIRQObject->pRefData = pRefData;
+-			pIRQObject->pfnISR = pfnISR;
+-
+-			/* Install different HW interrupts based on interrupt
+-			 * type. */
+-				switch (dwIntrType) {
+-				case ISR_MAILBOX1:
+-				pIRQObject->dwIntrID = INT_MAIL_MPU_IRQ;
+-
+-				GT_0trace(ISR_DebugMask, GT_1CLASS,
+-					  "Setting intr id for "
+-					  "ISR_MAILBOX1\n");
+-				break;
+-
+-				case ISR_MAILBOX2:
+-				pIRQObject->dwIntrID = MAIL_U3_MPU_IRQ;
+-				GT_0trace(ISR_DebugMask, GT_1CLASS,
+-					  "Setting intr id for "
+-					  "ISR_MAILBOX2\n");
+-
+-				break;
+-
+-				case DSP_MMUFAULT:
+-				pIRQObject->dwIntrID = INT_DSP_MMU_IRQ;
+-				GT_0trace(ISR_DebugMask, GT_1CLASS,
+-					  "Setting intr id for "
+-					  "DSP_MMUFAULT\n");
+-				break;
+-
+-				default:
+-				pIRQObject->dwIntrID = (u32) 0x00;
+-				GT_0trace(ISR_DebugMask, GT_1CLASS,
+-					  "Setting intr id to NULL\n");
+-				break;
+-			}
+-
+-			if (pIRQObject->dwIntrID != 0) {
+-				status = request_irq(pIRQObject->dwIntrID,
+-						     HardwareIST, 0,
+-						    "DspBridge", pIRQObject);
+-			} else {
+-				status = DSP_EINVALIDARG;
+-			}
+-		}
+-		if (DSP_SUCCEEDED(status)) {
+-			*phIRQ = pIRQObject;
+-			GT_1trace(ISR_DebugMask, GT_1CLASS,
+-				  "ISR:IRQ Object 0x%x \n",
+-				  pIRQObject);
+-		} else {
+-			MEM_FreeObject(pIRQObject);
+-		}
+-	}
+-	DBC_Ensure(DSP_SUCCEEDED(status) || (!phIRQ || *phIRQ == NULL));
+-	return status;
+-}
+-
+-/*
+- *  ======== ISR_Uninstall ========
+- *  Purpose:
+- *      Deregister the ISR previously installed by ISR_Install().
+- *      if it fails we do not delete the IRQ object.
+- */
+-DSP_STATUS ISR_Uninstall(struct ISR_IRQ *hIRQ)
+-{
+-	DSP_STATUS status = DSP_SOK;
+-	struct ISR_IRQ *pIRQObject = (struct ISR_IRQ *)hIRQ;
+-
+-	DBC_Require(hIRQ > 0);
+-
+-	GT_1trace(ISR_DebugMask, GT_ENTER,
+-		  "Entered ISR_Uninstall, hIRQ: 0x%x\n", hIRQ);
+-
+-	if (MEM_IsValidHandle(hIRQ, SIGNATURE)) {
+-		/* Linux function to uninstall ISR */
+-		free_irq(pIRQObject->dwIntrID, pIRQObject);
+-		pIRQObject->dwIntrID = (u32) -1;
+-	} else {
+-		status = DSP_EHANDLE;
+-	}
+-
+-	/* Free our IRQ object: */
+-	if (DSP_SUCCEEDED(status)) {
+-		MEM_FreeObject(pIRQObject);
+-		pIRQObject = NULL;
+-	}
+-
+-	DBC_Ensure((DSP_SUCCEEDED(status) && pIRQObject == NULL) ||
+-		   DSP_FAILED(status));
+-
+-	return status;
+-}
+-
+-/*
+- *  ======== HardwareIST ========
+- *  Purpose:
+- *      Linux calls this IRQ handler on interrupt.
+- */
+-static irqreturn_t HardwareIST(int irq, void *hIRQ)
+-{
+-	struct ISR_IRQ *pIRQObject = (struct ISR_IRQ *)hIRQ;
+-
+-	DBC_Require(irq == pIRQObject->dwIntrID);
+-
+-	/* Call the function registered in ISR_Install */
+-	(*(pIRQObject->pfnISR)) (pIRQObject->pRefData);
+-
+-	return IRQ_HANDLED;
+-}
+diff --git a/drivers/dsp/bridge/services/services.c b/drivers/dsp/bridge/services/services.c
+index a41c3ad..bc21912 100644
+--- a/drivers/dsp/bridge/services/services.c
++++ b/drivers/dsp/bridge/services/services.c
+@@ -47,7 +47,6 @@
+ #include <csl.h>
+ #include <dbg.h>
+ #include <dpc.h>
+-#include <isr.h>
+ #include <kfile.h>
+ #include <list.h>
+ #include <mem.h>
+@@ -92,7 +91,6 @@ void SERVICES_Exit(void)
+ 		PRCS_Exit();
+ 		LST_Exit();
+ 		KFILE_Exit();
+-		ISR_Exit();
+ 		DPC_Exit();
+ 		DBG_Exit();
+ 		CSL_Exit();
+@@ -113,7 +111,7 @@ void SERVICES_Exit(void)
+ bool SERVICES_Init(void)
+ {
+ 	bool fInit = true;
+-	bool fCFG, fCSL, fDBG, fDPC, fISR, fKFILE, fLST, fMEM;
++       bool fCFG, fCSL, fDBG, fDPC, fKFILE, fLST, fMEM;
+ 	bool fPRCS, fREG, fSYNC, fCLK, fUTIL, fNTFY;
+ 
+ 	DBC_Require(cRefs >= 0);
+@@ -133,7 +131,6 @@ bool SERVICES_Init(void)
+ 		fCSL = CSL_Init();
+ 		fDBG = DBG_Init();
+ 		fDPC = DPC_Init();
+-		fISR = ISR_Init();
+ 		fKFILE = KFILE_Init();
+ 		fLST = LST_Init();
+ 		fPRCS = PRCS_Init();
+@@ -143,7 +140,7 @@ bool SERVICES_Init(void)
+ 		fUTIL = UTIL_Init();
+ 		fNTFY = NTFY_Init();
+ 
+-		fInit = fCFG && fCSL && fDBG && fDPC && fISR && fKFILE &&
++               fInit = fCFG && fCSL && fDBG && fDPC && fKFILE &&
+ 			fLST && fMEM && fPRCS && fREG && fSYNC && fCLK && fUTIL;
+ 
+ 		if (!fInit) {
+@@ -171,9 +168,6 @@ bool SERVICES_Init(void)
+ 			if (fKFILE)
+ 				KFILE_Exit();
+ 
+-			if (fISR)
+-				ISR_Exit();
+-
+ 			if (fDPC)
+ 				DPC_Exit();
+ 
+diff --git a/drivers/dsp/bridge/wmd/_deh.h b/drivers/dsp/bridge/wmd/_deh.h
+index 4306501..586c939 100644
+--- a/drivers/dsp/bridge/wmd/_deh.h
++++ b/drivers/dsp/bridge/wmd/_deh.h
+@@ -29,7 +29,6 @@
+ #define _DEH_
+ 
+ #include <dpc.h>
+-#include <isr.h>
+ #include <ntfy.h>
+ #include <wmd.h>
+ 
+@@ -41,7 +40,6 @@ struct DEH_MGR {
+ 	struct WMD_DEV_CONTEXT *hWmdContext;	/* WMD device context. */
+ 	struct NTFY_OBJECT *hNtfy;	/* NTFY object                  */
+ 	struct DPC_OBJECT *hMmuFaultDpc;	/* DPC object handle.  */
+-	struct ISR_IRQ *hMmuFaultIsr;	/* DSP MMU ISR handle.          */
+ 	struct DSP_ERRORINFO errInfo;	/* DSP exception info.          */
+ } ;
+ 
+diff --git a/drivers/dsp/bridge/wmd/io_sm.c b/drivers/dsp/bridge/wmd/io_sm.c
+index d08421c..04ce1e0 100644
+--- a/drivers/dsp/bridge/wmd/io_sm.c
++++ b/drivers/dsp/bridge/wmd/io_sm.c
+@@ -196,7 +196,6 @@ struct IO_MGR {
+ 	u8 *pMsgInput; 	/* Address of input messages    */
+ 	u8 *pMsgOutput; 	/* Address of output messages   */
+ 	u32 uSMBufSize; 	/* Size of a shared memory I/O channel */
+-	struct ISR_IRQ *hIRQ; 		/* Virutalized IRQ handle       */
+ 	bool fSharedIRQ; 	/* Is this IRQ shared?	  */
+ 	struct DPC_OBJECT *hDPC; 	/* DPC object handle	    */
+ 	struct SYNC_CSOBJECT *hCSObj; 	/* Critical section object handle */
+@@ -335,18 +334,19 @@ DSP_STATUS WMD_IO_Create(OUT struct IO_MGR **phIOMgr,
+ 		IO_DisableInterrupt(hWmdContext);
+ 		if (devType == DSP_UNIT) {
+ 			/* Plug the channel ISR:. */
+-			status = ISR_Install(&pIOMgr->hIRQ, &hostRes, IO_ISR,
+-				 ISR_MAILBOX1, (void *)pIOMgr);
++                       if ((request_irq(INT_MAIL_MPU_IRQ, IO_ISR, 0,
++                                           "DspBridge", (void *)pIOMgr)) == 0)
++                               status = DSP_SOK;
++                       else
++                               status = DSP_EFAIL;
+ 		}
+-		if (DSP_SUCCEEDED(status)) {
+-			/* Enable interrupt used for dsp i/o link */
+-			/* moved  IO_EnableInterrupt(hWmdContext); */
+-		} else {
++               if (DSP_SUCCEEDED(status))
++                       DBG_Trace(DBG_LEVEL1, "ISR_IRQ Object 0x%x \n",
++                                                pIOMgr);
++               else
+ 			status = CHNL_E_ISR;
+-		}
+-	} else {
++       } else
+ 		status = CHNL_E_ISR;
+-	}
+ func_cont:
+ 	if (DSP_FAILED(status)) {
+ 		/* Cleanup: */
+@@ -371,15 +371,15 @@ DSP_STATUS WMD_IO_Destroy(struct IO_MGR *hIOMgr)
+ 	struct WMD_DEV_CONTEXT *hWmdContext;
+ 	if (MEM_IsValidHandle(hIOMgr, IO_MGRSIGNATURE)) {
+ 		/* Unplug IRQ:    */
+-		if (hIOMgr->hIRQ) {
+-			/* Disable interrupts from the board:  */
+-			if (DSP_SUCCEEDED(DEV_GetWMDContext(hIOMgr->hDevObject,
+-			   &hWmdContext)))
+-				DBC_Assert(hWmdContext);
+-			(void)CHNLSM_DisableInterrupt(hWmdContext);
+-			(void)ISR_Uninstall(hIOMgr->hIRQ);
+-			(void)DPC_Destroy(hIOMgr->hDPC);
++               /* Disable interrupts from the board:  */
++               if (DSP_SUCCEEDED(DEV_GetWMDContext(hIOMgr->hDevObject,
++                  &hWmdContext))) {
++                       DBC_Assert(hWmdContext);
+ 		}
++               (void)CHNLSM_DisableInterrupt(hWmdContext);
++               /* Linux function to uninstall ISR */
++               free_irq(INT_MAIL_MPU_IRQ, (void *)hIOMgr);
++               (void)DPC_Destroy(hIOMgr->hDPC);
+ #ifndef DSP_TRACEBUF_DISABLED
+ 		if (hIOMgr->pMsg)
+ 			MEM_Free(hIOMgr->pMsg);
+@@ -1056,10 +1056,11 @@ void IO_DPC(IN OUT void *pRefData)
+  *      Calls the WMD's CHNL_ISR to determine if this interrupt is ours, then
+  *      schedules a DPC to dispatch I/O.
+  */
+-bool IO_ISR(IN void *pRefData)
++irqreturn_t IO_ISR(int irq, IN void *pRefData)
+ {
+ 	struct IO_MGR *hIOMgr = (struct IO_MGR *)pRefData;
+ 	bool fSchedDPC;
++       DBC_Require(irq == INT_MAIL_MPU_IRQ);
+ 	DBC_Require(MEM_IsValidHandle(hIOMgr, IO_MGRSIGNATURE));
+ 	DBG_Trace(DBG_LEVEL3, "Entering IO_ISR(0x%x)\n", pRefData);
+ 	/* Call WMD's CHNLSM_ISR() to see if interrupt is ours, and process. */
+@@ -1082,13 +1083,10 @@ bool IO_ISR(IN void *pRefData)
+ 				DPC_Schedule(hIOMgr->hDPC);
+ 			}
+ 		}
+-		return true;
+-	} else {
++       } else
+ 		/* Ensure that, if WMD didn't claim it, the IRQ is shared. */
+ 		DBC_Ensure(hIOMgr->fSharedIRQ);
+-		/* If not ours, return false. */
+-		return false;
+-	}
++       return IRQ_HANDLED;
+ }
+ 
+ /*
+diff --git a/drivers/dsp/bridge/wmd/mmu_fault.c b/drivers/dsp/bridge/wmd/mmu_fault.c
+index b4abee1..75fe2a7 100644
+--- a/drivers/dsp/bridge/wmd/mmu_fault.c
++++ b/drivers/dsp/bridge/wmd/mmu_fault.c
+@@ -55,6 +55,7 @@
+ 
+ /*  ----------------------------------- This */
+ #include "_deh.h"
++#include <cfg.h>
+ #include "_tiomap_mmu.h"
+ #include "_tiomap.h"
+ #include "mmu_fault.h"
+@@ -85,7 +86,7 @@ void MMU_FaultDpc(IN void *pRefData)
+  *  ======== MMU_FaultIsr ========
+  *      ISR to be triggered by a DSP MMU fault interrupt.
+  */
+-void MMU_FaultIsr(IN void *pRefData)
++irqreturn_t  MMU_FaultIsr(int irq, IN void *pRefData)
+ {
+ 	struct DEH_MGR *pDehMgr = (struct DEH_MGR *)pRefData;
+ 	struct WMD_DEV_CONTEXT *pDevContext;
+@@ -94,7 +95,7 @@ void MMU_FaultIsr(IN void *pRefData)
+ 
+ 
+ 	DBG_Trace(DBG_LEVEL1, "Entering DEH_DspMmuIsr: 0x%x\n", pRefData);
+-
++       DBC_Require(irq == INT_DSP_MMU_IRQ);
+ 	DBC_Require(MEM_IsValidHandle(pDehMgr, SIGNATURE));
+ 
+ 	if (MEM_IsValidHandle(pDehMgr, SIGNATURE)) {
+@@ -138,6 +139,7 @@ void MMU_FaultIsr(IN void *pRefData)
+ 		}
+ 		PrintDspTraceBuffer(pDehMgr);
+ 	}
++       return IRQ_HANDLED;
+ }
+ 
+ 
+diff --git a/drivers/dsp/bridge/wmd/mmu_fault.h b/drivers/dsp/bridge/wmd/mmu_fault.h
+index 47602a9..009382a 100644
+--- a/drivers/dsp/bridge/wmd/mmu_fault.h
++++ b/drivers/dsp/bridge/wmd/mmu_fault.h
+@@ -39,7 +39,7 @@
+  *  ======== MMU_FaultIsr ========
+  *      ISR to be triggered by a DSP MMU fault interrupt.
+  */
+-	void MMU_FaultIsr(IN void *pRefData);
++irqreturn_t  MMU_FaultIsr(int irq, IN void *pRefData);
+ 
+ /*
+  *  ========PrintDspTraceBuffer ========
+diff --git a/drivers/dsp/bridge/wmd/tiomap_sm.c b/drivers/dsp/bridge/wmd/tiomap_sm.c
+index 35f6a77..ce5e53c 100644
+--- a/drivers/dsp/bridge/wmd/tiomap_sm.c
++++ b/drivers/dsp/bridge/wmd/tiomap_sm.c
+@@ -49,7 +49,6 @@
+ /*  ----------------------------------- OS Adaptation Layer */
+ #include <cfg.h>
+ #include <drv.h>
+-#include <isr.h>
+ #include <util.h>
+ 
+ /*  ----------------------------------- Mini Driver */
+diff --git a/drivers/dsp/bridge/wmd/ue_deh.c b/drivers/dsp/bridge/wmd/ue_deh.c
+index 81a2dc9..bf206ba 100644
+--- a/drivers/dsp/bridge/wmd/ue_deh.c
++++ b/drivers/dsp/bridge/wmd/ue_deh.c
+@@ -47,7 +47,6 @@
+ #include <csl.h>
+ #include <cfg.h>
+ #include <dpc.h>
+-#include <isr.h>
+ #include <mem.h>
+ #include <ntfy.h>
+ #include <drv.h>
+@@ -119,9 +118,11 @@ DSP_STATUS WMD_DEH_Create(OUT struct DEH_MGR **phDehMgr,
+ 			pDehMgr->errInfo.dwVal2 = 0L;
+ 			pDehMgr->errInfo.dwVal3 = 0L;
+ 			/* Install ISR function for DSP MMU fault */
+-			status = ISR_Install(&pDehMgr->hMmuFaultIsr,
+-				 &cfgHostRes, (ISR_PROC)MMU_FaultIsr,
+-				 DSP_MMUFAULT, (void *)pDehMgr);
++                       if ((request_irq(INT_DSP_MMU_IRQ, MMU_FaultIsr, 0,
++                                           "DspBridge", (void *)pDehMgr)) == 0)
++                               status = DSP_SOK;
++                       else
++                               status = DSP_EFAIL;
+ 		}
+ 	}
+ 	if (DSP_FAILED(status)) {
+@@ -130,6 +131,8 @@ DSP_STATUS WMD_DEH_Create(OUT struct DEH_MGR **phDehMgr,
+ 		*phDehMgr = NULL;
+ 	} else {
+ 		*phDehMgr = (struct DEH_MGR *)pDehMgr;
++               DBG_Trace(DBG_LEVEL1, "ISR_IRQ Object 0x%x \n",
++                                        pDehMgr);
+ 	}
+ 	DBG_Trace(DBG_LEVEL1, "Exiting DEH_Create.\n");
+ 	return status;
+@@ -149,9 +152,8 @@ DSP_STATUS WMD_DEH_Destroy(struct DEH_MGR *hDehMgr)
+ 		/* If notification object exists, delete it */
+ 		if (pDehMgr->hNtfy)
+ 			(void)NTFY_Delete(pDehMgr->hNtfy);
+-
+ 		/* Disable DSP MMU fault */
+-		(void)ISR_Uninstall(pDehMgr->hMmuFaultIsr);
++               free_irq(INT_DSP_MMU_IRQ, pDehMgr);
+ 		(void)DPC_Destroy(pDehMgr->hMmuFaultDpc);
+ 		/* Deallocate the DEH manager object */
+ 		MEM_FreeObject(pDehMgr);
+-- 
+1.6.0.3.613.g9f8f13
+

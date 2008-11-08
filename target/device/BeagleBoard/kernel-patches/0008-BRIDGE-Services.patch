@@ -1,0 +1,5034 @@
+From 747b7efb6f70f3cb742aca8d98cb4ee8e1b86dc5 Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Fri, 15 Aug 2008 01:55:54 +0300
+Subject: [PATCH 08/43] BRIDGE: Services
+
+Initial port from omapzoom
+	http://omapzoom.org/gf/project/omapbridge
+
+For details,
+http://omapzoom.org/gf/project/omapbridge/docman/?subdir=3
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ drivers/dsp/bridge/services/cfg.c      |  484 +++++++++++++++++++++++++
+ drivers/dsp/bridge/services/clk.c      |  376 ++++++++++++++++++++
+ drivers/dsp/bridge/services/csl.c      |  274 ++++++++++++++
+ drivers/dsp/bridge/services/dbg.c      |  119 +++++++
+ drivers/dsp/bridge/services/dpc.c      |  275 ++++++++++++++
+ drivers/dsp/bridge/services/isr.c      |  261 ++++++++++++++
+ drivers/dsp/bridge/services/kfile.c    |  336 ++++++++++++++++++
+ drivers/dsp/bridge/services/list.c     |  285 +++++++++++++++
+ drivers/dsp/bridge/services/mem.c      |  594 +++++++++++++++++++++++++++++++
+ drivers/dsp/bridge/services/ntfy.c     |  329 +++++++++++++++++
+ drivers/dsp/bridge/services/prcs.c     |  119 +++++++
+ drivers/dsp/bridge/services/reg.c      |  196 ++++++++++
+ drivers/dsp/bridge/services/regsup.c   |  367 +++++++++++++++++++
+ drivers/dsp/bridge/services/regsup.h   |   58 +++
+ drivers/dsp/bridge/services/services.c |  205 +++++++++++
+ drivers/dsp/bridge/services/sync.c     |  610 ++++++++++++++++++++++++++++++++
+ 16 files changed, 4888 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/dsp/bridge/services/cfg.c
+ create mode 100644 drivers/dsp/bridge/services/clk.c
+ create mode 100644 drivers/dsp/bridge/services/csl.c
+ create mode 100644 drivers/dsp/bridge/services/dbg.c
+ create mode 100644 drivers/dsp/bridge/services/dpc.c
+ create mode 100644 drivers/dsp/bridge/services/isr.c
+ create mode 100644 drivers/dsp/bridge/services/kfile.c
+ create mode 100644 drivers/dsp/bridge/services/list.c
+ create mode 100644 drivers/dsp/bridge/services/mem.c
+ create mode 100644 drivers/dsp/bridge/services/ntfy.c
+ create mode 100644 drivers/dsp/bridge/services/prcs.c
+ create mode 100644 drivers/dsp/bridge/services/reg.c
+ create mode 100644 drivers/dsp/bridge/services/regsup.c
+ create mode 100644 drivers/dsp/bridge/services/regsup.h
+ create mode 100644 drivers/dsp/bridge/services/services.c
+ create mode 100644 drivers/dsp/bridge/services/sync.c
+
+diff --git a/drivers/dsp/bridge/services/cfg.c b/drivers/dsp/bridge/services/cfg.c
+new file mode 100644
+index 0000000..1614d80
+--- /dev/null
++++ b/drivers/dsp/bridge/services/cfg.c
+@@ -0,0 +1,484 @@
++/*
++ * linux/drivers/dsp/bridge/services/cfg.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== cfgce.c ========
++ *  Purpose:
++ *      Implementation of platform specific config services.
++ *
++ *  Private Functions:
++ *      CFG_Exit
++ *      CFG_GetAutoStart
++ *      CFG_GetDevObject
++ *      CFG_GetDSPResources
++ *      CFG_GetExecFile
++ *      CFG_GetHostResources
++ *      CFG_GetObject
++ *      CFG_Init
++ *      CFG_SetDevObject
++ *      CFG_SetObject
++ *
++ *
++ *! Revision History:
++ *! ================
++ *! 26-Arp-2004 hp  Support for handling more than one Device.
++ *! 26-Feb-2003 kc  Removed unused CFG fxns.
++ *! 10-Nov-2000 rr: CFG_GetBoardName local var initialized.
++ *! 30-Oct-2000 kc: Changed local var. names to use Hungarian notation.
++ *! 10-Aug-2000 rr: Cosmetic changes.
++ *! 26-Jul-2000 rr: Added CFG_GetDCDName. CFG_Get/SetObject(based on a flag)
++ *!                  replaces CFG_GetMgrObject & CFG_SetMgrObject.
++ *! 17-Jul-2000 rr: Added CFG_GetMgrObject & CFG_SetMgrObject.
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		    GT Changes.
++ *! 31-Jan-2000 rr: Comments and bugfixes:  modified after code review
++ *! 07-Jan-2000 rr: CFG_GetBoardName Ensure class checks CSL_Strlen of the
++ *!                 read value from the registry against the passed in BufSize;
++ *!                 CFG_GetZLFile,CFG_GetWMDFileName and
++ *!                 CFG_GetExecFile also modified same way.
++ *! 06-Jan-2000 rr: CFG_GetSearchPath & CFG_GetWinBRIDGEDir removed.
++ *! 09-Dec-1999 rr: CFG_SetDevObject stores the DevNodeString pointer.
++ *! 03-Dec-1999 rr: CFG_GetDevObject reads stored DevObject from Registry.
++ *!                 CFG_GetDevNode reads the Devnodestring from the registry.
++ *!                 CFG_SetDevObject stores the registry path as
++ *!                 DevNodestring in the registry.
++ *! 02-Dec-1999 rr: CFG_debugMask is declared static now. stdwin.h included
++ *! 22-Nov-1999 kc: Added windows.h to remove warnings.
++ *! 25-Oct-1999 rr: CFG_GetHostResources reads the HostResource structure
++ *!                 from the registry which was set by the DRV Request
++ *!                 Resources.
++ *! 15-Oct-1999 rr: Changes in CFG_SetPrivateDword & HostResources reflecting
++ *!                 changes for  drv.h resource structure and wsxreg.h new
++ *!                 entry(DevObject) Hard coded entries removed for those items
++ *! 08-Oct-1999 rr: CFG_SetPrivateDword modified. it sets devobject into the
++ *!                 registry. CFG_Get HostResources modified for opening up
++ *!                 two mem winodws.
++ *! 24-Sep-1999 rr: CFG_GetHostResources uses hardcoded Registry calls,uses NT
++ *!                 type of Resource Structure.
++ *! 19-Jul-1999 a0216266: Stubbed from cfgnt.c.
++ */
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <csl.h>
++#include <reg.h>
++
++/*  ----------------------------------- Others */
++#include <dbreg.h>
++
++/*  ----------------------------------- This */
++#include <cfg.h>
++#include <list.h>
++
++struct DRV_EXT {
++	struct LST_ELEM link;
++	char szString[MAXREGPATHLENGTH];
++};
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask CFG_debugMask = { NULL, NULL };	/* CFG debug Mask           */
++#endif
++
++/*
++ *  ======== CFG_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the CFG module.
++ */
++void CFG_Exit(void)
++{
++	GT_0trace(CFG_debugMask, GT_5CLASS, "Entered CFG_Exit\n");
++}
++
++/*
++ *  ======== CFG_GetAutoStart ========
++ *  Purpose:
++ *      Retreive the autostart mask, if any, for this board.
++ */
++DSP_STATUS CFG_GetAutoStart(struct CFG_DEVNODE *hDevNode,
++			    OUT u32 *pdwAutoStart)
++{
++	DSP_STATUS status = DSP_SOK;
++	u32 dwBufSize;
++	GT_2trace(CFG_debugMask, GT_ENTER,
++		  "Entered CFG_GetAutoStart: \n\thDevNode:"
++		  "0x%x\n\tpdwAutoStart: 0x%x\n", hDevNode, pdwAutoStart);
++	dwBufSize = sizeof(*pdwAutoStart);
++	if (!hDevNode)
++		status = CFG_E_INVALIDHDEVNODE;
++	if (!pdwAutoStart)
++		status = CFG_E_INVALIDPOINTER;
++	if (DSP_SUCCEEDED(status)) {
++		status = REG_GetValue(NULL, (char *)hDevNode, AUTOSTART,
++				     (u8 *)pdwAutoStart, &dwBufSize);
++		if (DSP_FAILED(status))
++			status = CFG_E_RESOURCENOTAVAIL;
++	}
++#ifdef DEBUG
++	if (DSP_SUCCEEDED(status)) {
++		GT_0trace(CFG_debugMask, GT_1CLASS,
++			 "CFG_GetAutoStart SUCCESS \n");
++	} else {
++		GT_0trace(CFG_debugMask, GT_6CLASS,
++		"CFG_GetAutoStart Failed \n");
++	}
++#endif
++	DBC_Ensure((status == DSP_SOK &&
++		(*pdwAutoStart == 0 || *pdwAutoStart == 1))
++		|| status != DSP_SOK);
++	return status;
++}
++
++/*
++ *  ======== CFG_GetDevObject ========
++ *  Purpose:
++ *      Retrieve the Device Object handle for a given devnode.
++ */
++DSP_STATUS CFG_GetDevObject(struct CFG_DEVNODE *hDevNode, OUT u32 *pdwValue)
++{
++	DSP_STATUS status = DSP_SOK;
++	u32 dwBufSize;
++	GT_2trace(CFG_debugMask, GT_ENTER, "Entered CFG_GetDevObject, args: "
++		 "\n\thDevNode: 0x%x\n\tpdwValue: 0x%x\n", hDevNode,
++		 *pdwValue);
++	if (!hDevNode)
++		status = CFG_E_INVALIDHDEVNODE;
++
++	if (!pdwValue)
++		status = CFG_E_INVALIDHDEVNODE;
++
++	dwBufSize = sizeof(pdwValue);
++	if (DSP_SUCCEEDED(status)) {
++
++		/* check the device string and then call the REG_SetValue*/
++		if (!(CSL_Strcmp((char *)((struct DRV_EXT *)hDevNode)->szString,
++							"TIOMAP1510"))) {
++			GT_0trace(CFG_debugMask, GT_1CLASS,
++				  "Fetching DSP Device from "
++				  "Registry \n");
++			status = REG_GetValue(NULL, (char *)hDevNode,
++					      "DEVICE_DSP",
++					      (u8 *)pdwValue, &dwBufSize);
++		} else {
++			GT_0trace(CFG_debugMask, GT_6CLASS,
++				  "Failed to Identify the Device to Fetch \n");
++		}
++	}
++#ifdef DEBUG
++	if (DSP_SUCCEEDED(status)) {
++		GT_1trace(CFG_debugMask, GT_1CLASS,
++			  "CFG_GetDevObject SUCCESS DevObject"
++			  ": 0x%x\n ", *pdwValue);
++	} else {
++		GT_0trace(CFG_debugMask, GT_6CLASS,
++			  "CFG_GetDevObject Failed \n");
++	}
++#endif
++	return status;
++}
++
++/*
++ *  ======== CFG_GetDSPResources ========
++ *  Purpose:
++ *      Get the DSP resources available to a given device.
++ */
++DSP_STATUS CFG_GetDSPResources(struct CFG_DEVNODE *hDevNode,
++			       OUT struct CFG_DSPRES *pDSPResTable)
++{
++	DSP_STATUS status = DSP_SOK;	/* return value */
++	u32 dwResSize;
++	GT_2trace(CFG_debugMask, GT_ENTER,
++		  "Entered CFG_GetDSPResources, args: "
++		  "\n\thDevNode:  0x%x\n\tpDSPResTable:  0x%x\n",
++		  hDevNode, pDSPResTable);
++	if (!hDevNode) {
++		status = CFG_E_INVALIDHDEVNODE;
++	} else if (!pDSPResTable) {
++		status = CFG_E_INVALIDPOINTER;
++	} else {
++		status = REG_GetValue(NULL, CONFIG, DSPRESOURCES,
++				     (u8 *)pDSPResTable,
++				     &dwResSize);
++	}
++	if (DSP_SUCCEEDED(status)) {
++		GT_0trace(CFG_debugMask, GT_1CLASS,
++			  "CFG_GetDSPResources SUCCESS\n");
++	} else {
++		status = CFG_E_RESOURCENOTAVAIL;
++		GT_0trace(CFG_debugMask, GT_6CLASS,
++			  "CFG_GetDSPResources Failed \n");
++	}
++#ifdef DEBUG
++	/* assert that resource values are reasonable */
++	DBC_Assert(pDSPResTable->uChipType < 256);
++	DBC_Assert(pDSPResTable->uWordSize > 0);
++	DBC_Assert(pDSPResTable->uWordSize < 32);
++	DBC_Assert(pDSPResTable->cChips > 0);
++	DBC_Assert(pDSPResTable->cChips < 256);
++#endif
++	return status;
++}
++
++/*
++ *  ======== CFG_GetExecFile ========
++ *  Purpose:
++ *      Retreive the default executable, if any, for this board.
++ */
++DSP_STATUS CFG_GetExecFile(struct CFG_DEVNODE *hDevNode, u32 ulBufSize,
++			   OUT char *pstrExecFile)
++{
++	DSP_STATUS status = DSP_SOK;
++	u32 cExecSize = ulBufSize;
++	GT_3trace(CFG_debugMask, GT_ENTER,
++		  "Entered CFG_GetExecFile:\n\tthDevNode: "
++		  "0x%x\n\tulBufSize: 0x%x\n\tpstrExecFile: 0x%x\n", hDevNode,
++		  ulBufSize, pstrExecFile);
++	if (!hDevNode)
++		status = CFG_E_INVALIDHDEVNODE;
++
++	if (!pstrExecFile)
++		status = CFG_E_INVALIDPOINTER;
++
++	if (DSP_SUCCEEDED(status)) {
++		status = REG_GetValue(NULL, (char *)hDevNode, DEFEXEC,
++				     (u8 *)pstrExecFile, &cExecSize);
++		if (DSP_FAILED(status))
++			status = CFG_E_RESOURCENOTAVAIL;
++		else if (cExecSize > ulBufSize)
++			status = DSP_ESIZE;
++
++	}
++#ifdef DEBUG
++	if (DSP_SUCCEEDED(status)) {
++		GT_1trace(CFG_debugMask, GT_1CLASS,
++			  "CFG_GetExecFile SUCCESS Exec File"
++			  "name : %s\n ", pstrExecFile);
++	} else {
++		GT_0trace(CFG_debugMask, GT_6CLASS,
++			  "CFG_GetExecFile Failed \n");
++	}
++#endif
++	DBC_Ensure(((status == DSP_SOK) &&
++		  (CSL_Strlen(pstrExecFile) <= ulBufSize))
++		  || (status != DSP_SOK));
++	return status;
++}
++
++/*
++ *  ======== CFG_GetHostResources ========
++ *  Purpose:
++ *      Get the Host allocated resources assigned to a given device.
++ */
++DSP_STATUS CFG_GetHostResources(struct CFG_DEVNODE *hDevNode,
++				OUT struct CFG_HOSTRES *pHostResTable)
++{
++	DSP_STATUS status = DSP_SOK;
++	u32 dwBufSize;
++	GT_2trace(CFG_debugMask, GT_ENTER,
++		  "Entered CFG_GetHostResources, args:\n\t"
++		  "pHostResTable:  0x%x\n\thDevNode:  0x%x\n",
++		  pHostResTable, hDevNode);
++	if (!hDevNode)
++		status = CFG_E_INVALIDHDEVNODE;
++
++	if (!pHostResTable)
++		status = CFG_E_INVALIDPOINTER;
++
++	if (DSP_SUCCEEDED(status)) {
++		dwBufSize = sizeof(struct CFG_HOSTRES);
++		if (DSP_FAILED(REG_GetValue(NULL, (char *)hDevNode,
++			       CURRENTCONFIG,
++			      (u8 *)pHostResTable, &dwBufSize))) {
++			status = CFG_E_RESOURCENOTAVAIL;
++		}
++	}
++#ifdef DEBUG
++	if (DSP_SUCCEEDED(status)) {
++		GT_0trace(CFG_debugMask, GT_1CLASS,
++			  "CFG_GetHostResources SUCCESS \n");
++	} else {
++		GT_0trace(CFG_debugMask, GT_6CLASS,
++			  "CFG_GetHostResources Failed \n");
++	}
++#endif
++	return status;
++}
++
++/*
++ *  ======== CFG_GetObject ========
++ *  Purpose:
++ *      Retrieve the Object handle from the Registry
++ */
++DSP_STATUS CFG_GetObject(OUT u32 *pdwValue, u32 dwType)
++{
++	DSP_STATUS status = DSP_EINVALIDARG;
++	u32 dwBufSize;
++	DBC_Require(pdwValue != NULL);
++	GT_1trace(CFG_debugMask, GT_ENTER,
++		 "Entered CFG_GetObject, args:pdwValue: "
++		 "0x%x\n", *pdwValue);
++	dwBufSize = sizeof(pdwValue);
++	switch (dwType) {
++	case (REG_DRV_OBJECT):
++		status = REG_GetValue(NULL, CONFIG, DRVOBJECT,
++				     (u8 *)pdwValue,
++				     &dwBufSize);
++		break;
++	case (REG_MGR_OBJECT):
++		status = REG_GetValue(NULL, CONFIG, MGROBJECT,
++				     (u8 *)pdwValue,
++				     &dwBufSize);
++		break;
++	default:
++		break;
++	}
++	if (DSP_SUCCEEDED(status)) {
++		GT_1trace(CFG_debugMask, GT_1CLASS,
++			  "CFG_GetObject SUCCESS DrvObject: "
++			  "0x%x\n ", *pdwValue);
++	} else {
++		status = CFG_E_RESOURCENOTAVAIL;
++		*pdwValue = 0;
++		GT_0trace(CFG_debugMask, GT_6CLASS, "CFG_GetObject Failed \n");
++	}
++	DBC_Ensure((DSP_SUCCEEDED(status) && *pdwValue != 0) ||
++		   (DSP_FAILED(status) && *pdwValue == 0));
++	return status;
++}
++
++/*
++ *  ======== CFG_Init ========
++ *  Purpose:
++ *      Initialize the CFG module's private state.
++ */
++bool CFG_Init(void)
++{
++	struct CFG_DSPRES dspResources;
++	GT_create(&CFG_debugMask, "CF");	/* CF for ConFig */
++	GT_0trace(CFG_debugMask, GT_5CLASS, "Entered CFG_Init\n");
++	GT_0trace(CFG_debugMask, GT_5CLASS, "Intializing DSP Registry Info \n");
++
++	dspResources.uChipType = DSPTYPE_64;
++	dspResources.cChips = 1;
++	dspResources.uWordSize = DSPWORDSIZE;
++	dspResources.cMemTypes = 0;
++	dspResources.aMemDesc[0].uMemType = 0;
++	dspResources.aMemDesc[0].ulMin = 0;
++	dspResources.aMemDesc[0].ulMax = 0;
++	if (DSP_SUCCEEDED(REG_SetValue(NULL, CONFIG, DSPRESOURCES, REG_BINARY,
++			 (u8 *)&dspResources, sizeof(struct CFG_DSPRES)))) {
++		GT_0trace(CFG_debugMask, GT_5CLASS,
++			  "Initialized DSP resources in "
++			  "Registry \n");
++	} else
++		GT_0trace(CFG_debugMask, GT_5CLASS,
++			  "Failed to Initialize DSP resources"
++			  " in Registry \n");
++	return true;
++}
++
++/*
++ *  ======== CFG_SetDevObject ========
++ *  Purpose:
++ *      Store the Device Object handle and devNode pointer for a given devnode.
++ */
++DSP_STATUS CFG_SetDevObject(struct CFG_DEVNODE *hDevNode, u32 dwValue)
++{
++	DSP_STATUS status = DSP_SOK;
++	u32 dwBuffSize;
++	GT_2trace(CFG_debugMask, GT_ENTER,
++		  "Entered CFG_SetDevObject, args: \n\t"
++		  "hDevNode: 0x%x\n\tdwValue: 0x%x\n", hDevNode, dwValue);
++	if (!hDevNode)
++		status = CFG_E_INVALIDHDEVNODE;
++
++	dwBuffSize = sizeof(dwValue);
++	if (DSP_SUCCEEDED(status)) {
++		/* Store the WCD device object in the Registry */
++
++		if (!(CSL_Strcmp((char *)hDevNode, "TIOMAP1510"))) {
++			GT_0trace(CFG_debugMask, GT_1CLASS,
++				  "Registering the DSP Device \n");
++			status = REG_SetValue(NULL, (char *)hDevNode,
++				  "DEVICE_DSP", REG_DWORD,\
++				  (u8 *)&dwValue, dwBuffSize);
++			if (DSP_SUCCEEDED(status)) {
++				dwBuffSize = sizeof(hDevNode);
++				status = REG_SetValue(NULL,
++					  (char *)hDevNode, "DEVNODESTRING_DSP",
++					  REG_DWORD, (u8 *)&hDevNode,
++					  dwBuffSize);
++			}
++		} else {
++			GT_0trace(CFG_debugMask, GT_6CLASS,
++				  "Failed to Register Device \n");
++		}
++	}
++#ifdef DEBUG
++	if (DSP_SUCCEEDED(status)) {
++		GT_0trace(CFG_debugMask, GT_1CLASS,
++			  "CFG_SetDevObject SUCCESS \n");
++	} else {
++		GT_0trace(CFG_debugMask, GT_6CLASS,
++			  "CFG_SetDevObject Failed \n");
++	}
++#endif
++	return status;
++}
++
++/*
++ *  ======== CFG_SetObject ========
++ *  Purpose:
++ *      Store the Driver Object handle
++ */
++DSP_STATUS CFG_SetObject(u32 dwValue, u32 dwType)
++{
++	DSP_STATUS status = DSP_EINVALIDARG;
++	u32 dwBuffSize;
++	GT_1trace(CFG_debugMask, GT_ENTER,
++		  "Entered CFG_SetObject, args: dwValue: "
++		  "0x%x\n", dwValue);
++	dwBuffSize = sizeof(dwValue);
++	switch (dwType) {
++	case (REG_DRV_OBJECT):
++		status = REG_SetValue(NULL, CONFIG, DRVOBJECT, REG_DWORD,
++			 (u8 *)&dwValue, dwBuffSize);
++		break;
++	case (REG_MGR_OBJECT):
++		status = REG_SetValue(NULL, CONFIG, MGROBJECT, REG_DWORD,
++			 (u8 *) &dwValue, dwBuffSize);
++		break;
++	default:
++		break;
++	}
++#ifdef DEBUG
++	if (DSP_SUCCEEDED(status))
++		GT_0trace(CFG_debugMask, GT_1CLASS, "CFG_SetObject SUCCESS \n");
++	else
++		GT_0trace(CFG_debugMask, GT_6CLASS, "CFG_SetObject Failed \n");
++
++#endif
++	return status;
++}
+diff --git a/drivers/dsp/bridge/services/clk.c b/drivers/dsp/bridge/services/clk.c
+new file mode 100644
+index 0000000..dfe3e4f
+--- /dev/null
++++ b/drivers/dsp/bridge/services/clk.c
+@@ -0,0 +1,376 @@
++/*
++ * linux/drivers/dsp/bridge/services/clk.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*
++ *  ======== clk.c ========
++ *  Purpose:
++ *      Clock and Timer services.
++ *
++ *  Public Functions:
++ *      CLK_Exit
++ *      CLK_Init
++ *	CLK_Enable
++ *	CLK_Disable
++ *	CLK_GetRate
++ *	CLK_Set_32KHz
++ *! Revision History:
++ *! ================
++ *! 08-May-2007 rg: moved all clock functions from sync module.
++ *		    And added CLK_Set_32KHz, CLK_Set_SysClk.
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <csl.h>
++#include <mem.h>
++
++/*  ----------------------------------- This */
++#include <clk.h>
++#include <util.h>
++
++
++/*  ----------------------------------- Defines, Data Structures, Typedefs */
++
++typedef volatile unsigned long  REG_UWORD32;
++
++#define SSI_Base        0x48058000
++
++#define SSI_BASE                     IO_ADDRESS(SSI_Base)
++
++
++struct SERVICES_Clk_t {
++	struct clk *clk_handle;
++	const char *clk_name;
++};
++
++/* The row order of the below array needs to match with the clock enumerations
++ * 'SERVICES_ClkId' provided in the header file.. any changes in the
++ * enumerations needs to be fixed in the array as well */
++static struct SERVICES_Clk_t SERVICES_Clks[] = {
++	{NULL, "iva2_ck"},
++	{NULL, "mailboxes_ick"},
++	{NULL, "gpt5_fck"},
++	{NULL, "gpt5_ick"},
++	{NULL, "gpt6_fck"},
++	{NULL, "gpt6_ick"},
++	{NULL, "gpt7_fck"},
++	{NULL, "gpt7_ick"},
++	{NULL, "gpt8_fck"},
++	{NULL, "gpt8_ick"},
++	{NULL, "wdt_fck"},
++	{NULL, "wdt_ick"},
++	{NULL, "mcbsp1_fck"},
++	{NULL, "mcbsp1_ick"},
++	{NULL, "mcbsp2_fck"},
++	{NULL, "mcbsp2_ick"},
++	{NULL, "mcbsp3_fck"},
++	{NULL, "mcbsp3_ick"},
++	{NULL, "mcbsp4_fck"},
++	{NULL, "mcbsp4_ick"},
++	{NULL, "mcbsp5_fck"},
++	{NULL, "mcbsp5_ick"},
++	{NULL, "ssi_ssr_sst_fck"},
++	{NULL, "ssi_ick"},
++	{NULL, "omap_32k_fck"},
++	{NULL, "sys_ck"},
++	{NULL, ""}
++};
++
++
++#ifndef CONFIG_DISABLE_BRIDGE_PM
++extern struct platform_device dspbridge_device;
++#endif
++
++
++
++/* Generic TIMER object: */
++struct TIMER_OBJECT {
++	struct timer_list timer;
++};
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask CLK_debugMask = { NULL, NULL };	/* GT trace variable */
++#endif
++
++struct GPT6_configuration {
++	u32 config;
++	u32 tier;
++	u32 twer;
++	u32 tclr;
++	u32 tldr;
++	u32 ttgr;
++};
++/* Shadow settings to save the GPT6 timer settings */
++struct GPT6_configuration  gpt6_config;
++
++/*
++ *  ======== CLK_Exit ========
++ *  Purpose:
++ *      Cleanup CLK module.
++ */
++void CLK_Exit(void)
++{
++	int i = 0;
++
++	GT_0trace(CLK_debugMask, GT_5CLASS, "CLK_Exit\n");
++	/* Relinquish the clock handles */
++	while (i < SERVICESCLK_NOT_DEFINED) {
++		if (SERVICES_Clks[i].clk_handle)
++			clk_put(SERVICES_Clks[i].clk_handle);
++
++		SERVICES_Clks[i].clk_handle = NULL;
++		i++;
++	}
++
++}
++
++/*
++ *  ======== CLK_Init ========
++ *  Purpose:
++ *      Initialize CLK module.
++ */
++bool CLK_Init(void)
++{
++	struct clk *clk_handle;
++	int i = 0;
++	GT_create(&CLK_debugMask, "CK");	/* CK for CLK */
++	GT_0trace(CLK_debugMask, GT_5CLASS, "CLK_Init\n");
++
++	/* Get the clock handles from base port and store locally */
++	while (i < SERVICESCLK_NOT_DEFINED) {
++		/* get the handle from BP */
++#ifndef CONFIG_DISABLE_BRIDGE_PM
++		clk_handle = clk_get(&dspbridge_device.dev,
++			     SERVICES_Clks[i].clk_name);
++#else
++		clk_handle = clk_get(NULL, SERVICES_Clks[i].clk_name);
++#endif
++
++		if (!clk_handle) {
++			GT_1trace(CLK_debugMask, GT_7CLASS,
++				  "CLK_Init: failed to get Clk "
++				  "handle %s \n", SERVICES_Clks[i].clk_name);
++			/* should we fail here?? */
++		} else {
++			GT_1trace(CLK_debugMask, GT_7CLASS,
++				  "CLK_Init: PASS and Clk handle"
++				  "%s \n", SERVICES_Clks[i].clk_name);
++		}
++		SERVICES_Clks[i].clk_handle = clk_handle;
++		i++;
++	}
++
++	return true;
++}
++
++/*
++ *  ======== CLK_Enable ========
++ *  Purpose:
++ *      Enable Clock .
++ *
++*/
++DSP_STATUS CLK_Enable(IN enum SERVICES_ClkId clk_id)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct clk *pClk;
++
++	DBC_Require(clk_id < SERVICESCLK_NOT_DEFINED);
++	GT_1trace(CLK_debugMask, GT_6CLASS,
++		  "CLK_Enable: CLK Id = 0x%x \n", clk_id);
++
++	pClk = SERVICES_Clks[clk_id].clk_handle;
++	if (pClk) {
++		if (clk_enable(pClk) == 0x0) {
++			/* Success ? */
++		} else {
++			GT_1trace(CLK_debugMask, GT_7CLASS,
++				  "CLK_Enable: failed to Enable "
++				  "CLK %s \n", SERVICES_Clks[clk_id].clk_name);
++			status = DSP_EFAIL;
++		}
++	} else {
++		GT_1trace(CLK_debugMask, GT_7CLASS,
++			  "CLK_Enable: failed to get "
++			  "CLK %s \n", SERVICES_Clks[clk_id].clk_name);
++		status = DSP_EFAIL;
++	}
++	/* The SSI module need to configured not to have the Forced idle for
++	 * master interface. If it is set to forced idle, the SSI module is
++	 * transitioning to standby thereby causing the client in the DSP hang
++	 * waiting for the SSI module to be active after enabling the clocks
++	 */
++	if (clk_id == SERVICESCLK_ssi_fck)
++		SSI_Clk_Prepare(true);
++
++	return status;
++}
++/*
++ *  ======== CLK_Set_32KHz ========
++ *  Purpose:
++ *      To Set parent of a clock to 32KHz.
++ */
++
++DSP_STATUS CLK_Set_32KHz(IN enum SERVICES_ClkId clk_id)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct clk *pClk;
++	struct clk *pClkParent;
++	enum SERVICES_ClkId sys_32k_id = SERVICESCLK_sys_32k_ck;
++	pClkParent =  SERVICES_Clks[sys_32k_id].clk_handle;
++
++	DBC_Require(clk_id < SERVICESCLK_NOT_DEFINED);
++	GT_1trace(CLK_debugMask, GT_6CLASS, "CLK_Set_32KHz: CLK Id  = 0x%x is "
++		  "setting to 32KHz \n", clk_id);
++	pClk = SERVICES_Clks[clk_id].clk_handle;
++	if (pClk) {
++		if (!(clk_set_parent(pClk, pClkParent) == 0x0)) {
++			GT_1trace(CLK_debugMask, GT_7CLASS,
++				 "CLK_Set_32KHz: Failed to "
++				 "set to 32KHz %s \n",
++				 SERVICES_Clks[clk_id].clk_name);
++			status = DSP_EFAIL;
++		}
++	}
++	return status;
++}
++
++/*
++ *  ======== CLK_Disable ========
++ *  Purpose:
++ *      Disable the clock.
++ *
++*/
++DSP_STATUS CLK_Disable(IN enum SERVICES_ClkId clk_id)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct clk *pClk;
++	s32 clkUseCnt;
++
++	DBC_Require(clk_id < SERVICESCLK_NOT_DEFINED);
++	GT_1trace(CLK_debugMask, GT_6CLASS,
++		  "CLK_Disable: CLK Id = 0x%x \n", clk_id);
++
++	pClk = SERVICES_Clks[clk_id].clk_handle;
++
++	clkUseCnt = CLK_Get_UseCnt(clk_id);
++	if (clkUseCnt == -1) {
++		GT_1trace(CLK_debugMask, GT_7CLASS,
++			  "CLK_Disable: failed to get "
++			  "CLK Use count for Clk %s \n",
++			  SERVICES_Clks[clk_id].clk_name);
++	} else if (clkUseCnt == 0) {
++		GT_1trace(CLK_debugMask, GT_7CLASS,
++			  "CLK_Disable:  Clk %s  is already"
++			  "disabled\n", SERVICES_Clks[clk_id].clk_name);
++		 return status;
++	}
++	if (clk_id == SERVICESCLK_ssi_ick)
++		SSI_Clk_Prepare(false);
++
++		if (pClk) {
++			clk_disable(pClk);
++		} else {
++			GT_1trace(CLK_debugMask, GT_7CLASS,
++				  "CLK_Disable: failed to get "
++				  "CLK %s \n", SERVICES_Clks[clk_id].clk_name);
++			status = DSP_EFAIL;
++		}
++	return status;
++}
++
++/*
++ *  ======== CLK_GetRate ========
++ *  Purpose:
++ *      GetClock Speed.
++ *
++ */
++
++DSP_STATUS CLK_GetRate(IN enum SERVICES_ClkId clk_id, u32 *speedKhz)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct clk *pClk;
++	u32 clkSpeedHz;
++
++	DBC_Require(clk_id < SERVICESCLK_NOT_DEFINED);
++	*speedKhz = 0x0;
++
++	GT_1trace(CLK_debugMask, GT_7CLASS,
++		  "CLK_GetRate: CLK Id = 0x%x \n", clk_id);
++	pClk = SERVICES_Clks[clk_id].clk_handle;
++	if (pClk) {
++		clkSpeedHz = clk_get_rate(pClk);
++		*speedKhz = clkSpeedHz / 1000;
++		GT_2trace(CLK_debugMask, GT_6CLASS,
++			  "CLK_GetRate: clkSpeedHz = %d , "
++			  "speedinKhz=%d \n", clkSpeedHz, *speedKhz);
++	} else {
++		GT_1trace(CLK_debugMask, GT_7CLASS,
++			  "CLK_GetRate: failed to get CLK %s\n",
++			  SERVICES_Clks[clk_id].clk_name);
++		status = DSP_EFAIL;
++	}
++	return status;
++}
++
++s32 CLK_Get_UseCnt(IN enum SERVICES_ClkId clk_id)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct clk *pClk;
++	s32 useCount = -1;
++	DBC_Require(clk_id < SERVICESCLK_NOT_DEFINED);
++
++	pClk = SERVICES_Clks[clk_id].clk_handle;
++
++	if (pClk) {
++		useCount =  clk_get_usecount(pClk);
++	} else {
++		GT_1trace(CLK_debugMask, GT_7CLASS,
++			  "CLK_GetRate: failed to get "
++			  "CLK %s \n", SERVICES_Clks[clk_id].clk_name);
++		status = DSP_EFAIL;
++	}
++	return useCount;
++}
++
++void SSI_Clk_Prepare(bool FLAG)
++{
++	u32 ssi_sysconfig;
++	ssi_sysconfig = __raw_readl((SSI_BASE) + 0x10);
++
++
++	if (FLAG) {
++		/* Set Autoidle, SIDLEMode to smart idle, and MIDLEmode to
++		 * no idle */
++		ssi_sysconfig = 0x1011;
++	} else {
++		/* Set Autoidle, SIDLEMode to forced idle, and MIDLEmode to
++		 * forced idle*/
++		ssi_sysconfig = 0x1;
++	}
++	__raw_writel((u32)ssi_sysconfig, SSI_BASE + 0x10);
++}
+diff --git a/drivers/dsp/bridge/services/csl.c b/drivers/dsp/bridge/services/csl.c
+new file mode 100644
+index 0000000..a8b2ec8
+--- /dev/null
++++ b/drivers/dsp/bridge/services/csl.c
+@@ -0,0 +1,274 @@
++/*
++ * linux/drivers/dsp/bridge/services/csl.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== cslce.c ========
++ *  Purpose:
++ *      Provides platform independent C Standard library functions.
++ *
++ *  Public Functions:
++ *      CSL_Atoi
++ *      CSL_Exit
++ *      CSL_Init
++ *      CSL_NumToAscii
++ *      CSL_Strcmp
++ *      CSL_Strstr
++ *      CSL_Strcpyn
++ *      CSL_Strlen
++ *      CSL_Strncat
++ *      CSL_Strncmp
++ *      CSL_Strtokr
++ *
++ *! Revision History:
++ *! ================
++ *! 07-Aug-2002 jeh: Added CSL_Strtokr().
++ *! 21-Sep-2001 jeh: Added CSL_Strncmp(). Alphabetized functions.
++ *! 22-Nov-2000 map: Added CSL_Atoi and CSL_Strtok
++ *! 19-Nov-2000 kc: Added CSL_ByteSwap.
++ *! 09-Nov-2000 kc: Added CSL_Strncat.
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 15-Dec-1999 ag: Removed incorrect assertion CSL_NumToAscii()
++ *! 29-Oct-1999 kc: Added CSL_Wstrlen for UNICODE strings.
++ *! 30-Sep-1999 ag: Removed DBC assertion (!CSL_DebugMask.flags) in
++ *		  CSP_Init().
++ *! 20-Sep-1999 ag: Added CSL_WcharToAnsi().
++ *!		 Removed call to GT_set().
++ *! 19-Jan-1998 cr: Code review cleanup.
++ *! 29-Dec-1997 cr: Made platform independant, using MS CRT code, and
++ *!		 combined csl32.c csl95.c and cslnt.c into csl.c.  Also
++ *!		 changed CSL_lowercase to CSL_Uppercase.
++ *! 21-Aug-1997 gp: Fix to CSL_strcpyn to initialize Source string, the NT way.
++ *! 25-Jun-1997 cr: Created from csl95, added CSL_strcmp.
++ */
++
++/* ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- This */
++#include <csl.h>
++
++/* Is character c in the string pstrDelim? */
++#define IsDelimiter(c, pstrDelim) ((c != '\0') && \
++				   (strchr(pstrDelim, c) != NULL))
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask CSL_DebugMask = { NULL, NULL };	/* GT trace var. */
++#endif
++
++/*
++ *  ======= CSL_Atoi =======
++ *  Purpose:
++ *      Convert a string to an integer
++ */
++s32 CSL_Atoi(IN CONST char *ptstrSrc)
++{
++	char *end_position;
++
++	DBC_Require(ptstrSrc);
++
++	return simple_strtol(ptstrSrc, &end_position, 10);
++}
++
++/*
++ *  ======== CSL_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the CSL module.
++ */
++void CSL_Exit(void)
++{
++	GT_0trace(CSL_DebugMask, GT_5CLASS, "CSL_Exit\n");
++}
++
++/*
++ *  ======== CSL_Init ========
++ *  Purpose:
++ *      Initialize the CSL module's private state.
++ */
++bool CSL_Init(void)
++{
++	GT_create(&CSL_DebugMask, "CS");
++
++	GT_0trace(CSL_DebugMask, GT_5CLASS, "CSL_Init\n");
++
++	return true;
++}
++
++/*
++ *  ======== CSL_NumToAscii ========
++ *  Purpose:
++ *      Convert a 1 or 2 digit number to a 2 digit string.
++ */
++void CSL_NumToAscii(OUT char *pstrNumber, u32 dwNum)
++{
++	char tens;
++
++	DBC_Require(dwNum < 100);
++
++	if (dwNum < 100) {
++		tens = (char) dwNum / 10;
++		dwNum = dwNum % 10;
++
++		if (tens) {
++			pstrNumber[0] = tens + '0';
++			pstrNumber[1] = (char) dwNum + '0';
++			pstrNumber[2] = '\0';
++		} else {
++			pstrNumber[0] = (char) dwNum + '0';
++			pstrNumber[1] = '\0';
++		}
++	} else {
++		pstrNumber[0] = '\0';
++	}
++}
++
++/*
++ *  ======== CSL_Strcmp ========
++ *  Purpose:
++ *      Compare 2 ASCII strings.  Works the same was as stdio's strcmp.
++ */
++s32 CSL_Strcmp(IN CONST char *pstrStr1, IN CONST char *pstrStr2)
++{
++	return strcmp(pstrStr1, pstrStr2);
++}
++
++/*
++ *  ======== CSL_Strstr ========
++ *  Purpose:
++ *      Find substring in a stringn.
++ *  Parameters:
++ *      haystack:   Ptr to string1.
++ *      needle:    Ptr to substring to catch.
++ *  Returns:
++ *      Ptr to first char matching the substring in the main string.
++ *  Requires:
++ *      CSL initialized.
++ *      haystack is valid.
++ *      needle is valid.
++ *  Ensures:
++ */
++
++char *CSL_Strstr(IN CONST char *haystack, IN CONST char *needle)
++{
++	return strstr(haystack, needle);
++}
++
++/*
++ *  ======== CSL_Strcpyn ========
++ *  Purpose:
++ *      Safe strcpy function.
++ */
++char *CSL_Strcpyn(OUT char *pstrDest, IN CONST char *pstrSrc, u32 cMax)
++{
++	return strncpy(pstrDest, pstrSrc, cMax);
++}
++
++/*
++ *  ======== CSL_Strlen ========
++ *  Purpose:
++ *      Determine the length of a null terminated ASCII string.
++ */
++u32 CSL_Strlen(IN CONST char *pstrSrc)
++{
++	CONST char *pStr = pstrSrc;
++	u32 retVal;
++
++	DBC_Require(pstrSrc);
++
++	while (*pStr++)
++		;;
++
++	retVal = (u32) (pStr - pstrSrc - 1);
++	return retVal;
++}
++
++/*
++ *  ======== CSL_Strncat ========
++ *  Purpose:
++ *      Concatenate two strings together
++ */
++char *CSL_Strncat(IN char *pszDest, IN char *pszSrc, IN u32 dwSize)
++{
++
++	DBC_Require(pszDest && pszSrc);
++
++	return strncat(pszDest, pszSrc, dwSize);
++}
++
++/*
++ *  ======== CSL_Strncmp ========
++ *  Purpose:
++ *      Compare at most n characters of two ASCII strings.  Works the same
++ *      way as stdio's strncmp.
++ */
++s32 CSL_Strncmp(IN CONST char *pstrStr1, IN CONST char *pstrStr2, u32 n)
++{
++	return strncmp(pstrStr1, pstrStr2, n);
++}
++
++/*
++ *  ======= CSL_Strtokr =======
++ *  Purpose:
++ *      Re-entrant version of strtok.
++ */
++char *CSL_Strtokr(IN char *pstrSrc, IN CONST char *szSeparators,
++		  OUT char **ppstrLast)
++{
++	char *pstrTemp;
++	char *pstrToken;
++
++	DBC_Require(szSeparators != NULL);
++	DBC_Require(ppstrLast != NULL);
++	DBC_Require(pstrSrc != NULL || *ppstrLast != NULL);
++
++	/*
++	 *  Set string location to beginning (pstrSrc != NULL) or to the
++	 *  beginning of the next token.
++	 */
++	pstrTemp = (pstrSrc != NULL) ? pstrSrc : *ppstrLast;
++	if (*pstrTemp == '\0') {
++		pstrToken = NULL;
++	} else {
++		pstrToken = pstrTemp;
++		while (*pstrTemp != '\0' && !IsDelimiter(*pstrTemp,
++		      szSeparators)) {
++			pstrTemp++;
++		}
++		if (*pstrTemp != '\0') {
++			while (IsDelimiter(*pstrTemp, szSeparators)) {
++				/* TODO: Shouldn't we do this for
++				 * only 1 char?? */
++				*pstrTemp = '\0';
++				pstrTemp++;
++			}
++		}
++
++		/* Location in string for next call */
++		*ppstrLast = pstrTemp;
++	}
++
++	return pstrToken;
++}
+diff --git a/drivers/dsp/bridge/services/dbg.c b/drivers/dsp/bridge/services/dbg.c
+new file mode 100644
+index 0000000..b93f1de
+--- /dev/null
++++ b/drivers/dsp/bridge/services/dbg.c
+@@ -0,0 +1,119 @@
++/*
++ * linux/drivers/dsp/bridge/services/dbg.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== dbgce.c ========
++ *  Purpose:
++ *      Provide debugging services for DSP/BIOS Bridge Mini Drivers.
++ *
++ *  Public Functions:
++ *      DBG_Exit
++ *      DBG_Init
++ *      DBG_Trace
++ *
++ *  Notes:
++ *      Requires gt.h.
++ *
++ *      This implementation does not create GT masks on a per WMD basis.
++ *      There is currently no facility for a WMD to alter the GT mask.
++ *
++ *! Revision History:
++ *! ================
++ *! 15-Feb-2000 rr: DBG_Trace prints based on the DebugZones.
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 29-Oct-1999 kc: Cleaned up for code review.
++ *! 10-Oct-1997 cr: Added DBG_Printf service.
++ *! 28-May-1997 cr: Added reference counting.
++ *! 23-May-1997 cr: Updated DBG_Trace to new gt interface.
++ *! 29-May-1996 gp: Removed WCD_ prefix.
++ *! 20-May-1996 gp: Remove DEBUG conditional compilation.
++ *! 15-May-1996 gp: Created.
++ */
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- This */
++#include <dbg.h>
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask DBG_debugMask = { NULL, NULL };	/* GT trace var. */
++#endif
++
++#if ((defined DEBUG) || (defined DDSP_DEBUG_PRODUCT)) && GT_TRACE
++
++/*
++ *  ======== DBG_Init ========
++ *  Purpose:
++ *      Ensures trace capability is set up for link drivers.
++ */
++bool DBG_Init(void)
++{
++	GT_create(&DBG_debugMask, "WD");     /* for WmD (link driver) debug */
++
++	GT_0trace(DBG_debugMask, GT_5CLASS, "DBG_Init\n");
++
++	return true;
++}
++
++/*
++ *  ======== DBG_Trace ========
++ *  Purpose:
++ *      Output a trace message to the debugger, if the given trace level
++ *      is unmasked.
++ */
++DSP_STATUS DBG_Trace(u8 bLevel, char *pstrFormat, ...)
++{
++	s32 arg1, arg2, arg3, arg4, arg5, arg6;
++	va_list va;
++
++	va_start(va, pstrFormat);
++
++	arg1 = va_arg(va, s32);
++	arg2 = va_arg(va, s32);
++	arg3 = va_arg(va, s32);
++	arg4 = va_arg(va, s32);
++	arg5 = va_arg(va, s32);
++	arg6 = va_arg(va, s32);
++
++	va_end(va);
++
++	if (bLevel & *(DBG_debugMask).flags)
++		(*GT->PRINTFXN)(pstrFormat, arg1, arg2, arg3, arg4, arg5, arg6);
++
++	return DSP_SOK;
++}
++
++/*
++ *  ======== DBG_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the DBG module.
++ */
++void DBG_Exit(void)
++{
++	GT_0trace(DBG_debugMask, GT_5CLASS, "DBG_Exit\n");
++}
++
++#endif	/* ((defined DEBUG) || (defined DDSP_DEBUG_PRODUCT)) && GT_TRACE */
+diff --git a/drivers/dsp/bridge/services/dpc.c b/drivers/dsp/bridge/services/dpc.c
+new file mode 100644
+index 0000000..a053ee7
+--- /dev/null
++++ b/drivers/dsp/bridge/services/dpc.c
+@@ -0,0 +1,275 @@
++/*
++ * linux/drivers/dsp/bridge/services/dpc.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== dpcce.c ========
++ *  Purpose:
++ *      Deferred Procedure Call(DPC) Services.
++ *
++ *
++ *  Public Functions:
++ *      DPC_Create
++ *      DPC_Destroy
++ *      DPC_Exit
++ *      DPC_Init
++ *      DPC_Schedule
++ *
++ *! Revision History:
++ *! ================
++ *! 28-Mar-2001 ag: Added #ifdef CHNL_NOIPCINTR to set DPC thread priority
++ *!                     to THREAD_PRIORITY_IDLE for polling IPC.
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 31-Jan-2000 rr: Changes after code review.Terminate thread,handle
++ *!                 modified.DPC_Destroy frees the DPC_Object only on
++ *!                 Successful termination of the thread and the handle.
++ *! 06-Jan-1999 ag: Format cleanup for code review.
++ *!                 Removed DPC_[Lower|Raise]IRQL[From|To]DispatchLevel.
++ *! 10-Dec-1999 ag: Added SetProcPermissions in DPC_DeferredProcedure().
++ *!                 (Needed to access client(s) CHNL buffers).
++ *! 19-Sep-1999 a0216266: Stubbed from dpcnt.c.
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <mem.h>
++
++/*  ----------------------------------- This */
++#include <dpc.h>
++
++/*  ----------------------------------- Defines, Data Structures, Typedefs */
++#define SIGNATURE       0x5f435044	/* "DPC_" (in reverse). */
++
++/* The DPC object, passed to our priority event callback routine: */
++struct DPC_OBJECT {
++	u32 dwSignature;	/* Used for object validation.   */
++	void *pRefData;		/* Argument for client's DPC.    */
++	DPC_PROC pfnDPC;	/* Client's DPC.                 */
++	u32 numRequested;	/* Number of requested DPC's.      */
++	u32 numScheduled;	/* Number of executed DPC's.      */
++	struct tasklet_struct dpc_tasklet;
++
++#ifdef DEBUG
++	u32 cEntryCount;	/* Number of times DPC reentered. */
++	u32 numRequestedMax;	/* Keep track of max pending DPC's. */
++#endif
++
++	spinlock_t dpc_lock;
++};
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask DPC_DebugMask = { NULL, NULL };	/* DPC Debug Mask */
++#endif
++
++/*  ----------------------------------- Function Prototypes */
++static void DPC_DeferredProcedure(IN unsigned long pDeferredContext);
++
++/*
++ *  ======== DPC_Create ========
++ *  Purpose:
++ *      Create a DPC object, allowing a client's own DPC procedure to be
++ *      scheduled for a call with client reference data.
++ */
++DSP_STATUS DPC_Create(OUT struct DPC_OBJECT **phDPC, DPC_PROC pfnDPC,
++		      void *pRefData)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct DPC_OBJECT *pDPCObject = NULL;
++
++	if ((phDPC != NULL) && (pfnDPC != NULL)) {
++		/*
++		 *  Allocate a DPC object to store information allowing our DPC
++		 *  callback to dispatch to the client's DPC.
++		 */
++		MEM_AllocObject(pDPCObject, struct DPC_OBJECT, SIGNATURE);
++		if (pDPCObject != NULL) {
++			tasklet_init(&pDPCObject->dpc_tasklet,
++				     DPC_DeferredProcedure,
++				     (u32) pDPCObject);
++			/* Fill out our DPC Object: */
++			pDPCObject->pRefData = pRefData;
++			pDPCObject->pfnDPC = pfnDPC;
++			pDPCObject->numRequested = 0;
++			pDPCObject->numScheduled = 0;
++#ifdef DEBUG
++			pDPCObject->numRequestedMax = 0;
++			pDPCObject->cEntryCount = 0;
++#endif
++			pDPCObject->dpc_lock =
++				__SPIN_LOCK_UNLOCKED(pDPCObject.dpc_lock);
++			*phDPC = pDPCObject;
++		} else {
++			GT_0trace(DPC_DebugMask, GT_6CLASS,
++				  "DPC_Create: DSP_EMEMORY\n");
++			status = DSP_EMEMORY;
++		}
++	} else {
++		GT_0trace(DPC_DebugMask, GT_6CLASS,
++			  "DPC_Create: DSP_EPOINTER\n");
++		status = DSP_EPOINTER;
++	}
++	DBC_Ensure((DSP_FAILED(status) && (!phDPC || (phDPC && *phDPC == NULL)))
++		   || DSP_SUCCEEDED(status));
++	return status;
++}
++
++/*
++ *  ======== DPC_Destroy ========
++ *  Purpose:
++ *      Cancel the last scheduled DPC, and deallocate a DPC object previously
++ *      allocated with DPC_Create(). Frees the Object only if the thread
++ *      and the event terminated successfuly.
++ */
++DSP_STATUS DPC_Destroy(struct DPC_OBJECT *hDPC)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct DPC_OBJECT *pDPCObject = (struct DPC_OBJECT *)hDPC;
++
++	if (MEM_IsValidHandle(hDPC, SIGNATURE)) {
++
++		/* Free our DPC object: */
++		if (DSP_SUCCEEDED(status)) {
++			tasklet_kill(&pDPCObject->dpc_tasklet);
++			MEM_FreeObject(pDPCObject);
++			pDPCObject = NULL;
++			GT_0trace(DPC_DebugMask, GT_2CLASS,
++				  "DPC_Destroy: SUCCESS\n");
++		}
++	} else {
++		GT_0trace(DPC_DebugMask, GT_6CLASS,
++			  "DPC_Destroy: DSP_EHANDLE\n");
++		status = DSP_EHANDLE;
++	}
++	DBC_Ensure((DSP_SUCCEEDED(status) && pDPCObject == NULL)
++		   || DSP_FAILED(status));
++	return status;
++}
++
++/*
++ *  ======== DPC_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the DPC module.
++ */
++void DPC_Exit(void)
++{
++	GT_0trace(DPC_DebugMask, GT_5CLASS, "Entered DPC_Exit\n");
++}
++
++/*
++ *  ======== DPC_Init ========
++ *  Purpose:
++ *      Initialize the DPC module's private state.
++ */
++bool DPC_Init(void)
++{
++	GT_create(&DPC_DebugMask, "DP");
++
++	GT_0trace(DPC_DebugMask, GT_5CLASS, "Entered DPC_Init\n");
++
++	return true;
++}
++
++/*
++ *  ======== DPC_Schedule ========
++ *  Purpose:
++ *      Schedule a deferred procedure call to be executed at a later time.
++ *      Latency and order of DPC execution is platform specific.
++ */
++DSP_STATUS DPC_Schedule(struct DPC_OBJECT *hDPC)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct DPC_OBJECT *pDPCObject = (struct DPC_OBJECT *)hDPC;
++	unsigned long flags;
++
++	GT_1trace(DPC_DebugMask, GT_ENTER, "DPC_Schedule hDPC %x\n", hDPC);
++	if (MEM_IsValidHandle(hDPC, SIGNATURE)) {
++		/* Increment count of DPC's pending. Needs to be protected
++		 * from ISRs since this function is called from process
++		 * context also. */
++		spin_lock_irqsave(&hDPC->dpc_lock, flags);
++		pDPCObject->numRequested++;
++		spin_unlock_irqrestore(&hDPC->dpc_lock, flags);
++		tasklet_schedule(&(hDPC->dpc_tasklet));
++#ifdef DEBUG
++		if (pDPCObject->numRequested > pDPCObject->numScheduled +
++						pDPCObject->numRequestedMax) {
++			pDPCObject->numRequestedMax = pDPCObject->numRequested -
++						pDPCObject->numScheduled;
++		}
++#endif
++	/*  If an interrupt occurs between incrementing numRequested and the
++	 *  assertion below, then DPC will get executed while returning from
++	 *  ISR, which will complete all requests and make numRequested equal
++	 * to numScheduled, firing this assertion. This happens only when
++	 * DPC is being scheduled in process context */
++	} else {
++		GT_0trace(DPC_DebugMask, GT_6CLASS,
++			  "DPC_Schedule: DSP_EHANDLE\n");
++		status = DSP_EHANDLE;
++	}
++	GT_1trace(DPC_DebugMask, GT_ENTER, "DPC_Schedule status %x\n", status);
++	return status;
++}
++
++/*
++ *  ======== DeferredProcedure ========
++ *  Purpose:
++ *      Main DPC routine.  This is called by host OS DPC callback
++ *      mechanism with interrupts enabled.
++ */
++static void DPC_DeferredProcedure(IN unsigned long pDeferredContext)
++{
++	struct DPC_OBJECT *pDPCObject = (struct DPC_OBJECT *)pDeferredContext;
++	/* read numRequested in local variable */
++	u32 requested;
++	u32 serviced;
++
++	DBC_Require(pDPCObject != NULL);
++	requested = pDPCObject->numRequested;
++	serviced = pDPCObject->numScheduled;
++
++	GT_1trace(DPC_DebugMask, GT_ENTER, "> DPC_DeferredProcedure "
++		  "pDeferredContext=%x\n", pDeferredContext);
++	/* Rollover taken care of using != instead of < */
++	if (serviced != requested) {
++		if (pDPCObject->pfnDPC != NULL) {
++			/* Process pending DPC's: */
++			do {
++				/* Call client's DPC: */
++				(*(pDPCObject->pfnDPC))(pDPCObject->pRefData);
++				serviced++;
++			} while (serviced != requested);
++		}
++		pDPCObject->numScheduled = requested;
++	}
++	GT_2trace(DPC_DebugMask, GT_ENTER,
++		  "< DPC_DeferredProcedure requested %d"
++		  " serviced %d\n", requested, serviced);
++}
++
+diff --git a/drivers/dsp/bridge/services/isr.c b/drivers/dsp/bridge/services/isr.c
+new file mode 100644
+index 0000000..781a19c
+--- /dev/null
++++ b/drivers/dsp/bridge/services/isr.c
+@@ -0,0 +1,261 @@
++/*
++ * linux/drivers/dsp/bridge/services/isr.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== isrce.c ========
++ *  Purpose:
++ *      Interrupt services.
++ *
++ *  Public Functions:
++ *      ISR_Exit
++ *      ISR_Init
++ *      ISR_Install
++ *      ISR_Uninstall
++ *
++ *
++ *! Revision History:
++ *! ================
++ *! 06-Feb-2003 kc: Renamed DSP_MAILBOX1 to ISR_MAILBOX1.
++ *! 14-Mar-2002 rr: Added HELEN1_V1 flag while installing the interrupt.
++ *! 05-Nov-2001 kc: Updated ISR_Install to support multiple HW interrupts.
++ *! 27-Jul-2001 rr: Interrupt Id is based on x86 or ARM define.
++ *! 24-Apr-2001 ag: Replaced nkintr.h with hw.h.
++ *! 10-Oct-2000 rr: CeSetThreadPriority used instead of SetThreadPriority.
++ *! 11-Aug-2000 ag: Removed #include <stdwin.h>
++ *! 10-Aug-2000 rr: InterruptInitialize happens before the IST creation.
++ *! 15-Feb-2000 rr: InterruptInitialize return value checked.
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 31-Jan-2000 rr: Changes after code review.Terminate thread,handle
++ *!                 modified.ISR_UnInstall frees the ISR_Object only on
++ *!                 Successful termination of the thread and the handle.
++ *! 19-Jan-2000 rr: Code Cleaned up after code review.
++ *! 06-Jan-2000 rr: Bus type included in the IRQ object. It is checked
++ *!                 during the install and uninstall.
++ *! 29-Dec-1999 rr: WaitForSingleObject removed during ISR_UnInstall
++ *! 22-Nov-1999 rr: Event gets created before CardRequestIRQ
++ *! 05-Nov-1999 rr: ISR_Install does not intialize the interrupt for PCMCIA
++ *!                 For other bus type this will happen. IST function return
++ *!                 value not checked as anyway we have to say InterruptDone
++ *! 29-Oct-1999 rr: Hardware IST is created here.
++ *! 25-Oct-1999 rr: New Isr design.
++ *! 13-Sep-1999 a0216266: Stubbed from isrnt.c.
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <list.h>
++#include <mem.h>
++
++/*  ----------------------------------- This */
++#include <isr.h>
++
++/*  ----------------------------------- Defines, Data Structures, Typedefs */
++#define SIGNATURE       0x5f525349	/* "ISR_" (in reverse). */
++
++/* The IRQ object, passed to our hardware and virtual interrupt routines: */
++struct ISR_IRQ {
++	u32 dwSignature;	/* Used for object validation.   */
++	void *pRefData;		/* Argument for client's ISR.    */
++	ISR_PROC pfnISR;	/* Client's ISR.                 */
++
++	u32 dwIntrID;		/* hardware intertupt identifier */
++};
++
++/*  ----------------------------------- Globals & Defines */
++#if GT_TRACE
++static struct GT_Mask ISR_DebugMask = { NULL, NULL };	/* ISR Debug Mask */
++#endif
++
++/*  ----------------------------------- Function Prototypes */
++static irqreturn_t HardwareIST(int irq, void *hIRQ);
++
++/*
++ *  ======== ISR_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the ISR module.
++ */
++void ISR_Exit(void)
++{
++	GT_0trace(ISR_DebugMask, GT_ENTER, "Entered ISR_Exit\n");
++}
++
++/*
++ *  ======== ISR_Init ========
++ *  Purpose:
++ *      Initialize the ISR module's private state.
++ */
++bool ISR_Init(void)
++{
++	GT_create(&ISR_DebugMask, "IS");
++
++	GT_0trace(ISR_DebugMask, GT_5CLASS, "Entered ISR_Init\n");
++
++	return true;
++}
++
++/*
++ *  ======== ISR_Install ========
++ *  Purpose:
++ *      Register an ISR for a given IRQ with the system's interrupt manager.
++ */
++DSP_STATUS ISR_Install(OUT struct ISR_IRQ **phIRQ,
++		       IN CONST struct CFG_HOSTRES *pHostConfig,
++		       ISR_PROC pfnISR, u32 dwIntrType, void *pRefData)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct ISR_IRQ *pIRQObject = NULL;
++
++	DBC_Require(pHostConfig);
++	DBC_Require(pRefData != NULL);
++
++	GT_5trace(ISR_DebugMask, GT_ENTER,
++		  "Entered ISR_Install, args:" "\n\thIRQ:"
++		  "0x%x\n\tpHostConfig: 0x%x\n\tpfnISR: 0x%x\n" "\tpRefData:"
++		  "0x%x\n \tdwIntrType 0x%x\n", phIRQ, pHostConfig, pfnISR,
++		  pRefData, dwIntrType);
++
++	if (phIRQ != NULL) {
++		*phIRQ = NULL;
++		/*
++		 *  Allocate an IRQ object to store information allowing our
++		 *  interrupt handler to dispatch to the client's interrupt
++		 *  routines.
++		 */
++		MEM_AllocObject(pIRQObject, struct ISR_IRQ, SIGNATURE);
++		if (pIRQObject != NULL) {
++			/* Fill out the Object: */
++			pIRQObject->pRefData = pRefData;
++			pIRQObject->pfnISR = pfnISR;
++
++			/* Install different HW interrupts based on interrupt
++			 * type. */
++				switch (dwIntrType) {
++				case ISR_MAILBOX1:
++				pIRQObject->dwIntrID = INT_MAIL_MPU_IRQ;
++
++				GT_0trace(ISR_DebugMask, GT_1CLASS,
++					  "Setting intr id for "
++					  "ISR_MAILBOX1\n");
++				break;
++
++				case ISR_MAILBOX2:
++				pIRQObject->dwIntrID = MAIL_U3_MPU_IRQ;
++				GT_0trace(ISR_DebugMask, GT_1CLASS,
++					  "Setting intr id for "
++					  "ISR_MAILBOX2\n");
++
++				break;
++
++				case DSP_MMUFAULT:
++				pIRQObject->dwIntrID = INT_DSP_MMU_IRQ;
++				GT_0trace(ISR_DebugMask, GT_1CLASS,
++					  "Setting intr id for "
++					  "DSP_MMUFAULT\n");
++				break;
++
++				default:
++				pIRQObject->dwIntrID = (u32) 0x00;
++				GT_0trace(ISR_DebugMask, GT_1CLASS,
++					  "Setting intr id to NULL\n");
++				break;
++			}
++
++			if (pIRQObject->dwIntrID != 0) {
++				status = request_irq(pIRQObject->dwIntrID,
++						     HardwareIST, 0,
++						    "DspBridge", pIRQObject);
++			} else {
++				status = DSP_EINVALIDARG;
++			}
++		}
++		if (DSP_SUCCEEDED(status)) {
++			*phIRQ = pIRQObject;
++			GT_1trace(ISR_DebugMask, GT_1CLASS,
++				  "ISR:IRQ Object 0x%x \n",
++				  pIRQObject);
++		} else {
++			MEM_FreeObject(pIRQObject);
++		}
++	}
++	DBC_Ensure(DSP_SUCCEEDED(status) || (!phIRQ || *phIRQ == NULL));
++	return status;
++}
++
++/*
++ *  ======== ISR_Uninstall ========
++ *  Purpose:
++ *      Deregister the ISR previously installed by ISR_Install().
++ *      if it fails we do not delete the IRQ object.
++ */
++DSP_STATUS ISR_Uninstall(struct ISR_IRQ *hIRQ)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct ISR_IRQ *pIRQObject = (struct ISR_IRQ *)hIRQ;
++
++	DBC_Require(hIRQ > 0);
++
++	GT_1trace(ISR_DebugMask, GT_ENTER,
++		  "Entered ISR_Uninstall, hIRQ: 0x%x\n", hIRQ);
++
++	if (MEM_IsValidHandle(hIRQ, SIGNATURE)) {
++		/* Linux function to uninstall ISR */
++		free_irq(pIRQObject->dwIntrID, pIRQObject);
++		pIRQObject->dwIntrID = (u32) -1;
++	} else {
++		status = DSP_EHANDLE;
++	}
++
++	/* Free our IRQ object: */
++	if (DSP_SUCCEEDED(status)) {
++		MEM_FreeObject(pIRQObject);
++		pIRQObject = NULL;
++	}
++
++	DBC_Ensure((DSP_SUCCEEDED(status) && pIRQObject == NULL) ||
++		   DSP_FAILED(status));
++
++	return status;
++}
++
++/*
++ *  ======== HardwareIST ========
++ *  Purpose:
++ *      Linux calls this IRQ handler on interrupt.
++ */
++static irqreturn_t HardwareIST(int irq, void *hIRQ)
++{
++	struct ISR_IRQ *pIRQObject = (struct ISR_IRQ *)hIRQ;
++
++	DBC_Require(irq == pIRQObject->dwIntrID);
++
++	/* Call the function registered in ISR_Install */
++	(*(pIRQObject->pfnISR)) (pIRQObject->pRefData);
++
++	return IRQ_HANDLED;
++}
+diff --git a/drivers/dsp/bridge/services/kfile.c b/drivers/dsp/bridge/services/kfile.c
+new file mode 100644
+index 0000000..d5c02e3
+--- /dev/null
++++ b/drivers/dsp/bridge/services/kfile.c
+@@ -0,0 +1,336 @@
++/*
++ * linux/drivers/dsp/bridge/services/kfile.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== kfilece.c ========
++ *  Purpose:
++ *      This module provides file i/o services.
++ *
++ *  Public Functions:
++ *      KFILE_Close
++ *      KFILE_Exit
++ *      KFILE_Init
++ *      KFILE_Open
++ *      KFILE_Read
++ *      KFILE_Seek
++ *      KFILE_Tell
++ *
++ *! Revision History
++ *! ================
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 22-Nov-1999 kc: Added changes from code review.
++ *! 12-Nov-1999 kc: Enabled CSL for UNICODE/ANSI string conversions.
++ *! 30-Sep-1999 ag: Changed KFILE_Read() GT level from _ENTER to _4CLASS.
++ *!                 Removed GT_set().
++ *! 25-Aug-1999 ag: Changed MEM_Calloc allocation type to MEM_PAGED.
++ *! 13-Jul-1999 a0216266(ww - TID): Stubbed from kfilent.c.
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <csl.h>
++#include <mem.h>
++#include <prcs.h>
++
++/*  ----------------------------------- This */
++#include <kfile.h>
++
++/*  ----------------------------------- Defines, Data Structures, Typedefs */
++#define SIGNATURE           0x4c49464b	/* hex code of KFIL (reversed) */
++#define MAXFILENAMELENGTH   256
++#define GENERAL_FAILURE     0xffffffff	/* SetFilePointer error */
++
++/* The KFILE_FileObj abstracts the true file handle from a KFILE handle. */
++struct KFILE_FileObj {
++    u32 dwSignature;
++    __kernel_pid_t owner_pid;	/* PID of process that opened this file */
++    char 	*fileName  ;
++    bool          isOpen    ;
++    u32        size      ;
++    u32        curPos    ;
++    long 	  hInternal;		/* internal handle of file */
++    struct file *fileDesc;
++
++};
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask KFILE_debugMask = { NULL, NULL };	/* Debug mask */
++#endif
++
++/*
++ *  ======== KFILE_Close ========
++ *  Purpose:
++ *      This function closes a file's stream.
++ */
++s32 KFILE_Close(struct KFILE_FileObj *hFile)
++{
++	s32 cRetVal = 0;	/* 0 indicates success */
++	s32 fRetVal = 0;
++	__kernel_pid_t curr_pid;
++
++	GT_1trace(KFILE_debugMask, GT_ENTER, "KFILE_Close: hFile 0x%x\n",
++		  hFile);
++
++	/* Check for valid handle */
++	if (MEM_IsValidHandle(hFile, SIGNATURE)) {
++		/* Close file only if opened by the same process (id). Otherwise
++		 * Linux closes all open file handles when process exits.*/
++		PRCS_GetCurrentHandle((void **)&curr_pid);
++
++		fRetVal = filp_close(hFile->fileDesc, NULL) ;
++		if (fRetVal) {
++			cRetVal = E_KFILE_ERROR;
++			GT_1trace(KFILE_debugMask, GT_6CLASS,
++				  "KFILE_Close: sys_close "
++				  "returned %d\n", fRetVal);
++		}
++		MEM_FreeObject(hFile);
++	} else {
++		cRetVal = E_KFILE_INVALIDHANDLE;
++		GT_0trace(KFILE_debugMask, GT_6CLASS, "KFILE_Close: "
++			  "invalid file handle\n");
++	}
++	return cRetVal;
++}
++
++/*
++ *  ======== KFILE_Exit ========
++ *  Purpose:
++ *      Decrement reference count, and free resources when reference count
++ *      is 0.
++ */
++void KFILE_Exit(void)
++{
++	GT_0trace(KFILE_debugMask, GT_5CLASS, "KFILE_Exit\n");
++}
++
++/*
++ *  ======== KFILE_Init ========
++ */
++bool KFILE_Init(void)
++{
++	GT_create(&KFILE_debugMask, "KF");	/* "KF" for KFile */
++
++	GT_0trace(KFILE_debugMask, GT_5CLASS, "KFILE_Init\n");
++
++	return true;
++}
++
++/*
++ *  ======== KFILE_Open ========
++ *  Purpose:
++ *      Open a file for reading ONLY
++ */
++struct KFILE_FileObj *KFILE_Open(CONST char *pszFileName, CONST char *pszMode)
++{
++	struct KFILE_FileObj *hFile;	/* file handle */
++	DSP_STATUS status;
++	mm_segment_t fs;
++
++	struct file*fileDesc = NULL;
++	DBC_Require(pszMode != NULL);
++	DBC_Require(pszFileName != NULL);
++
++	GT_2trace(KFILE_debugMask, GT_ENTER,
++		  "KFILE_Open: pszFileName %s, pszMode "
++		  "%s\n", pszFileName, pszMode);
++
++	/* create a KFILE object */
++	MEM_AllocObject(hFile, struct KFILE_FileObj, SIGNATURE);
++
++	if (hFile) {
++		fs = get_fs();
++		set_fs(get_ds());
++	/* Third argument is mode (permissions). Ignored unless creating file */
++		fileDesc = filp_open(pszFileName, O_RDONLY, 0);
++		if ((IS_ERR(fileDesc)) || (fileDesc == NULL) ||
++		     (fileDesc->f_op == NULL) || (fileDesc->f_op->read == NULL)
++		     || (fileDesc->f_op->llseek == NULL)) {
++			status = DSP_EFILE;
++		} else {
++			hFile->fileDesc = fileDesc;
++			hFile->fileName = (char *)pszFileName;
++			hFile->isOpen	   = true;
++			hFile->curPos   = 0;
++			hFile->size = fileDesc->f_op->llseek(fileDesc, 0,
++							    SEEK_END);
++			fileDesc->f_op->llseek(fileDesc, 0, SEEK_SET);
++			PRCS_GetCurrentHandle((void **) &hFile->owner_pid);
++			status = DSP_SOK;
++		}
++		set_fs(fs);
++		if (DSP_FAILED(status)) {
++			/* free memory, and clear handle */
++			MEM_FreeObject(hFile);
++			hFile = NULL;
++		}
++	} else {
++			GT_0trace(KFILE_debugMask, GT_6CLASS,
++				  "KFILE_Open: MEM_AllocObject failed\n");
++			status = DSP_EMEMORY;
++	}
++	return hFile;
++}
++
++/*
++ *  ======== KFILE_Read ========
++ *  Purpose:
++ *      Reads a specified number of bytes into a buffer.
++ */
++s32
++KFILE_Read(void *pBuffer, s32 cSize, s32 cCount, struct KFILE_FileObj *hFile)
++{
++	u32 dwBytesRead = 0;
++	s32 cRetVal = 0;
++	mm_segment_t fs;
++
++	DBC_Require(pBuffer != NULL);
++
++	GT_4trace(KFILE_debugMask, GT_4CLASS,
++		  "KFILE_Read: buffer 0x%x, cSize 0x%x,"
++		  "cCount 0x%x, hFile 0x%x\n", pBuffer, cSize, cCount, hFile);
++
++	/* check for valid file handle */
++	if (MEM_IsValidHandle(hFile, SIGNATURE)) {
++		if ((cSize > 0) && (cCount > 0) && pBuffer) {
++			/* read from file */
++			fs = get_fs();
++			set_fs(get_ds());
++			dwBytesRead = hFile->fileDesc->f_op->read(hFile->
++				      fileDesc, pBuffer, cSize *cCount,
++				      &(hFile->fileDesc->f_pos));
++			set_fs(fs);
++			if (dwBytesRead) {
++				cRetVal = dwBytesRead / cSize;
++				hFile->curPos += dwBytesRead;
++				DBC_Assert((dwBytesRead / cSize) <= \
++					  (u32)cCount);
++			} else {
++				cRetVal = E_KFILE_ERROR;
++				GT_0trace(KFILE_debugMask, GT_6CLASS,
++					  "KFILE_Read: sys_read() failed\n");
++			}
++		} else {
++			cRetVal = DSP_EINVALIDARG;
++			GT_0trace(KFILE_debugMask, GT_6CLASS,
++				  "KFILE_Read: Invalid argument(s)\n");
++		}
++	} else {
++		cRetVal = E_KFILE_INVALIDHANDLE;
++		GT_0trace(KFILE_debugMask, GT_6CLASS,
++			  "KFILE_Read: invalid file handle\n");
++	}
++
++	return cRetVal;
++}
++
++/*
++ *  ======== KFILE_Seek ========
++ *  Purpose:
++ *      Sets the file position indicator. NOTE:  we don't support seeking
++ *      beyond the boundaries of a file.
++ */
++s32 KFILE_Seek(struct KFILE_FileObj *hFile, s32 lOffset, s32 cOrigin)
++{
++	s32 cRetVal = 0;	/* 0 for success */
++	u32 dwCurPos = 0;
++
++	struct file *fileDesc = NULL;
++
++	GT_3trace(KFILE_debugMask, GT_ENTER, "KFILE_Seek: hFile 0x%x, "
++		  "lOffset 0x%x, cOrigin 0x%x\n",
++		  hFile, lOffset, cOrigin);
++
++	/* check for valid file handle */
++	if (MEM_IsValidHandle(hFile, SIGNATURE)) {
++		/* based on the origin flag, move the internal pointer */
++
++	fileDesc = hFile->fileDesc;
++		switch (cOrigin) {
++		case KFILE_SEEK_SET:
++			dwCurPos = hFile->fileDesc->f_op->llseek(hFile->
++				   fileDesc, lOffset, SEEK_SET);
++			cRetVal = ((dwCurPos >= 0) ? 0 : E_KFILE_ERROR);
++			break;
++
++		case KFILE_SEEK_CUR:
++			dwCurPos = hFile->fileDesc->f_op->llseek(hFile->
++				   fileDesc, lOffset, SEEK_CUR);
++			cRetVal = ((dwCurPos >= 0) ? 0 : E_KFILE_ERROR);
++			break;
++		case KFILE_SEEK_END:
++			dwCurPos = hFile->fileDesc->f_op->llseek(hFile->
++				   fileDesc, lOffset, SEEK_END);
++			cRetVal = ((dwCurPos >= 0) ? 0 : E_KFILE_ERROR);
++			break;
++		default:
++			cRetVal = E_KFILE_BADORIGINFLAG;
++			GT_0trace(KFILE_debugMask, GT_6CLASS,
++				  "KFILE_Seek:bad origin flag\n");
++			break;
++		}
++	} else {
++		cRetVal = E_KFILE_INVALIDHANDLE;
++		GT_0trace(KFILE_debugMask, GT_6CLASS,
++			  "KFILE_Seek:invalid file handle\n");
++	}
++	return cRetVal;
++}
++
++/*
++ *  ======== KFILE_Tell ========
++ *  Purpose:
++ *      Reports the current value of the position indicator. We did not
++ *	    consider 64 bit long file size, which implies a 4GB file limit
++ *      (2 to 32 power).
++ */
++s32 KFILE_Tell(struct KFILE_FileObj *hFile)
++{
++	u32 dwCurPos = 0;
++	s32 lRetVal = E_KFILE_ERROR;
++
++	GT_1trace(KFILE_debugMask, GT_ENTER, "KFILE_Tell: hFile 0x%x\n", hFile);
++
++	if (MEM_IsValidHandle(hFile, SIGNATURE)) {
++
++		/* Get current position. */
++		dwCurPos = hFile->fileDesc->f_op->llseek(hFile->fileDesc, 0,
++			   SEEK_CUR);
++		if (dwCurPos >= 0)
++			lRetVal = dwCurPos;
++
++	} else {
++		lRetVal = E_KFILE_INVALIDHANDLE;
++		GT_0trace(KFILE_debugMask, GT_6CLASS,
++			  "KFILE_Seek:invalid file handle\n");
++	}
++	return lRetVal;
++}
++
+diff --git a/drivers/dsp/bridge/services/list.c b/drivers/dsp/bridge/services/list.c
+new file mode 100644
+index 0000000..3d4c752
+--- /dev/null
++++ b/drivers/dsp/bridge/services/list.c
+@@ -0,0 +1,285 @@
++/*
++ * linux/drivers/dsp/bridge/services/list.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== listce.c ========
++ *  Purpose
++ *      Provides standard circular list handling functions.
++ *
++ *  Public Functions:
++ *      LST_Create
++ *      LST_Delete
++ *      LST_Exit
++ *      LST_First
++ *      LST_GetHead
++ *      LST_Init
++ *      LST_InitElem
++ *      LST_InsertBefore
++ *      LST_Next
++ *      LST_PutTail
++ *      LST_RemoveElem
++ *
++ *! Revision History
++ *! ================
++ *! 06-Mar-2002 jeh Don't set element self to NULL in LST_RemoveElem().
++ *! 10-Aug-2000 ag: Added LST_InsertBefore().
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 22-Nov-1999 kc: Added changes from code review.
++ *! 10-Aug-1999 kc: Based on wsx-c18.
++ *! 16-Jun-1997 gp: Removed unnecessary enabling/disabling of interrupts around
++ *!                 list manipulation code.
++ *! 22-Oct-1996 gp: Added LST_RemoveElem, and LST_First/LST_Next iterators.
++ *! 10-Aug-1996 gp: Acquired from SMM for WinSPOX v. 1.1; renamed identifiers.
++ */
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <mem.h>
++
++/*  ----------------------------------- This */
++#include <list.h>
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask LST_debugMask = { NULL, NULL };	/* GT trace var. */
++#endif
++
++/*
++ *  ======== LST_Create ========
++ *  Purpose:
++ *      Allocates and initializes a circular list.
++ */
++struct LST_LIST *LST_Create(void)
++{
++	struct LST_LIST *pList;
++
++	GT_0trace(LST_debugMask, GT_ENTER, "LST_Create: entered\n");
++
++	pList = (struct LST_LIST *) MEM_Calloc(sizeof(struct LST_LIST),
++		MEM_NONPAGED);
++	if (pList != NULL) {
++		pList->head.next = &pList->head;
++		pList->head.prev = &pList->head;
++		pList->head.self = NULL;
++	}
++
++	return pList;
++}
++
++/*
++ *  ======== LST_Delete ========
++ *  Purpose:
++ *      Removes a list by freeing its control structure's memory space.
++ */
++void LST_Delete(struct LST_LIST *pList)
++{
++	DBC_Require(pList != NULL);
++
++	GT_1trace(LST_debugMask, GT_ENTER, "LST_Delete: pList 0x%x\n", pList);
++
++	MEM_Free(pList);
++}
++
++/*
++ *  ======== LST_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the LST module.
++ */
++void LST_Exit(void)
++{
++	GT_0trace(LST_debugMask, GT_5CLASS, "LST_Exit\n");
++}
++
++/*
++ *  ======== LST_First ========
++ *  Purpose:
++ *      Returns a pointer to the first element of the list, or NULL if the
++ *      list is empty.
++ */
++struct LST_ELEM *LST_First(struct LST_LIST *pList)
++{
++	struct LST_ELEM *pElem = NULL;
++
++	DBC_Require(pList != NULL);
++
++	GT_1trace(LST_debugMask, GT_ENTER, "LST_First: pList 0x%x\n", pList);
++
++	if (!LST_IsEmpty(pList))
++		pElem = pList->head.next;
++
++	return pElem;
++}
++
++/*
++ *  ======== LST_GetHead ========
++ *  Purpose:
++ *      "Pops" the head off the list and returns a pointer to it.
++ */
++struct LST_ELEM *LST_GetHead(struct LST_LIST *pList)
++{
++	struct LST_ELEM *pElem;
++
++	DBC_Require(pList != NULL);
++
++	GT_1trace(LST_debugMask, GT_ENTER, "LST_GetHead: pList 0x%x\n", pList);
++
++	if (LST_IsEmpty(pList))
++		return NULL;
++
++	/* pElem is always valid because the list cannot be empty
++	 * at this point */
++	pElem = pList->head.next;
++	pList->head.next = pElem->next;
++	pElem->next->prev = &pList->head;
++
++	return pElem->self;
++}
++
++/*
++ *  ======== LST_Init ========
++ *  Purpose:
++ *      Initialize LST module private state.
++ */
++bool LST_Init(void)
++{
++	GT_create(&LST_debugMask, "LS");	/* LS for LSt module */
++
++	GT_0trace(LST_debugMask, GT_5CLASS, "LST_Init\n");
++
++	return true;
++}
++
++/*
++ *  ======== LST_InitElem ========
++ *  Purpose:
++ *      Initializes a list element to default (cleared) values
++ */
++void LST_InitElem(struct LST_ELEM *pElem)
++{
++	DBC_Require(pElem != NULL);
++
++	GT_1trace(LST_debugMask, GT_ENTER, "LST_InitElem: pElem 0x%x\n", pElem);
++
++	if (pElem) {
++		pElem->next = NULL;
++		pElem->prev = NULL;
++		pElem->self = pElem;
++	}
++}
++
++/*
++ *  ======== LST_InsertBefore ========
++ *  Purpose:
++ *      Insert the element before the existing element.
++ */
++void LST_InsertBefore(struct LST_LIST *pList, struct LST_ELEM *pElem,
++		      struct LST_ELEM *pElemExisting)
++{
++	DBC_Require(pList != NULL);
++	DBC_Require(pElem != NULL);
++	DBC_Require(pElemExisting != NULL);
++
++	GT_3trace(LST_debugMask, GT_ENTER, "LST_InsertBefore: pList 0x%x, "
++		  "pElem 0x%x pElemExisting 0x%x\n", pList, pElem,
++		  pElemExisting);
++
++	pElemExisting->prev->next = pElem;
++	pElem->prev = pElemExisting->prev;
++	pElem->next = pElemExisting;
++	pElemExisting->prev = pElem;
++}
++
++/*
++ *  ======== LST_Next ========
++ *  Purpose:
++ *      Returns a pointer to the next element of the list, or NULL if the
++ *      next element is the head of the list or the list is empty.
++ */
++struct LST_ELEM *LST_Next(struct LST_LIST *pList, struct LST_ELEM *pCurElem)
++{
++	struct LST_ELEM *pNextElem = NULL;
++
++	DBC_Require(pList != NULL);
++	DBC_Require(pCurElem != NULL);
++
++	GT_2trace(LST_debugMask, GT_ENTER,
++		  "LST_Next: pList 0x%x, pCurElem 0x%x\n",
++		  pList, pCurElem);
++
++	if (!LST_IsEmpty(pList)) {
++		if (pCurElem->next != &pList->head)
++			pNextElem = pCurElem->next;
++	}
++
++	return pNextElem;
++}
++
++/*
++ *  ======== LST_PutTail ========
++ *  Purpose:
++ *      Adds the specified element to the tail of the list
++ */
++void LST_PutTail(struct LST_LIST *pList, struct LST_ELEM *pElem)
++{
++	DBC_Require(pList != NULL);
++	DBC_Require(pElem != NULL);
++
++	GT_2trace(LST_debugMask, GT_ENTER,
++		  "LST_PutTail: pList 0x%x, pElem 0x%x\n",
++		  pList, pElem);
++
++	pElem->prev = pList->head.prev;
++	pElem->next = &pList->head;
++	pList->head.prev = pElem;
++	pElem->prev->next = pElem;
++
++	DBC_Ensure(!LST_IsEmpty(pList));
++}
++
++/*
++ *  ======== LST_RemoveElem ========
++ *  Purpose:
++ *      Removes (unlinks) the given element from the list, if the list is not
++ *      empty.  Does not free the list element.
++ */
++void LST_RemoveElem(struct LST_LIST *pList, struct LST_ELEM *pCurElem)
++{
++	DBC_Require(pList != NULL);
++	DBC_Require(pCurElem != NULL);
++
++	GT_2trace(LST_debugMask, GT_ENTER,
++		  "LST_RemoveElem: pList 0x%x, pCurElem "
++		  "0x%x\n", pList, pCurElem);
++
++	if (!LST_IsEmpty(pList)) {
++		pCurElem->prev->next = pCurElem->next;
++		pCurElem->next->prev = pCurElem->prev;
++
++		/* set elem fields to NULL to prevent illegal references */
++		pCurElem->next = NULL;
++		pCurElem->prev = NULL;
++	}
++}
++
+diff --git a/drivers/dsp/bridge/services/mem.c b/drivers/dsp/bridge/services/mem.c
+new file mode 100644
+index 0000000..186684e
+--- /dev/null
++++ b/drivers/dsp/bridge/services/mem.c
+@@ -0,0 +1,594 @@
++/*
++ * linux/drivers/dsp/bridge/services/mem.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== mem.c ========
++ *  Purpose:
++ *      Implementation of platform specific memory services.
++ *
++ *  Public Functions:
++ *      MEM_Alloc
++ *      MEM_AllocPhysMem
++ *      MEM_Calloc
++ *      MEM_Exit
++ *      MEM_FlushCache
++ *      MEM_Free
++ *      MEM_FreePhysMem
++ *      MEM_Init
++ *      MEM_ExtPhysPoolInit
++ *
++ *! Revision History:
++ *! =================
++ *! 18-Jan-2004 hp: Added support for External physical memory pool
++ *! 19-Apr-2004 sb: Added Alloc/Free PhysMem, FlushCache, VirtualToPhysical
++ *! 01-Sep-2001 ag: Code cleanup.
++ *! 02-May-2001 ag: MEM_[UnMap]LinearAddress revamped to align Phys to Virt.
++ *!		 Set PAGE_PHYSICAL if phy addr <= 512MB. Opposite uSoft doc!
++ *! 29-Aug-2000 rr: MEM_LinearAddress does not check for 512MB for non-x86.
++ *! 28-Mar-2000 rr: MEM_LinearAddress changed.Handles address larger than 512MB
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 22-Nov-1999 kc: Added changes from code review.
++ *! 16-Aug-1999 kc: modified for WinCE.
++ *! 20-Mar-1999 ag: SP 4 fix in MEM_UMBCalloc().
++ *!		 Mdl offset now ORed not added to userBuf.
++ *! 23-Dec-1997 cr: Code review changes.
++ *! 08-Dec-1997 cr: Prepared for code review.
++ *! 24-Jun-1997 cr: Created.
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- This */
++#include <mem.h>
++#include <list.h>
++
++/*  ----------------------------------- Defines */
++#define MEM_512MB   0x1fffffff
++#define memInfoSign 0x464E494D	/* "MINF" (in reverse). */
++
++#ifdef DEBUG
++#define MEM_CHECK		/* Use to detect source of memory leaks */
++#endif
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask MEM_debugMask = { NULL, NULL };	/* GT trace variable */
++#endif
++
++static u32 cRefs;		/* module reference count */
++
++static bool extPhysMemPoolEnabled = false;
++
++struct extPhysMemPool {
++	u32 physMemBase;
++	u32 physMemSize;
++	u32 virtMemBase;
++	u32 nextPhysAllocPtr;
++};
++
++static struct extPhysMemPool extMemPool;
++
++/*  Information about each element allocated on heap */
++struct memInfo {
++	struct LST_ELEM link;		/* Must be first */
++	size_t size;
++	void *caller;
++	u32 dwSignature;	/* Should be last */
++};
++
++#ifdef MEM_CHECK
++
++/*
++ *  This structure holds a linked list to all memory elements allocated on
++ *  heap by DSP/BIOS Bridge. This is used to report memory leaks and free
++ *  such elements while removing the DSP/BIOS Bridge driver
++ */
++struct memMan {
++	struct LST_LIST lst;
++	spinlock_t lock;
++};
++
++static struct memMan mMan;
++
++/*
++ *  These functions are similar to LST_PutTail and LST_RemoveElem and are
++ *  duplicated here to make MEM independent of LST
++ */
++static inline void MLST_PutTail(struct LST_LIST *pList, struct LST_ELEM *pElem)
++{
++	pElem->prev = pList->head.prev;
++	pElem->next = &pList->head;
++	pList->head.prev = pElem;
++	pElem->prev->next = pElem;
++	pElem->self = pElem;
++}
++
++static inline void MLST_RemoveElem(struct LST_LIST *pList,
++				   struct LST_ELEM *pCurElem)
++{
++	pCurElem->prev->next = pCurElem->next;
++	pCurElem->next->prev = pCurElem->prev;
++	pCurElem->next = NULL;
++	pCurElem->prev = NULL;
++}
++
++void MEM_Check(void)
++{
++	struct memInfo *pMem;
++	struct LST_ELEM *last = &mMan.lst.head;
++	struct LST_ELEM *curr = mMan.lst.head.next;
++
++	if (!LST_IsEmpty(&mMan.lst)) {
++		GT_0trace(MEM_debugMask, GT_7CLASS, "*** MEMORY LEAK ***\n");
++		GT_0trace(MEM_debugMask, GT_7CLASS,
++			  "Addr      Size      Caller\n");
++		while (curr != last) {
++			pMem = (struct memInfo *)curr;
++			curr = curr->next;
++			if ((u32)pMem > PAGE_OFFSET &&
++			    MEM_IsValidHandle(pMem, memInfoSign)) {
++				GT_3trace(MEM_debugMask, GT_7CLASS,
++					"%lx  %d\t [<%p>]\n",
++					(u32) pMem + sizeof(struct memInfo),
++					pMem->size, pMem->caller);
++				MLST_RemoveElem(&mMan.lst,
++						(struct LST_ELEM *) pMem);
++				kfree(pMem);
++			} else {
++				GT_1trace(MEM_debugMask, GT_7CLASS,
++					  "Invalid allocation or "
++					  "Buffer underflow at %x\n",
++					  (u32)pMem +	sizeof(struct memInfo));
++				break;
++			}
++		}
++	}
++	DBC_Ensure(LST_IsEmpty(&mMan.lst));
++}
++
++#endif
++
++void MEM_ExtPhysPoolInit(u32 poolPhysBase, u32 poolSize)
++{
++	u32 poolVirtBase;
++
++	/* get the virtual address for the physical memory pool passed */
++	poolVirtBase = (u32)ioremap(poolPhysBase, poolSize);
++
++	if ((void **)poolVirtBase == NULL) {
++		GT_0trace(MEM_debugMask, GT_7CLASS,
++			  "[PHYS_POOL]Mapping External "
++			  "physical memory to virt failed \n");
++		extPhysMemPoolEnabled = false;
++	} else {
++		extMemPool.physMemBase = poolPhysBase;
++		extMemPool.physMemSize = poolSize;
++		extMemPool.virtMemBase = poolVirtBase;
++		extMemPool.nextPhysAllocPtr = poolPhysBase;
++		extPhysMemPoolEnabled = true;
++		GT_3trace(MEM_debugMask, GT_1CLASS,
++			  "ExtMemory Pool details " "Pool"
++			  "Physical mem base = %0x " "Pool Physical mem size "
++			  "= %0x" "Pool Virtual mem base = %0x \n",
++			  poolPhysBase, poolSize, poolVirtBase);
++	}
++}
++
++void MEM_ExtPhysPoolRelease(void)
++{
++	GT_0trace(MEM_debugMask, GT_1CLASS,
++		  "Releasing External memory pool \n");
++	if (extPhysMemPoolEnabled) {
++		iounmap((void *)(extMemPool.virtMemBase));
++		extPhysMemPoolEnabled = false;
++	}
++}
++
++/*
++ *  ======== MEM_ExtPhysMemAlloc ========
++ *  Purpose:
++ *     Allocate physically contiguous, uncached memory from external memory pool
++ */
++
++void *MEM_ExtPhysMemAlloc(u32 bytes, u32 align, OUT u32 *pPhysAddr)
++{
++	u32 newAllocPtr;
++	u32 offset;
++	u32 virtAddr;
++
++	GT_2trace(MEM_debugMask, GT_1CLASS,
++		  "Ext Memory Allocation" "bytes=0x%x , "
++		  "align=0x%x \n", bytes, align);
++	if (align == 0) {
++		GT_0trace(MEM_debugMask, GT_7CLASS,
++			  "ExtPhysical Memory Allocation "
++			  "No alignment request in allocation call !! \n");
++		align = 1;
++	}
++	if (bytes > ((extMemPool.physMemBase + extMemPool.physMemSize)
++	    - extMemPool.nextPhysAllocPtr)) {
++		GT_1trace(MEM_debugMask, GT_7CLASS,
++			  "ExtPhysical Memory Allocation "
++			  "unable to allocate memory for bytes = 0x%x \n",
++			  bytes);
++		pPhysAddr = 0;
++		return NULL;
++	} else {
++		offset = (extMemPool.nextPhysAllocPtr & (align - 1));
++		if (offset == 0)
++			newAllocPtr = extMemPool.nextPhysAllocPtr;
++		else
++			newAllocPtr = (extMemPool.nextPhysAllocPtr) +
++				      (align - offset);
++		if ((newAllocPtr + bytes) <=
++		    (extMemPool.physMemBase + extMemPool.physMemSize)) {
++			/* we can allocate */
++			*pPhysAddr = newAllocPtr;
++			extMemPool.nextPhysAllocPtr = newAllocPtr + bytes;
++			virtAddr = extMemPool.virtMemBase + (newAllocPtr -
++				   extMemPool.physMemBase);
++			GT_2trace(MEM_debugMask, GT_1CLASS,
++				  "Ext Memory Allocation succedded "
++				  "phys address=0x%x , virtaddress=0x%x \n",
++				  newAllocPtr, virtAddr);
++			return (void *)virtAddr;
++		} else {
++			*pPhysAddr = 0;
++			return NULL;
++		}
++	}
++}
++
++/*
++ *  ======== MEM_Alloc ========
++ *  Purpose:
++ *      Allocate memory from the paged or non-paged pools.
++ */
++void *MEM_Alloc(u32 cBytes, enum MEM_POOLATTRS type)
++{
++	struct memInfo *pMem = NULL;
++
++	GT_2trace(MEM_debugMask, GT_ENTER,
++		  "MEM_Alloc: cBytes 0x%x\ttype 0x%x\n", cBytes, type);
++	if (cBytes > 0) {
++		switch (type) {
++		case MEM_NONPAGED:
++		/* If non-paged memory required, see note at top of file. */
++		case MEM_PAGED:
++#ifndef MEM_CHECK
++			pMem = kmalloc(cBytes, GFP_ATOMIC);
++#else
++			pMem = kmalloc(cBytes + sizeof(struct memInfo),
++			       GFP_ATOMIC);
++			if (pMem) {
++				pMem->size = cBytes;
++				pMem->caller = __builtin_return_address(0);
++				pMem->dwSignature = memInfoSign;
++
++				spin_lock(&mMan.lock);
++				MLST_PutTail(&mMan.lst,
++					    (struct LST_ELEM *)pMem);
++				spin_unlock(&mMan.lock);
++
++				pMem = (void *)((u32)pMem +
++					sizeof(struct memInfo));
++			}
++#endif
++			break;
++		case MEM_LARGEVIRTMEM:
++#ifndef MEM_CHECK
++			/* FIXME - Replace with 'vmalloc' after BP fix */
++			pMem = __vmalloc(cBytes, GFP_ATOMIC, PAGE_KERNEL);
++#else
++			/* FIXME - Replace with 'vmalloc' after BP fix */
++			pMem = __vmalloc((cBytes + sizeof(struct memInfo)),
++				GFP_ATOMIC, PAGE_KERNEL);
++			if (pMem) {
++				pMem->size = cBytes;
++				pMem->caller = __builtin_return_address(0);
++				pMem->dwSignature = memInfoSign;
++
++				spin_lock(&mMan.lock);
++				MLST_PutTail(&mMan.lst,
++					    (struct LST_ELEM *) pMem);
++				spin_unlock(&mMan.lock);
++
++				pMem = (void *)((u32)pMem +
++					sizeof(struct memInfo));
++			}
++#endif
++			break;
++
++		default:
++			GT_0trace(MEM_debugMask, GT_6CLASS,
++				  "MEM_Alloc: unexpected "
++				  "MEM_POOLATTRS value\n");
++			break;
++		}
++	}
++
++	return pMem;
++}
++
++/*
++ *  ======== MEM_AllocPhysMem ========
++ *  Purpose:
++ *      Allocate physically contiguous, uncached memory
++ */
++void *MEM_AllocPhysMem(u32 cBytes, u32 ulAlign, OUT u32 *pPhysicalAddress)
++{
++	void *pVaMem = NULL;
++	dma_addr_t paMem;
++
++	DBC_Require(cRefs > 0);
++
++	GT_2trace(MEM_debugMask, GT_ENTER,
++		  "MEM_AllocPhysMem: cBytes 0x%x\tulAlign"
++		  "0x%x\n", cBytes, ulAlign);
++
++	if (cBytes > 0) {
++		if (extPhysMemPoolEnabled) {
++			pVaMem = MEM_ExtPhysMemAlloc(cBytes, ulAlign,
++						    (u32 *)&paMem);
++		} else
++			pVaMem = dma_alloc_coherent(NULL, cBytes, &paMem,
++						   GFP_ATOMIC);
++		if (pVaMem == NULL) {
++			*pPhysicalAddress = 0;
++			GT_1trace(MEM_debugMask, GT_6CLASS,
++				  "MEM_AllocPhysMem failed: "
++				  "0x%x\n", pVaMem);
++		} else {
++			*pPhysicalAddress = paMem;
++		}
++	}
++	return pVaMem;
++}
++
++/*
++ *  ======== MEM_Calloc ========
++ *  Purpose:
++ *      Allocate zero-initialized memory from the paged or non-paged pools.
++ */
++void *MEM_Calloc(u32 cBytes, enum MEM_POOLATTRS type)
++{
++	struct memInfo *pMem = NULL;
++
++	GT_2trace(MEM_debugMask, GT_ENTER,
++		  "MEM_Calloc: cBytes 0x%x\ttype 0x%x\n",
++		  cBytes, type);
++
++	if (cBytes > 0) {
++		switch (type) {
++		case MEM_NONPAGED:
++		/* If non-paged memory required, see note at top of file. */
++		case MEM_PAGED:
++#ifndef MEM_CHECK
++			pMem = kmalloc(cBytes, GFP_ATOMIC);
++			if (pMem)
++				memset(pMem, 0, cBytes);
++
++#else
++			pMem = kmalloc(cBytes + sizeof(struct memInfo),
++				      GFP_ATOMIC);
++			if (pMem) {
++				memset((void *)((u32)pMem +
++					sizeof(struct memInfo)), 0, cBytes);
++				pMem->size = cBytes;
++				pMem->caller = __builtin_return_address(0);
++				pMem->dwSignature = memInfoSign;
++				spin_lock(&mMan.lock);
++				MLST_PutTail(&mMan.lst,
++					(struct LST_ELEM *) pMem);
++				spin_unlock(&mMan.lock);
++				pMem = (void *)((u32)pMem +
++					sizeof(struct memInfo));
++			}
++#endif
++			break;
++		case MEM_LARGEVIRTMEM:
++#ifndef MEM_CHECK
++			/* FIXME - Replace with 'vmalloc' after BP fix */
++			pMem = __vmalloc(cBytes, GFP_ATOMIC, PAGE_KERNEL);
++			if (pMem)
++				memset(pMem, 0, cBytes);
++
++#else
++			/* FIXME - Replace with 'vmalloc' after BP fix */
++			pMem = __vmalloc(cBytes + sizeof(struct memInfo),
++				GFP_ATOMIC, PAGE_KERNEL);
++			if (pMem) {
++				memset((void *)((u32)pMem +
++					sizeof(struct memInfo)), 0, cBytes);
++				pMem->size = cBytes;
++				pMem->caller = __builtin_return_address(0);
++				pMem->dwSignature = memInfoSign;
++				spin_lock(&mMan.lock);
++				MLST_PutTail(&mMan.lst, (struct LST_ELEM *)
++					pMem);
++				spin_unlock(&mMan.lock);
++				pMem = (void *)((u32)pMem +
++					sizeof(struct memInfo));
++			}
++#endif
++			break;
++		default:
++			GT_1trace(MEM_debugMask, GT_6CLASS,
++				  "MEM_Calloc: unexpected "
++				  "MEM_POOLATTRS value 0x%x\n", type);
++			break;
++		}
++	}
++
++	return pMem;
++}
++
++/*
++ *  ======== MEM_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the MEM module.
++ */
++void MEM_Exit(void)
++{
++	DBC_Require(cRefs > 0);
++
++	GT_1trace(MEM_debugMask, GT_5CLASS, "MEM_Exit: cRefs 0x%x\n", cRefs);
++
++	cRefs--;
++#ifdef MEM_CHECK
++	if (cRefs == 0)
++		MEM_Check();
++
++#endif
++	MEM_ExtPhysPoolRelease();
++	DBC_Ensure(cRefs >= 0);
++}
++
++/*
++ *  ======== MEM_FlushCache ========
++ *  Purpose:
++ *      Flush cache
++ */
++void MEM_FlushCache(void *pMemBuf, u32 cBytes, s32 FlushType)
++{
++	DBC_Require(cRefs > 0);
++
++	switch (FlushType) {
++	/* invalidate only */
++	case PROC_INVALIDATE_MEM:
++		dmac_inv_range(pMemBuf, pMemBuf + cBytes - 1);
++		outer_inv_range(__pa((u32)pMemBuf), __pa((u32)pMemBuf +
++				cBytes - 1));
++	break;
++	/* writeback only */
++	case PROC_WRITEBACK_MEM:
++		dmac_clean_range(pMemBuf, pMemBuf + cBytes - 1);
++		outer_clean_range(__pa((u32)pMemBuf), __pa((u32)pMemBuf +
++				  cBytes - 1));
++	break;
++	/* writeback and invalidate */
++	case PROC_WRITEBACK_INVALIDATE_MEM:
++		dmac_flush_range(pMemBuf, pMemBuf + cBytes - 1);
++		outer_flush_range(__pa((u32)pMemBuf), __pa((u32)pMemBuf +
++				  cBytes - 1));
++	break;
++	default:
++		GT_1trace(MEM_debugMask, GT_6CLASS, "MEM_FlushCache: invalid "
++			  "FlushMemType 0x%x\n", FlushType);
++	break;
++	}
++
++}
++
++
++/*
++ *  ======== MEM_Free ========
++ *  Purpose:
++ *      Free the given block of system memory.
++ */
++void MEM_Free(IN void *pMemBuf)
++{
++#ifdef MEM_CHECK
++	struct memInfo *pMem = (void *)((u32)pMemBuf - sizeof(struct memInfo));
++#endif
++
++	DBC_Require(pMemBuf != NULL);
++
++	GT_1trace(MEM_debugMask, GT_ENTER, "MEM_Free: pMemBufs 0x%x\n",
++		  pMemBuf);
++
++	if (pMemBuf) {
++#ifndef MEM_CHECK
++		kfree(pMemBuf);
++#else
++		if (pMem) {
++			if (pMem->dwSignature == memInfoSign) {
++				spin_lock(&mMan.lock);
++				MLST_RemoveElem(&mMan.lst,
++						(struct LST_ELEM *) pMem);
++				spin_unlock(&mMan.lock);
++				pMem->dwSignature = 0;
++				kfree(pMem);
++			} else {
++				GT_1trace(MEM_debugMask, GT_7CLASS,
++					"Invalid allocation or "
++					"Buffer underflow at %x\n",
++					(u32) pMem + sizeof(struct memInfo));
++			}
++		}
++#endif
++	}
++}
++
++/*
++ *  ======== MEM_FreePhysMem ========
++ *  Purpose:
++ *      Free the given block of physically contiguous memory.
++ */
++void MEM_FreePhysMem(void *pVirtualAddress, u32 pPhysicalAddress,
++		     u32 cBytes)
++{
++	DBC_Require(cRefs > 0);
++	DBC_Require(pVirtualAddress != NULL);
++
++	GT_1trace(MEM_debugMask, GT_ENTER, "MEM_FreePhysMem: pVirtualAddress "
++		  "0x%x\n", pVirtualAddress);
++
++	if (!extPhysMemPoolEnabled)
++		dma_free_coherent(NULL, cBytes, pVirtualAddress,
++				 pPhysicalAddress);
++}
++
++/*
++ *  ======== MEM_Init ========
++ *  Purpose:
++ *      Initialize MEM module private state.
++ */
++bool MEM_Init(void)
++{
++	DBC_Require(cRefs >= 0);
++
++	if (cRefs == 0) {
++		GT_create(&MEM_debugMask, "MM");	/* MM for MeM module */
++
++#ifdef MEM_CHECK
++		mMan.lst.head.next = &mMan.lst.head;
++		mMan.lst.head.prev = &mMan.lst.head;
++		mMan.lst.head.self = NULL;
++#endif
++
++	}
++
++	cRefs++;
++
++	GT_1trace(MEM_debugMask, GT_5CLASS, "MEM_Init: cRefs 0x%x\n", cRefs);
++
++	DBC_Ensure(cRefs > 0);
++
++	return true;
++}
+diff --git a/drivers/dsp/bridge/services/ntfy.c b/drivers/dsp/bridge/services/ntfy.c
+new file mode 100644
+index 0000000..72bb1e4
+--- /dev/null
++++ b/drivers/dsp/bridge/services/ntfy.c
+@@ -0,0 +1,329 @@
++/*
++ * linux/drivers/dsp/bridge/services/ntfy.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== ntfyce.c ========
++ *  Purpose:
++ *      Manage lists of notification events.
++ *
++ *  Public Functions:
++ *      NTFY_Create
++ *      NTFY_Delete
++ *      NTFY_Exit
++ *      NTFY_Init
++ *      NTFY_Notify
++ *      NTFY_Register
++ *
++ *! Revision History:
++ *! =================
++ *! 06-Feb-2003 kc      Removed DSP_POSTMESSAGE related code.
++ *! 05-Nov-2001 kc      Updated DSP_HNOTIFICATION structure.
++ *! 10-May-2001 jeh     Removed SERVICES module init/exit from NTFY_Init/Exit.
++ *!                     NTFY_Register() returns DSP_ENOTIMPL for all but
++ *!                     DSP_SIGNALEVENT.
++ *! 12-Oct-2000 jeh     Use MEM_IsValidHandle().
++ *! 07-Sep-2000 jeh     Created.
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <csl.h>
++#include <list.h>
++#include <mem.h>
++#include <sync.h>
++
++/*  ----------------------------------- This */
++#include <ntfy.h>
++
++/*  ----------------------------------- Defines, Data Structures, Typedefs */
++#define NTFY_SIGNATURE      0x5946544e	/* "YFTN" */
++
++/*
++ *  ======== NTFY_OBJECT ========
++ */
++struct NTFY_OBJECT {
++	u32 dwSignature;	/* For object validation */
++	struct LST_LIST *notifyList;	/* List of NOTIFICATION objects */
++	struct SYNC_CSOBJECT *hSync;	/* For critical sections */
++};
++
++/*
++ *  ======== NOTIFICATION ========
++ *  This object will be created when a client registers for events.
++ */
++struct NOTIFICATION {
++	struct LST_ELEM listElem;
++	u32 uEventMask;	/* Events to be notified about */
++	u32 uNotifyType;	/* Type of notification to be sent */
++
++	/*
++	 *  We keep a copy of the event name to check if the event has
++	 *  already been registered. (SYNC also keeps a copy of the name).
++	 */
++	char *pstrName;		/* Name of event */
++	HANDLE hEvent;		/* Handle for notification */
++	struct SYNC_OBJECT *hSync;
++};
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask NTFY_debugMask = { NULL, NULL };    /* GT trace variable */
++#endif
++
++/*  ----------------------------------- Function Prototypes */
++static void DeleteNotify(struct NOTIFICATION *pNotify);
++
++/*
++ *  ======== NTFY_Create ========
++ *  Purpose:
++ *      Create an empty list of notifications.
++ */
++DSP_STATUS NTFY_Create(struct NTFY_OBJECT **phNtfy)
++{
++	struct NTFY_OBJECT *pNtfy;
++	DSP_STATUS status = DSP_SOK;
++
++	DBC_Require(phNtfy != NULL);
++
++	*phNtfy = NULL;
++	MEM_AllocObject(pNtfy, struct NTFY_OBJECT, NTFY_SIGNATURE);
++
++	if (pNtfy) {
++
++		status = SYNC_InitializeDPCCS(&pNtfy->hSync);
++		if (DSP_SUCCEEDED(status)) {
++			pNtfy->notifyList = LST_Create();
++			if (pNtfy->notifyList == NULL) {
++				(void) SYNC_DeleteCS(pNtfy->hSync);
++				MEM_FreeObject(pNtfy);
++				status = DSP_EMEMORY;
++			} else {
++				*phNtfy = pNtfy;
++			}
++		}
++	} else {
++		status = DSP_EMEMORY;
++	}
++
++	DBC_Ensure((DSP_FAILED(status) && *phNtfy == NULL) ||
++		  (DSP_SUCCEEDED(status) && MEM_IsValidHandle((*phNtfy),
++		  NTFY_SIGNATURE)));
++
++	return status;
++}
++
++/*
++ *  ======== NTFY_Delete ========
++ *  Purpose:
++ *      Free resources allocated in NTFY_Create.
++ */
++void NTFY_Delete(struct NTFY_OBJECT *hNtfy)
++{
++	struct NOTIFICATION *pNotify;
++
++	DBC_Require(MEM_IsValidHandle(hNtfy, NTFY_SIGNATURE));
++
++	/* Remove any elements remaining in list */
++	if (hNtfy->notifyList) {
++		while ((pNotify = (struct NOTIFICATION *)LST_GetHead(hNtfy->
++								notifyList))) {
++			DeleteNotify(pNotify);
++		}
++		DBC_Assert(LST_IsEmpty(hNtfy->notifyList));
++		LST_Delete(hNtfy->notifyList);
++	}
++	if (hNtfy->hSync)
++		(void)SYNC_DeleteCS(hNtfy->hSync);
++
++	MEM_FreeObject(hNtfy);
++}
++
++/*
++ *  ======== NTFY_Exit ========
++ *  Purpose:
++ *      Discontinue usage of NTFY module.
++ */
++void NTFY_Exit(void)
++{
++	GT_0trace(NTFY_debugMask, GT_5CLASS, "Entered NTFY_Exit\n");
++}
++
++/*
++ *  ======== NTFY_Init ========
++ *  Purpose:
++ *      Initialize the NTFY module.
++ */
++bool NTFY_Init(void)
++{
++	GT_create(&NTFY_debugMask, "NY");	/* "NY" for NtfY */
++
++	GT_0trace(NTFY_debugMask, GT_5CLASS, "NTFY_Init()\n");
++
++	return true;
++}
++
++/*
++ *  ======== NTFY_Notify ========
++ *  Purpose:
++ *      Execute notify function (signal event) for every
++ *      element in the notification list that is to be notified about the
++ *      event specified in uEventMask.
++ */
++void NTFY_Notify(struct NTFY_OBJECT *hNtfy, u32 uEventMask)
++{
++	struct NOTIFICATION *pNotify;
++
++	DBC_Require(MEM_IsValidHandle(hNtfy, NTFY_SIGNATURE));
++
++	/*
++	 *  Go through notifyList and notify all clients registered for
++	 *  uEventMask events.
++	 */
++
++	(void) SYNC_EnterCS(hNtfy->hSync);
++
++	pNotify = (struct NOTIFICATION *)LST_First(hNtfy->notifyList);
++	while (pNotify != NULL) {
++		if (pNotify->uEventMask & uEventMask) {
++			/* Notify */
++			if (pNotify->uNotifyType == DSP_SIGNALEVENT)
++				(void)SYNC_SetEvent(pNotify->hSync);
++
++		}
++		pNotify = (struct NOTIFICATION *)LST_Next(hNtfy->notifyList,
++			  (struct LST_ELEM *)pNotify);
++	}
++
++	(void) SYNC_LeaveCS(hNtfy->hSync);
++}
++
++/*
++ *  ======== NTFY_Register ========
++ *  Purpose:
++ *      Add a notification element to the list. If the notification is already
++ *      registered, and uEventMask != 0, the notification will get posted for
++ *      events specified in the new event mask. If the notification is already
++ *      registered and uEventMask == 0, the notification will be unregistered.
++ */
++DSP_STATUS NTFY_Register(struct NTFY_OBJECT *hNtfy,
++			 struct DSP_NOTIFICATION *hNotification,
++			 u32 uEventMask, u32 uNotifyType)
++{
++	struct NOTIFICATION *pNotify;
++	struct SYNC_ATTRS syncAttrs;
++	DSP_STATUS status = DSP_SOK;
++
++	DBC_Require(MEM_IsValidHandle(hNtfy, NTFY_SIGNATURE));
++
++	if (hNotification == NULL)
++		status = DSP_EHANDLE;
++
++	/* Return DSP_ENOTIMPL if uNotifyType is not supported */
++	if (DSP_SUCCEEDED(status)) {
++		if (!IsValidNotifyMask(uNotifyType))
++			status = DSP_ENOTIMPL;
++
++	}
++
++	if (DSP_FAILED(status))
++		return status;
++
++	(void)SYNC_EnterCS(hNtfy->hSync);
++
++	pNotify = (struct NOTIFICATION *)LST_First(hNtfy->notifyList);
++	while (pNotify != NULL) {
++		/* If there is more than one notification type, each
++		 * type may require its own handler code.  */
++
++		if (hNotification->handle == pNotify->hSync) {
++			/* found */
++			break;
++		}
++		pNotify = (struct NOTIFICATION *)LST_Next(hNtfy->notifyList,
++			  (struct LST_ELEM *)pNotify);
++	}
++	if (pNotify == NULL) {
++		/* Not registered */
++		if (uEventMask == 0) {
++			status = DSP_EVALUE;
++		} else {
++			/* Allocate NOTIFICATION object, add to list */
++			pNotify = MEM_Calloc(sizeof(struct NOTIFICATION),
++					     MEM_PAGED);
++			if (pNotify == NULL)
++				status = DSP_EMEMORY;
++
++		}
++		if (DSP_SUCCEEDED(status)) {
++			LST_InitElem((struct LST_ELEM *) pNotify);
++			 /* If there is more than one notification type, each
++			 * type may require its own handler code. */
++			status = SYNC_OpenEvent(&pNotify->hSync, &syncAttrs);
++			hNotification->handle = pNotify->hSync;
++
++			if (DSP_SUCCEEDED(status)) {
++				pNotify->uEventMask = uEventMask;
++				pNotify->uNotifyType = uNotifyType;
++				LST_PutTail(hNtfy->notifyList,
++					   (struct LST_ELEM *)pNotify);
++			} else {
++				DeleteNotify(pNotify);
++			}
++		}
++	} else {
++		/* Found in list */
++		if (uEventMask == 0) {
++			/* Remove from list and free */
++			LST_RemoveElem(hNtfy->notifyList,
++				      (struct LST_ELEM *)pNotify);
++			DeleteNotify(pNotify);
++		} else {
++			/* Update notification mask (type shouldn't change) */
++			pNotify->uEventMask = uEventMask;
++		}
++	}
++	(void)SYNC_LeaveCS(hNtfy->hSync);
++	return status;
++}
++
++/*
++ *  ======== DeleteNotify ========
++ *  Purpose:
++ *      Free the notification object.
++ */
++static void DeleteNotify(struct NOTIFICATION *pNotify)
++{
++	if (pNotify->hSync)
++		(void) SYNC_CloseEvent(pNotify->hSync);
++
++	if (pNotify->pstrName)
++		MEM_Free(pNotify->pstrName);
++
++	MEM_Free(pNotify);
++}
++
+diff --git a/drivers/dsp/bridge/services/prcs.c b/drivers/dsp/bridge/services/prcs.c
+new file mode 100644
+index 0000000..cb45541
+--- /dev/null
++++ b/drivers/dsp/bridge/services/prcs.c
+@@ -0,0 +1,119 @@
++/*
++ * linux/drivers/dsp/bridge/services/prcs.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== procce.c ========
++ *  Purpose:
++ *      Provide information about processes and threads.
++ *
++ *  Public Functions:
++ *      PRCS_Exit
++ *      PRCS_GetCurrentHandle
++ *      PRCS_Init
++ *
++ *! Revision History:
++ *! ================
++ *! 18-Dec-2000 rr: PRCS_GetCurrentProcesshandle's DBC_Ensure class
++ *!                 removed. See the foot node.
++ *! 06-Jul-2000 rr: Prefix changed to PRCS to accomodate RM PROC.
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 22-Nov-1999 kc: Added changes from code review.
++ *! 22-Sep-1999 kc: Modified from procnt.c.
++ *! 26-Aug-1997 cr: Implemented.
++ *! 16-Aug-1997 cr: Stubbed from proc95.c
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- This */
++#include <prcs.h>
++
++/*  ----------------------------------- Globals & Defines */
++#if GT_TRACE
++static struct GT_Mask PRCS_debugMask = { NULL, NULL };	/* GT trace var. */
++#endif
++
++/*
++ *  ======== PRCS_Exit ========
++ *  Purpose:
++ *      Discontinue usage of the PRCS module.
++ */
++void PRCS_Exit(void)
++{
++	GT_0trace(PRCS_debugMask, GT_5CLASS, "PRCS_Exit\n");
++}
++
++/*
++ *  ======== PRCS_GetCurrentHandle ========
++ *  Purpose:
++ *      This functions returns the process handle of the
++ *      caller process.
++ */
++DSP_STATUS PRCS_GetCurrentHandle(OUT HANDLE *phProcess)
++{
++	DSP_STATUS status;
++
++	DBC_Require(phProcess != NULL);
++
++	GT_1trace(PRCS_debugMask, GT_ENTER,
++		  "PRCS_GetCurrentHandle: phProcess 0x%x\n",
++		  phProcess);
++	if (phProcess) {
++		if (!in_interrupt()) {
++			/* Return PID instead of process handle */
++			*phProcess = (HANDLE)current->pid;
++			status = DSP_SOK;
++		} else {
++			*phProcess = NULL;
++			status = DSP_EFAIL;
++		}
++	} else {
++		*phProcess = NULL;
++		status = DSP_EPOINTER;
++		GT_0trace(PRCS_debugMask, GT_6CLASS,
++			  "PRCS_GetCurrentHandle: invalid "
++			  "handle\n");
++	}
++	return status;
++}
++
++/*
++ *  ======== PRCS_Init ========
++ *  Purpose:
++ *      Initialize the PRCS module's private state.
++ */
++bool PRCS_Init(void)
++{
++
++	GT_create(&PRCS_debugMask, "PS");	/* PS for ProcesS */
++
++	GT_0trace(PRCS_debugMask, GT_5CLASS, "PRCS_Init\n");
++
++	return true;
++}
++
+diff --git a/drivers/dsp/bridge/services/reg.c b/drivers/dsp/bridge/services/reg.c
+new file mode 100644
+index 0000000..f540944
+--- /dev/null
++++ b/drivers/dsp/bridge/services/reg.c
+@@ -0,0 +1,196 @@
++/*
++ * linux/drivers/dsp/bridge/services/reg.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== regce.c ========
++ *  Purpose:
++ *      Provide registry functions.
++ *
++ *  Public Functions:
++ *      REG_DeleteValue
++ *      REG_EnumValue
++ *      REG_Exit
++ *      REG_GetValue
++ *      REG_Init
++ *      REG_SetValue
++ *
++ *! Revision History:
++ *! ================
++ *
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <csl.h>
++#include <mem.h>
++
++/*  ----------------------------------- Others */
++#include <dbreg.h>
++
++/*  ----------------------------------- This */
++#include <reg.h>
++#include <regsup.h>
++
++#if GT_TRACE
++struct GT_Mask REG_debugMask = { NULL, NULL };	/* GT trace var. */
++#endif
++
++/*
++ *  ======== REG_DeleteValue ========
++ *  Deletes a registry entry value.  NOTE:  A registry entry value is not the
++ *  same as *  a registry key.
++ */
++DSP_STATUS REG_DeleteValue(OPTIONAL IN HANDLE *phKey, IN CONST char *pstrSubkey,
++			   IN CONST char *pstrValue)
++{
++	DSP_STATUS status;
++	DBC_Require(pstrSubkey && pstrValue);
++	DBC_Require(phKey == NULL);
++	DBC_Require(CSL_Strlen(pstrSubkey) < REG_MAXREGPATHLENGTH);
++	DBC_Require(CSL_Strlen(pstrValue) < REG_MAXREGPATHLENGTH);
++
++	GT_0trace(REG_debugMask, GT_ENTER, "REG_DeleteValue: entered\n");
++
++	/*  Note that we don't use phKey */
++	if (regsupDeleteValue(pstrSubkey, pstrValue) == DSP_SOK)
++		status = DSP_SOK;
++	else
++		status = DSP_EFAIL;
++
++	return status;
++}
++
++/*
++ *  ======== REG_EnumValue ========
++ *  Enumerates a registry key and retrieve values stored under the key.
++ *  We will assume the input pdwValueSize is smaller than
++ *  REG_MAXREGPATHLENGTH for implementation purposes.
++ */
++DSP_STATUS REG_EnumValue(IN HANDLE *phKey, IN u32 dwIndex,
++			 IN CONST char *pstrKey, IN OUT char *pstrValue,
++			 IN OUT u32 *pdwValueSize, IN OUT char *pstrData,
++			 IN OUT u32 *pdwDataSize)
++{
++	DSP_STATUS status;
++
++	DBC_Require(pstrKey && pstrValue && pdwValueSize && pstrData &&
++		    pdwDataSize);
++	DBC_Require(*pdwValueSize <= REG_MAXREGPATHLENGTH);
++	DBC_Require(phKey == NULL);
++	DBC_Require(CSL_Strlen(pstrKey) < REG_MAXREGPATHLENGTH);
++
++	GT_0trace(REG_debugMask, GT_ENTER, "REG_EnumValue: entered\n");
++
++	status = regsupEnumValue(dwIndex, pstrKey, pstrValue, pdwValueSize,
++				 pstrData, pdwDataSize);
++
++	return status;
++}
++
++/*
++ *  ======== REG_Exit ========
++ *  Discontinue usage of the REG module.
++ */
++void REG_Exit(void)
++{
++	GT_0trace(REG_debugMask, GT_5CLASS, "REG_Exit\n");
++
++	regsupExit();
++}
++
++/*
++ *  ======== REG_GetValue ========
++ *  Retrieve a value from the registry.
++ */
++DSP_STATUS REG_GetValue(OPTIONAL IN HANDLE *phKey, IN CONST char *pstrSubkey,
++			IN CONST char *pstrValue, OUT u8 *pbData,
++			IN OUT u32 *pdwDataSize)
++{
++	DSP_STATUS status;
++
++	DBC_Require(pstrSubkey && pstrValue && pbData);
++	DBC_Require(phKey == NULL);
++	DBC_Require(CSL_Strlen(pstrSubkey) < REG_MAXREGPATHLENGTH);
++	DBC_Require(CSL_Strlen(pstrValue) < REG_MAXREGPATHLENGTH);
++
++	GT_0trace(REG_debugMask, GT_ENTER, "REG_GetValue: entered\n");
++
++	/*  We need to use regsup calls...  */
++	/*  ...for now we don't need the key handle or  */
++	/*  the subkey, all we need is the value to lookup.  */
++	if (regsupGetValue((char *)pstrValue, pbData, pdwDataSize) == DSP_SOK)
++		status = DSP_SOK;
++	else
++		status = DSP_EFAIL;
++
++	return status;
++}
++
++/*
++ *  ======== REG_Init ========
++ *  Initialize the REG module's private state.
++ */
++bool REG_Init(void)
++{
++	bool fInit;
++
++	GT_create(&REG_debugMask, "RG");	/* RG for ReG */
++
++	fInit = regsupInit();
++
++	GT_0trace(REG_debugMask, GT_5CLASS, "REG_Init\n");
++
++	return fInit;
++}
++
++/*
++ *  ======== REG_SetValue ========
++ *  Set a value in the registry.
++ */
++DSP_STATUS REG_SetValue(OPTIONAL IN HANDLE *phKey, IN CONST char *pstrSubkey,
++			IN CONST char *pstrValue, IN CONST u32 dwType,
++			IN u8 *pbData, IN u32 dwDataSize)
++{
++	DSP_STATUS status;
++
++	DBC_Require(pstrValue && pbData);
++	DBC_Require(phKey == NULL);
++	DBC_Require(dwDataSize > 0);
++	DBC_Require(CSL_Strlen(pstrValue) < REG_MAXREGPATHLENGTH);
++
++	/*  We need to use regsup calls...  */
++	/*  ...for now we don't need the key handle or  */
++	/*  the subkey, all we need is the value to lookup.  */
++	if (regsupSetValue((char *)pstrValue, pbData, dwDataSize) == DSP_SOK)
++		status = DSP_SOK;
++	else
++		status = DSP_EFAIL;
++
++	return status;
++}
++
+diff --git a/drivers/dsp/bridge/services/regsup.c b/drivers/dsp/bridge/services/regsup.c
+new file mode 100644
+index 0000000..f1d2c51
+--- /dev/null
++++ b/drivers/dsp/bridge/services/regsup.c
+@@ -0,0 +1,367 @@
++/*
++ * linux/drivers/dsp/bridge/services/regsup.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== regsup.c ========
++ *  Purpose:
++ *      Provide registry support functions.
++ *
++ *! Revision History:
++ *! ================
++ *! 28-May-2002  map: Integrated PSI's dspimage update mechanism
++ *! 11-May-2002  gp:  Turned PERF "on".
++ *! 21-May-2002  map: Fixed bug in SetValue - if resizing datasize, set
++ *!		      new size too
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++#include <dbreg.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <mem.h>
++#include <csl.h>
++
++/*  ----------------------------------- This */
++#include <regsup.h>
++
++struct RegValueStruct {
++	char name[BRIDGE_MAX_NAME_SIZE];   /*  Name of a given value entry  */
++	u32 dataSize;		/*  Size of the data  */
++	void *pData;		/*  Pointer to the actual data  */
++};
++
++struct RegKeyStruct {
++	/*The current number of value entries this key has*/
++	u32 numValueEntries;
++	/* Array of value entries */
++	struct RegValueStruct values[BRIDGE_MAX_NUM_REG_ENTRIES];
++};
++
++
++/*  Pointer to the registry support key  */
++static struct RegKeyStruct *pRegKey;
++
++#if GT_TRACE
++extern struct GT_Mask REG_debugMask;	/* GT trace var. */
++/*
++ *  ======== printS ========
++ *  Purpose:
++ *      Displays printable characters in pBuf, if any.
++ */
++static inline void printS(void *pBuf)
++{
++	int pos = 0;
++	if (*(REG_debugMask).flags & (GT_2CLASS)) {
++		while (*(u8 *)((pBuf)+pos) >= ' ' &&
++		       *(u8 *)((pBuf)+pos) <= '~') {
++			GT_1trace(REG_debugMask, GT_2CLASS, "%c",
++					*(u8 *)((pBuf) + pos++));
++		}
++
++		GT_0trace(REG_debugMask, GT_2CLASS, "\n");
++	}
++}
++#else
++#define printS(pBuf)
++#endif
++
++/*
++ *  ======== regsupInit ========
++ *  Purpose:
++ *      Initialize the Registry Support module's private state.
++ */
++bool regsupInit(void)
++{
++	if (pRegKey != NULL)
++		return true;
++
++	/*  Need to allocate and setup our registry.  */
++	pRegKey = MEM_Calloc(sizeof(struct RegKeyStruct), MEM_NONPAGED);
++	if (pRegKey == NULL)
++		return false;
++
++	return true;
++}
++
++/*
++ *  ======== regsupExit ========
++ *  Purpose:
++ *      Release all registry support allocations.
++ */
++void regsupExit(void)
++{
++	u32 i;
++
++	/*  Make sure data has actually been allocated.  */
++	if (pRegKey == NULL) {
++		/*  Nothing initialized.return!  */
++		return;
++	}
++
++	GT_1trace(REG_debugMask, GT_2CLASS, "pRegKey->numValueEntries %d\n",
++		  pRegKey->numValueEntries);
++
++	/*  Now go through each entry and free all resources.  */
++	for (i = 0; ((i < BRIDGE_MAX_NUM_REG_ENTRIES) &&
++	    (i < pRegKey->numValueEntries)); i++) {
++		if (pRegKey->values[i].name[0] != '\0') {
++			/*  We have a valid entry.free it up!  */
++			if (pRegKey->values[i].pData != NULL) {
++				GT_3trace(REG_debugMask, GT_2CLASS,
++					  "E %d\t %s DATA %x ", i,
++					  pRegKey->values[i].name,
++					  *(u32 *)pRegKey->values[i].pData);
++				printS((u8 *)(pRegKey->values[i].pData));
++				MEM_Free(pRegKey->values[i].pData);
++			}
++			pRegKey->values[i].pData = NULL;
++			pRegKey->values[i].dataSize = 0;
++			pRegKey->values[i].name[0] = '\0';
++		}
++	}
++
++	/*  Now that all of the resources are freed up, free the main one!  */
++	MEM_Free(pRegKey);
++
++	/*  Don't forget to NULL out the global entry!  */
++	pRegKey = NULL;
++}
++
++/*
++ *  ======== regsupGetValue ========
++ *  Purpose:
++ *      Get the value of the entry having the given name.
++ */
++DSP_STATUS regsupGetValue(char *valName, void *pBuf, u32 *dataSize)
++{
++	DSP_STATUS retVal = DSP_EFAIL;
++	u32 i;
++
++	/*  Need to search through the entries looking for the right one.  */
++	for (i = 0; i < pRegKey->numValueEntries; i++) {
++		/*  See if the name matches.  */
++		if (CSL_Strncmp(pRegKey->values[i].name, valName,
++		    BRIDGE_MAX_NAME_SIZE) == 0) {
++
++			/*  We have a match!  Copy out the data.  */
++			memcpy(pBuf, pRegKey->values[i].pData,
++			       pRegKey->values[i].dataSize);
++
++			/*  Get the size for the caller.  */
++			*dataSize = pRegKey->values[i].dataSize;
++
++			/*  Set our status to good and exit.  */
++			retVal = DSP_SOK;
++			break;
++		}
++	}
++
++	if (DSP_SUCCEEDED(retVal)) {
++		GT_2trace(REG_debugMask, GT_2CLASS, "G %s DATA %x ", valName,
++			  *(u32 *)pBuf);
++		printS((u8 *)pBuf);
++	} else {
++		GT_1trace(REG_debugMask, GT_3CLASS, "G %s FAILED\n", valName);
++	}
++
++	return retVal;
++}
++
++/*
++ *  ======== regsupSetValue ========
++ *  Purpose:
++ *      Sets the value of the entry having the given name.
++ */
++DSP_STATUS regsupSetValue(char *valName, void *pBuf, u32 dataSize)
++{
++	DSP_STATUS retVal = DSP_EFAIL;
++	u32 i;
++
++	GT_2trace(REG_debugMask, GT_2CLASS, "S %s DATA %x ", valName,
++		  *(u32 *)pBuf);
++	printS((u8 *)pBuf);
++
++	/*  Need to search through the entries looking for the right one.  */
++	for (i = 0; i < pRegKey->numValueEntries; i++) {
++		/*  See if the name matches.  */
++		if (CSL_Strncmp(pRegKey->values[i].name, valName,
++		    BRIDGE_MAX_NAME_SIZE) == 0) {
++			/*  Make sure the new data size is the same.  */
++			if (dataSize != pRegKey->values[i].dataSize) {
++				/*  The caller needs a different data size!  */
++				MEM_Free(pRegKey->values[i].pData);
++				pRegKey->values[i].pData = MEM_Alloc(dataSize,
++							   MEM_NONPAGED);
++				if (pRegKey->values[i].pData == NULL)
++					break;
++
++			}
++
++			/*  We have a match!  Copy out the data.  */
++			memcpy(pRegKey->values[i].pData, pBuf, dataSize);
++
++			/* Reset datasize - overwrite if new or same */
++			pRegKey->values[i].dataSize = dataSize;
++
++			/*  Set our status to good and exit.  */
++			retVal = DSP_SOK;
++			break;
++		}
++	}
++
++	/*  See if we found a match or if this is a new entry  */
++	if (i == pRegKey->numValueEntries) {
++		/*  No match, need to make a new entry  */
++		/*  First check to see if we can make any more entries.  */
++		if (pRegKey->numValueEntries < BRIDGE_MAX_NUM_REG_ENTRIES) {
++			CSL_Strcpyn(pRegKey->
++				values[pRegKey->numValueEntries].name, valName,
++				BRIDGE_MAX_NAME_SIZE);
++			pRegKey->values[pRegKey->numValueEntries].pData =
++					MEM_Alloc(dataSize, MEM_NONPAGED);
++			if (pRegKey->values[pRegKey->numValueEntries].pData !=
++									NULL) {
++				memcpy(pRegKey->
++					values[pRegKey->numValueEntries].pData,
++					pBuf, dataSize);
++				pRegKey->
++				    values[pRegKey->numValueEntries].dataSize =
++				    dataSize;
++				pRegKey->numValueEntries++;
++				retVal = DSP_SOK;
++			}
++		} else {
++			GT_0trace(REG_debugMask, GT_7CLASS,
++				  "MAX NUM REG ENTRIES REACHED\n");
++		}
++	}
++
++	return retVal;
++}
++
++/*
++ *  ======== regsupEnumValue ========
++ *  Purpose:
++ *      Returns registry "values" and their "data" under a (sub)key.
++ */
++DSP_STATUS regsupEnumValue(IN u32 dwIndex, IN CONST char *pstrKey,
++			   IN OUT char *pstrValue, IN OUT u32 *pdwValueSize,
++			   IN OUT char *pstrData, IN OUT u32 *pdwDataSize)
++{
++	DSP_STATUS retVal = REG_E_INVALIDSUBKEY;
++	u32 i;
++	u32 dwKeyLen = CSL_Strlen(pstrKey);
++	u32 count = 0;
++
++	/*  Need to search through the entries looking for the right one.  */
++	for (i = 0; i < pRegKey->numValueEntries; i++) {
++		/*  See if the name matches.  */
++		if ((CSL_Strncmp(pRegKey->values[i].name, pstrKey,
++		    dwKeyLen) == 0) && count++ == dwIndex) {
++			/*  We have a match!  Copy out the data.  */
++			memcpy(pstrData, pRegKey->values[i].pData,
++				pRegKey->values[i].dataSize);
++			/*  Get the size for the caller.  */
++			*pdwDataSize = pRegKey->values[i].dataSize;
++			*pdwValueSize = CSL_Strlen(&(pRegKey->
++						values[i].name[dwKeyLen]));
++			CSL_Strcpyn(pstrValue,
++				    &(pRegKey->values[i].name[dwKeyLen]),
++				    *pdwValueSize + 1);
++			GT_3trace(REG_debugMask, GT_2CLASS,
++				  "E Key %s, Value %s, Data %x ",
++				  pstrKey, pstrValue, *(u32 *)pstrData);
++			printS((u8 *)pstrData);
++			/*  Set our status to good and exit.  */
++			retVal = DSP_SOK;
++			break;
++		}
++	}
++
++	if (count && DSP_FAILED(retVal))
++		retVal = REG_E_NOMOREITEMS;
++
++	return retVal;
++}
++
++/*
++ *  ======== regsupDeleteValue ========
++ */
++DSP_STATUS regsupDeleteValue(IN CONST char *pstrSubkey,
++			    IN CONST char *pstrValue)
++{
++	DSP_STATUS retVal = DSP_EFAIL;
++	u32 i;
++
++	for (i = 0; ((i < BRIDGE_MAX_NUM_REG_ENTRIES) &&
++	    (i < pRegKey->numValueEntries)); i++) {
++		/*  See if the name matches...  */
++		if (CSL_Strncmp(pRegKey->values[i].name, pstrValue,
++		    BRIDGE_MAX_NAME_SIZE) == 0) {
++			/* We have a match!  Delete this key.  To delete a
++			 * key, we free all resources associated with this
++			 * key and, if we're not already the last entry in
++			 * the array, we copy that entry into this deleted
++			 * key.
++			 */
++			MEM_Free(pRegKey->values[i].pData);
++			if ((pRegKey->numValueEntries - 1) == i) {
++				/* we're deleting the last one */
++				pRegKey->values[i].name[0] = '\0';
++				pRegKey->values[i].dataSize = 0;
++				pRegKey->values[i].pData = NULL;
++			} else {
++				/* move the last one here */
++				CSL_Strcpyn(pRegKey->values[i].name,
++				    pRegKey->
++				    values[pRegKey->numValueEntries - 1].name,
++				    BRIDGE_MAX_NAME_SIZE);
++				pRegKey->values[i].dataSize =
++				    pRegKey->
++				    values[pRegKey->numValueEntries-1].dataSize;
++				pRegKey->values[i].pData =
++				    pRegKey->
++				    values[pRegKey->numValueEntries-1].pData;
++				/* don't have to do this, but for
++				 * the paranoid... */
++				pRegKey->
++				    values[pRegKey->numValueEntries-1].name[0] =
++				    '\0';
++			}
++
++			/* another one bites the dust. */
++			pRegKey->numValueEntries--;
++
++			/*  Set our status to good and exit...  */
++			retVal = DSP_SOK;
++			break;
++		}
++	}
++	return retVal;
++
++}
++
+diff --git a/drivers/dsp/bridge/services/regsup.h b/drivers/dsp/bridge/services/regsup.h
+new file mode 100644
+index 0000000..8893854
+--- /dev/null
++++ b/drivers/dsp/bridge/services/regsup.h
+@@ -0,0 +1,58 @@
++/*
++ * linux/drivers/dsp/bridge/services/regsup.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== regsup.h ========
++ *
++ *! Revision History
++ *! ================
++ */
++
++#ifndef _REGSUP_H_
++#define _REGSUP_H_
++
++#define BRIDGE_MAX_NAME_SIZE                     MAXREGPATHLENGTH
++#define BRIDGE_MAX_NUM_REG_ENTRIES               52
++
++/*  Init function. MUST be called BEFORE any calls are  */
++/*  made into this psuedo-registry!!!  Returns TRUE/FALSE for SUCCESS/ERROR  */
++extern bool regsupInit(void);
++
++/*  Release all registry support allocations.  */
++extern void regsupExit(void);
++
++/*
++ *  ======== regsupDeleteValue ========
++ */
++extern DSP_STATUS regsupDeleteValue(IN CONST char *pstrSubkey,
++				    IN CONST char *pstrValue);
++/*  Get the value of the entry having the given name.  Returns DSP_SOK  */
++/*  if an entry was found and the value retrieved.  Returns DSP_EFAIL
++ *  otherwise.*/
++extern DSP_STATUS regsupGetValue(char *valName, void *pBuf, u32 *dataSize);
++
++/*  Sets the value of the entry having the given name.  Returns DSP_SOK  */
++/*  if an entry was found and the value set.  Returns DSP_EFAIL otherwise.  */
++extern DSP_STATUS regsupSetValue(char *valName, void *pBuf, u32 dataSize);
++
++/*  Returns registry "values" and their "data" under a (sub)key. */
++extern DSP_STATUS regsupEnumValue(IN u32 dwIndex, IN CONST char *pstrKey,
++			IN OUT char *pstrValue, IN OUT u32 *pdwValueSize,
++			IN OUT char *pstrData, IN OUT u32 *pdwDataSize);
++
++#endif
++
+diff --git a/drivers/dsp/bridge/services/services.c b/drivers/dsp/bridge/services/services.c
+new file mode 100644
+index 0000000..5e92d3e
+--- /dev/null
++++ b/drivers/dsp/bridge/services/services.c
+@@ -0,0 +1,205 @@
++/*
++ * linux/drivers/dsp/bridge/services/services.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*
++ *  ======== services.c ========
++ *  Purpose:
++ *      Provide SERVICES loading.
++ *
++ *  Public Functions:
++ *      SERVICES_Exit
++ *      SERVICES_Init
++ *
++ *
++ *! Revision History
++ *! ================
++ *! 20-Nov-2000 rr: NTFY_Init/Exit added.
++ *! 06-Jul-2000 rr: PROC prefix changed to PRCS to accomodate RM.
++ *! 01-Feb-2000 kc: Created.
++ */
++
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <cfg.h>
++#include <csl.h>
++#include <dbg.h>
++#include <dpc.h>
++#include <isr.h>
++#include <kfile.h>
++#include <list.h>
++#include <mem.h>
++#include <ntfy.h>
++#include <prcs.h>
++#include <reg.h>
++#include <sync.h>
++#include <clk.h>
++#include <util.h>
++
++/*  ----------------------------------- This */
++#include <services.h>
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask SERVICES_debugMask = { NULL, NULL };	/* GT trace var. */
++#endif
++
++static u32 cRefs;		/* SERVICES module reference count */
++
++/*
++ *  ======== SERVICES_Exit ========
++ *  Purpose:
++ *      Discontinue usage of module; free resources when reference count
++ *      reaches 0.
++ */
++void SERVICES_Exit(void)
++{
++	DBC_Require(cRefs > 0);
++
++	GT_1trace(SERVICES_debugMask, GT_5CLASS, "SERVICES_Exit: cRefs 0x%x\n",
++		 cRefs);
++
++	cRefs--;
++	if (cRefs == 0) {
++		/* Uninitialize all SERVICES modules here */
++		NTFY_Exit();
++		UTIL_Exit();
++		SYNC_Exit();
++		CLK_Exit();
++		REG_Exit();
++		PRCS_Exit();
++		LST_Exit();
++		KFILE_Exit();
++		ISR_Exit();
++		DPC_Exit();
++		DBG_Exit();
++		CSL_Exit();
++		CFG_Exit();
++		MEM_Exit();
++
++		GT_exit();
++	}
++
++	DBC_Ensure(cRefs >= 0);
++}
++
++/*
++ *  ======== SERVICES_Init ========
++ *  Purpose:
++ *      Initializes SERVICES modules.
++ */
++bool SERVICES_Init(void)
++{
++	bool fInit = true;
++	bool fCFG, fCSL, fDBG, fDPC, fISR, fKFILE, fLST, fMEM;
++	bool fPRCS, fREG, fSYNC, fCLK, fUTIL, fNTFY;
++
++	DBC_Require(cRefs >= 0);
++
++	if (cRefs == 0) {
++
++		GT_init();
++		GT_create(&SERVICES_debugMask, "OS");	/* OS for OSal */
++
++		GT_0trace(SERVICES_debugMask, GT_ENTER,
++			 "SERVICES_Init: entered\n");
++
++		/* Perform required initialization of SERVICES modules. */
++		fMEM = MEM_Init();
++		fREG = REG_Init();
++		fCFG = CFG_Init();
++		fCSL = CSL_Init();
++		fDBG = DBG_Init();
++		fDPC = DPC_Init();
++		fISR = ISR_Init();
++		fKFILE = KFILE_Init();
++		fLST = LST_Init();
++		fPRCS = PRCS_Init();
++		/* fREG = REG_Init(); */
++		fSYNC = SYNC_Init();
++		fCLK  = CLK_Init();
++		fUTIL = UTIL_Init();
++		fNTFY = NTFY_Init();
++
++		fInit = fCFG && fCSL && fDBG && fDPC && fISR && fKFILE &&
++			fLST && fMEM && fPRCS && fREG && fSYNC && fCLK && fUTIL;
++
++		if (!fInit) {
++			if (fNTFY)
++				NTFY_Exit();
++
++			if (fUTIL)
++				UTIL_Exit();
++
++			if (fSYNC)
++				SYNC_Exit();
++
++			if (fCLK)
++				CLK_Exit();
++
++			if (fREG)
++				REG_Exit();
++
++			if (fPRCS)
++				PRCS_Exit();
++
++			if (fLST)
++				LST_Exit();
++
++			if (fKFILE)
++				KFILE_Exit();
++
++			if (fISR)
++				ISR_Exit();
++
++			if (fDPC)
++				DPC_Exit();
++
++			if (fDBG)
++				DBG_Exit();
++
++			if (fCSL)
++				CSL_Exit();
++
++			if (fCFG)
++				CFG_Exit();
++
++			if (fMEM)
++				MEM_Exit();
++
++		}
++	}
++
++	if (fInit)
++		cRefs++;
++
++	GT_1trace(SERVICES_debugMask, GT_5CLASS, "SERVICES_Init: cRefs 0x%x\n",
++		 cRefs);
++
++	DBC_Ensure((fInit && (cRefs > 0)) || (!fInit && (cRefs >= 0)));
++
++	return fInit;
++}
++
+diff --git a/drivers/dsp/bridge/services/sync.c b/drivers/dsp/bridge/services/sync.c
+new file mode 100644
+index 0000000..f472b2d
+--- /dev/null
++++ b/drivers/dsp/bridge/services/sync.c
+@@ -0,0 +1,610 @@
++/*
++ * linux/drivers/dsp/bridge/services/sync.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*
++ *  ======== syncce.c ========
++ *  Purpose:
++ *      Synchronization services.
++ *
++ *  Public Functions:
++ *      SYNC_CloseEvent
++ *      SYNC_DeleteCS
++ *      SYNC_EnterCS
++ *      SYNC_Exit
++ *      SYNC_Init
++ *      SYNC_InitializeCS
++ *      SYNC_LeaveCS
++ *      SYNC_OpenEvent
++ *      SYNC_ResetEvent
++ *      SYNC_SetEvent
++ *      SYNC_WaitOnEvent
++ *      SYNC_WaitOnMultipleEvents
++ *
++ *! Revision History:
++ *! ================
++ *! 05-Nov-2001 kc: Minor cosmetic changes.
++ *! 05-Oct-2000 jeh Added SYNC_WaitOnMultipleEvents().
++ *! 10-Aug-2000 rr: SYNC_PostMessage added.
++ *! 10-Jul-2000 jeh Modified SYNC_OpenEvent() to handle NULL attrs.
++ *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
++ *!		 GT Changes.
++ *! 01-Dec-1999 ag: Added optional named event creation in SYNC_OpenEvent().
++ *! 22-Nov-1999 kc: Added changes from code review.
++ *! 22-Sep-1999 kc: Modified from sync95.c.
++ *! 05-Aug-1996 gp: Created.
++ */
++
++/*  ----------------------------------- Host OS */
++#include <host_os.h>
++
++/*  ----------------------------------- DSP/BIOS Bridge */
++#include <std.h>
++#include <dbdefs.h>
++#include <errbase.h>
++
++/*  ----------------------------------- Trace & Debug */
++#include <dbc.h>
++#include <gt.h>
++
++/*  ----------------------------------- OS Adaptation Layer */
++#include <csl.h>
++#include <mem.h>
++
++/*  ----------------------------------- This */
++#include <sync.h>
++
++/*  ----------------------------------- Defines, Data Structures, Typedefs */
++#define SIGNATURE       0x434e5953	/* "SYNC" (in reverse) */
++#define SIGNATURECS     0x53435953	/* "SYCS" (in reverse) */
++#define SIGNATUREDPCCS  0x53445953	/* "SYDS" (in reverse) */
++
++enum wait_state {
++	wo_waiting,
++	wo_signalled
++} ;
++
++enum sync_state {
++	so_reset,
++	so_signalled
++} ;
++
++struct WAIT_OBJECT {
++	enum wait_state state;
++	struct SYNC_OBJECT *signalling_event;
++	struct semaphore sem;
++};
++
++/* Generic SYNC object: */
++struct SYNC_OBJECT {
++	u32 dwSignature;	/* Used for object validation. */
++	enum sync_state state;
++	spinlock_t sync_lock;
++	struct WAIT_OBJECT *pWaitObj;
++};
++
++struct SYNC_CSOBJECT {
++	u32 dwSignature;	/* used for object validation */
++	struct semaphore sem;
++} ;
++
++struct SYNC_DPCCSOBJECT {
++	u32 dwSignature;	/* used for object validation */
++	spinlock_t sync_dpccs_lock;
++	s32 count;
++} ;
++
++/*  ----------------------------------- Globals */
++#if GT_TRACE
++static struct GT_Mask SYNC_debugMask = { NULL, NULL };     /* GT trace variable */
++#endif
++
++static int test_and_set(volatile void *ptr, int val)
++{
++	int ret = val;
++	asm volatile (" swp %0, %0, [%1]" : "+r" (ret) : "r"(ptr) : "memory");
++	return ret;
++}
++
++static void timeout_callback(unsigned long hWaitObj);
++
++/*
++ *  ======== SYNC_CloseEvent ========
++ *  Purpose:
++ *      Close an existing SYNC event object.
++ */
++DSP_STATUS SYNC_CloseEvent(struct SYNC_OBJECT *hEvent)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_OBJECT *pEvent = (struct SYNC_OBJECT *)hEvent;
++
++	DBC_Require(pEvent != NULL && pEvent->pWaitObj == NULL);
++
++	GT_1trace(SYNC_debugMask, GT_ENTER, "SYNC_CloseEvent: hEvent 0x%x\n",
++		  hEvent);
++
++	if (MEM_IsValidHandle(hEvent, SIGNATURE)) {
++		if (pEvent->pWaitObj) {
++			status = DSP_EFAIL;
++			GT_0trace(SYNC_debugMask, GT_6CLASS,
++				  "SYNC_CloseEvent: Wait object not NULL\n");
++		}
++		MEM_FreeObject(pEvent);
++
++	} else {
++		status = DSP_EHANDLE;
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_CloseEvent: invalid "
++			  "hEvent handle 0x%x\n", hEvent);
++	}
++
++	return status;
++}
++
++/*
++ *  ======== SYNC_Exit ========
++ *  Purpose:
++ *      Cleanup SYNC module.
++ */
++void SYNC_Exit(void)
++{
++	GT_0trace(SYNC_debugMask, GT_5CLASS, "SYNC_Exit\n");
++}
++
++/*
++ *  ======== SYNC_Init ========
++ *  Purpose:
++ *      Initialize SYNC module.
++ */
++bool SYNC_Init(void)
++{
++	GT_create(&SYNC_debugMask, "SY");	/* SY for SYnc */
++
++	GT_0trace(SYNC_debugMask, GT_5CLASS, "SYNC_Init\n");
++
++	return true;
++}
++
++/*
++ *  ======== SYNC_OpenEvent ========
++ *  Purpose:
++ *      Open a new synchronization event object.
++ */
++DSP_STATUS SYNC_OpenEvent(OUT struct SYNC_OBJECT **phEvent,
++			  IN OPTIONAL struct SYNC_ATTRS *pAttrs)
++{
++	struct SYNC_OBJECT *pEvent = NULL;
++	DSP_STATUS status = DSP_SOK;
++
++	DBC_Require(phEvent != NULL);
++
++	GT_2trace(SYNC_debugMask, GT_ENTER,
++		  "SYNC_OpenEvent: phEvent 0x%x, pAttrs "
++		  "0x%x\n", phEvent, pAttrs);
++
++	/* Allocate memory for sync object */
++	MEM_AllocObject(pEvent, struct SYNC_OBJECT, SIGNATURE);
++	if (pEvent != NULL) {
++		pEvent->state = so_reset;
++		pEvent->pWaitObj = NULL;
++		pEvent->sync_lock = __SPIN_LOCK_UNLOCKED(pEvent.sync_lock);
++	} else {
++		status = DSP_EMEMORY;
++		GT_0trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_OpenEvent: MEM_AllocObject failed\n");
++	}
++
++	*phEvent = pEvent;
++
++	return status;
++}
++
++/*
++ *  ======== SYNC_ResetEvent ========
++ *  Purpose:
++ *      Reset an event to non-signalled.
++ */
++DSP_STATUS SYNC_ResetEvent(struct SYNC_OBJECT *hEvent)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_OBJECT *pEvent = (struct SYNC_OBJECT *)hEvent;
++
++	GT_1trace(SYNC_debugMask, GT_ENTER, "SYNC_ResetEvent: hEvent 0x%x\n",
++		  hEvent);
++
++	if (MEM_IsValidHandle(hEvent, SIGNATURE)) {
++		pEvent->state = so_reset;
++		status = DSP_SOK;
++	} else {
++		status = DSP_EHANDLE;
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_ResetEvent: invalid hEvent "
++			  "handle 0x%x\n", hEvent);
++	}
++
++	return status;
++}
++
++/*
++ *  ======== SYNC_SetEvent ========
++ *  Purpose:
++ *      Set an event to signaled and unblock one waiting thread.
++ *
++ *  This function is called from ISR, DPC and user context. Hence interrupts
++ *  are disabled to ensure atomicity.
++ */
++
++DSP_STATUS SYNC_SetEvent(struct SYNC_OBJECT *hEvent)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_OBJECT *pEvent = (struct SYNC_OBJECT *)hEvent;
++	unsigned long flags;
++
++	GT_1trace(SYNC_debugMask, GT_6CLASS, "SYNC_SetEvent: hEvent 0x%x\n",
++		  hEvent);
++
++	if (MEM_IsValidHandle(hEvent, SIGNATURE)) {
++		spin_lock_irqsave(&hEvent->sync_lock, flags);
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			"SYNC_SetEvent: pEvent->pWaitObj "
++			"= 0x%x \n", pEvent->pWaitObj);
++	if (pEvent->pWaitObj)
++		GT_1trace(SYNC_debugMask, GT_6CLASS, "SYNC_SetEvent: "
++			"pEvent->pWaitObj->state = 0x%x \n",
++			pEvent->pWaitObj->state);
++		if (pEvent->pWaitObj != NULL &&
++		   test_and_set(&pEvent->pWaitObj->state,
++		   wo_signalled) == wo_waiting) {
++
++			pEvent->state = so_reset;
++			pEvent->pWaitObj->signalling_event = pEvent;
++			up(&pEvent->pWaitObj->sem);
++			GT_1trace(SYNC_debugMask, GT_6CLASS,
++				  "SYNC_SetEvent: Unlock "
++				  "Semaphore for hEvent 0x%x\n", hEvent);
++		} else {
++			pEvent->state = so_signalled;
++		}
++		spin_unlock_irqrestore(&hEvent->sync_lock, flags);
++	} else {
++		status = DSP_EHANDLE;
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_SetEvent: invalid hEvent "
++			  "handle 0x%x\n", hEvent);
++	}
++	return status;
++}
++
++/*
++ *  ======== SYNC_WaitOnEvent ========
++ *  Purpose:
++ *      Wait for an event to be signalled, up to the specified timeout.
++ *      Note: dwTimeOut must be 0xffffffff to signal infinite wait.
++ */
++DSP_STATUS SYNC_WaitOnEvent(struct SYNC_OBJECT *hEvent, u32 dwTimeout)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_OBJECT *pEvent = (struct SYNC_OBJECT *)hEvent;
++	u32 temp;
++
++	GT_2trace(SYNC_debugMask, GT_6CLASS, "SYNC_WaitOnEvent: hEvent 0x%x\n, "
++		  "dwTimeOut 0x%x", hEvent, dwTimeout);
++	if (MEM_IsValidHandle(hEvent, SIGNATURE)) {
++		status = SYNC_WaitOnMultipleEvents(&pEvent, 1, dwTimeout,
++						  &temp);
++	} else {
++		status = DSP_EHANDLE;
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_WaitOnEvent: invalid hEvent"
++			  "handle 0x%x\n", hEvent);
++	}
++	return status;
++}
++
++/*
++ *  ======== SYNC_WaitOnMultipleEvents ========
++ *  Purpose:
++ *      Wait for any of an array of events to be signalled, up to the
++ *      specified timeout.
++ */
++DSP_STATUS SYNC_WaitOnMultipleEvents(struct SYNC_OBJECT **hSyncEvents,
++				     u32 uCount, u32 dwTimeout,
++				     OUT u32 *puIndex)
++{
++	u32 i;
++	DSP_STATUS status = DSP_SOK;
++	u32 curr;
++	struct WAIT_OBJECT *Wp;
++
++	DBC_Require(uCount > 0);
++	DBC_Require(hSyncEvents != NULL);
++	DBC_Require(puIndex != NULL);
++
++	for (i = 0; i < uCount; i++)
++		DBC_Require(MEM_IsValidHandle(hSyncEvents[i], SIGNATURE));
++
++	GT_4trace(SYNC_debugMask, GT_6CLASS,
++		  "SYNC_WaitOnMultipleEvents: hSyncEvents:"
++		  "0x%x\tuCount: 0x%x" "\tdwTimeout: 0x%x\tpuIndex: 0x%x\n",
++		  hSyncEvents, uCount, dwTimeout, puIndex);
++
++	Wp = MEM_Calloc(sizeof(struct WAIT_OBJECT), MEM_NONPAGED);
++	if (Wp == NULL)
++		return DSP_EMEMORY;
++
++	Wp->state = wo_waiting;
++	Wp->signalling_event = NULL;
++	init_MUTEX_LOCKED(&(Wp->sem));
++
++	for (curr = 0; curr < uCount; curr++) {
++		hSyncEvents[curr]->pWaitObj = Wp;
++		if (hSyncEvents[curr]->state == so_signalled) {
++			GT_0trace(SYNC_debugMask, GT_6CLASS,
++				 "Detected signaled Event !!!\n");
++			if (test_and_set(&(Wp->state), wo_signalled) ==
++			   wo_waiting) {
++				GT_0trace(SYNC_debugMask, GT_6CLASS,
++					 "Setting Signal Event!!!\n");
++				hSyncEvents[curr]->state = so_reset;
++				Wp->signalling_event = hSyncEvents[curr];
++			}
++		curr++;	/* Will try optimizing later */
++		break;
++		}
++	}
++
++	curr--;			/* Will try optimizing later */
++	if (Wp->state != wo_signalled && dwTimeout > 0) {
++		struct timer_list timeout;
++		if (dwTimeout != SYNC_INFINITE) {
++			init_timer(&timeout);
++			timeout.function = timeout_callback;
++			timeout.data = (unsigned long)Wp;
++			timeout.expires = jiffies + dwTimeout * HZ / 1000;
++			add_timer(&timeout);
++		}
++		if (down_interruptible(&(Wp->sem))) {
++			GT_0trace(SYNC_debugMask, GT_7CLASS, "SYNC: "
++				"WaitOnMultipleEvents Interrupted by signal\n");
++			status = DSP_EFAIL;
++		}
++		if (dwTimeout != SYNC_INFINITE) {
++			if (in_interrupt()) {
++				if (!del_timer(&timeout)) {
++					GT_0trace(SYNC_debugMask, GT_7CLASS,
++						  "SYNC: Timer expired\n");
++				}
++			} else {
++				if (!del_timer_sync(&timeout)) {
++					GT_0trace(SYNC_debugMask, GT_7CLASS,
++						  "SYNC: Timer expired\n");
++				}
++			}
++		}
++	}
++	for (i = 0; i <= curr; i++) {
++		if (MEM_IsValidHandle(hSyncEvents[i], SIGNATURE)) {
++			/*  Memory corruption here if hSyncEvents[i] is
++			 *  freed before following statememt. */
++			hSyncEvents[i]->pWaitObj = NULL;
++		}
++		if (hSyncEvents[i] == Wp->signalling_event)
++			*puIndex = i;
++
++	}
++	if (Wp->signalling_event == NULL && DSP_SUCCEEDED(status)) {
++		GT_0trace(SYNC_debugMask, GT_7CLASS,
++			  "SYNC:Signaling Event NULL!!!(:-\n");
++		status = DSP_ETIMEOUT;
++	}
++	if (Wp)
++		MEM_Free(Wp);
++	return status;
++}
++
++static void timeout_callback(unsigned long hWaitObj)
++{
++	struct WAIT_OBJECT *pWaitObj = (struct WAIT_OBJECT *)hWaitObj;
++	if (test_and_set(&pWaitObj->state, wo_signalled) == wo_waiting)
++		up(&pWaitObj->sem);
++
++}
++
++/*
++ *  ======== SYNC_DeleteCS ========
++ */
++DSP_STATUS SYNC_DeleteCS(struct SYNC_CSOBJECT *hCSObj)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_CSOBJECT *pCSObj = (struct SYNC_CSOBJECT *)hCSObj;
++
++	GT_0trace(SYNC_debugMask, GT_ENTER, "SYNC_DeleteCS\n");
++
++	if (MEM_IsValidHandle(hCSObj, SIGNATURECS)) {
++		if (down_trylock(&pCSObj->sem) != 0) {
++			GT_1trace(SYNC_debugMask, GT_7CLASS,
++				  "CS in use (locked) while "
++				  "deleting! pCSObj=0x%X", pCSObj);
++			DBC_Assert(0);
++		}
++		MEM_FreeObject(hCSObj);
++	} else if (MEM_IsValidHandle(hCSObj, SIGNATUREDPCCS)) {
++		struct SYNC_DPCCSOBJECT *pDPCCSObj =
++					 (struct SYNC_DPCCSOBJECT *)hCSObj;
++		if (pDPCCSObj->count != 1) {
++			GT_1trace(SYNC_debugMask, GT_7CLASS,
++				  "DPC CS in use (locked) while "
++				  "deleting! pCSObj=0x%X", pCSObj);
++			DBC_Assert(0);
++		}
++		MEM_FreeObject(pDPCCSObj);
++	} else {
++		status = DSP_EHANDLE;
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_DeleteCS: invalid hCSObj "
++			  "handle 0x%x\n", hCSObj);
++	}
++
++	return status;
++}
++
++/*
++ *  ======== SYNC_EnterCS ========
++ */
++DSP_STATUS SYNC_EnterCS(struct SYNC_CSOBJECT *hCSObj)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_CSOBJECT *pCSObj = (struct SYNC_CSOBJECT *)hCSObj;
++
++	GT_1trace(SYNC_debugMask, GT_ENTER, "SYNC_EnterCS: hCSObj %p\n",
++		 hCSObj);
++	if (MEM_IsValidHandle(hCSObj, SIGNATURECS)) {
++		if (in_interrupt()) {
++			status = DSP_EFAIL;
++			GT_0trace(SYNC_debugMask, GT_7CLASS,
++				 "SYNC_EnterCS called from "
++				 "ISR/DPC or with ISR/DPC disabled!");
++			DBC_Assert(0);
++		} else if (down_interruptible(&pCSObj->sem)) {
++			GT_1trace(SYNC_debugMask, GT_7CLASS,
++				 "CS interrupted by signal! "
++				 "pCSObj=0x%X", pCSObj);
++			status = DSP_EFAIL;
++		}
++	} else if (MEM_IsValidHandle(hCSObj, SIGNATUREDPCCS)) {
++		struct SYNC_DPCCSOBJECT *pDPCCSObj =
++					(struct SYNC_DPCCSOBJECT *)hCSObj;
++		GT_0trace(SYNC_debugMask, GT_ENTER, "SYNC_EnterCS DPC\n");
++		spin_lock_bh(&pDPCCSObj->sync_dpccs_lock);
++		pDPCCSObj->count--;
++		if (pDPCCSObj->count != 0) {
++			/* FATAL ERROR : Failed to acquire DPC CS */
++			GT_2trace(SYNC_debugMask, GT_7CLASS,
++				  "SYNC_EnterCS DPCCS %x locked,"
++				  "count %d", pDPCCSObj, pDPCCSObj->count);
++			spin_unlock_bh(&pDPCCSObj->sync_dpccs_lock);
++			DBC_Assert(0);
++		}
++	} else {
++		status = DSP_EHANDLE;
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_EnterCS: invalid hCSObj "
++			  "handle 0x%x\n", hCSObj);
++	}
++
++	return status;
++}
++
++/*
++ *  ======== SYNC_InitializeCS ========
++ */
++DSP_STATUS SYNC_InitializeCS(OUT struct SYNC_CSOBJECT **phCSObj)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_CSOBJECT *pCSObj = NULL;
++
++	GT_0trace(SYNC_debugMask, GT_ENTER, "SYNC_InitializeCS\n");
++
++	/* Allocate memory for sync CS object */
++	MEM_AllocObject(pCSObj, struct SYNC_CSOBJECT, SIGNATURECS);
++	if (pCSObj != NULL) {
++		init_MUTEX(&pCSObj->sem);
++	} else {
++		status = DSP_EMEMORY;
++		GT_0trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_InitializeCS: MEM_AllocObject"
++			  "failed\n");
++	}
++	/* return CS object */
++	*phCSObj = pCSObj;
++	DBC_Assert(DSP_FAILED(status) || (pCSObj));
++	return status;
++}
++
++DSP_STATUS SYNC_InitializeDPCCS(OUT struct SYNC_CSOBJECT **phCSObj)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_DPCCSOBJECT *pCSObj = NULL;
++
++	DBC_Require(phCSObj);
++
++	GT_0trace(SYNC_debugMask, GT_ENTER, "SYNC_InitializeDPCCS\n");
++
++	if (phCSObj) {
++		/* Allocate memory for sync CS object */
++		MEM_AllocObject(pCSObj, struct SYNC_DPCCSOBJECT,
++				SIGNATUREDPCCS);
++		if (pCSObj != NULL) {
++			pCSObj->count = 1;
++			pCSObj->sync_dpccs_lock =
++				__SPIN_LOCK_UNLOCKED(pCSObj.sync_dpccs_lock);
++		} else {
++			status = DSP_EMEMORY;
++			GT_0trace(SYNC_debugMask, GT_6CLASS,
++				  "SYNC_InitializeDPCCS: "
++				  "MEM_AllocObject failed\n");
++		}
++
++		/* return CS object */
++		*phCSObj = (struct SYNC_CSOBJECT *)pCSObj;
++	} else {
++		status = DSP_EPOINTER;
++	}
++
++	GT_1trace(SYNC_debugMask, GT_ENTER, "SYNC_InitializeDPCCS "
++		  "pCSObj %p\n", pCSObj);
++	DBC_Assert(DSP_FAILED(status) || (pCSObj));
++
++	return status;
++}
++
++/*
++ *  ======== SYNC_LeaveCS ========
++ */
++DSP_STATUS SYNC_LeaveCS(struct SYNC_CSOBJECT *hCSObj)
++{
++	DSP_STATUS status = DSP_SOK;
++	struct SYNC_CSOBJECT *pCSObj = (struct SYNC_CSOBJECT *)hCSObj;
++
++	GT_1trace(SYNC_debugMask, GT_ENTER, "SYNC_LeaveCS: hCSObj %p\n",
++		  hCSObj);
++
++	if (MEM_IsValidHandle(hCSObj, SIGNATURECS)) {
++		up(&pCSObj->sem);
++	} else if (MEM_IsValidHandle(hCSObj, SIGNATUREDPCCS)) {
++		struct SYNC_DPCCSOBJECT *pDPCCSObj =
++					(struct SYNC_DPCCSOBJECT *)hCSObj;
++		pDPCCSObj->count++;
++		if (pDPCCSObj->count != 1) {
++			/* FATAL ERROR : Invalid DPC CS count */
++			GT_2trace(SYNC_debugMask, GT_7CLASS,
++				  "SYNC_LeaveCS DPCCS %x, "
++				  "Invalid count %d", pDPCCSObj,
++				  pDPCCSObj->count);
++			spin_unlock_bh(&pDPCCSObj->sync_dpccs_lock);
++			DBC_Assert(0);
++			spin_lock_bh(&pDPCCSObj->sync_dpccs_lock);
++		}
++		spin_unlock_bh(&pDPCCSObj->sync_dpccs_lock);
++		GT_0trace(SYNC_debugMask, GT_ENTER, "SYNC_LeaveCS DPC\n");
++	} else {
++		status = DSP_EHANDLE;
++		GT_1trace(SYNC_debugMask, GT_6CLASS,
++			  "SYNC_LeaveCS: invalid hCSObj "
++			  "handle 0x%x\n", hCSObj);
++	}
++
++	return status;
++}
+-- 
+1.6.0.3.613.g9f8f13
+

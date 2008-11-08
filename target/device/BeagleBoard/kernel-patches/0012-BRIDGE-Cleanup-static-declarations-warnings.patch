@@ -1,0 +1,826 @@
+From f5545984e108660ce681fdd762ce74b22eb17857 Mon Sep 17 00:00:00 2001
+From: Omar Ramirez Luna <x00omar@ti.com>
+Date: Mon, 18 Aug 2008 12:16:30 +0300
+Subject: [PATCH 12/43] BRIDGE: Cleanup static declarations warnings
+
+Signed-off-by: Omar Ramirez Luna <x00omar@ti.com>
+Acked-by: Hari Kanigeri <h-kanigeri2@ti.com>
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/bridge/io.h             |    4 +-
+ .../arm/plat-omap/include/bridge/resourcecleanup.h |   24 +++++++++----------
+ drivers/dsp/bridge/dynload/cload.c                 |   10 +++-----
+ drivers/dsp/bridge/dynload/getsection.c            |    2 +-
+ drivers/dsp/bridge/pmgr/cmm.c                      |    2 +-
+ drivers/dsp/bridge/pmgr/cod.c                      |   10 ++++----
+ drivers/dsp/bridge/pmgr/dbll.c                     |    2 +-
+ drivers/dsp/bridge/pmgr/dmm.c                      |    8 +++---
+ drivers/dsp/bridge/pmgr/io.c                       |    1 +
+ drivers/dsp/bridge/pmgr/wcd.c                      |    6 ++--
+ drivers/dsp/bridge/rmgr/drv.c                      |   19 ++++++++-------
+ drivers/dsp/bridge/rmgr/drv_interface.c            |   21 +++++++++--------
+ drivers/dsp/bridge/rmgr/dspdrv.c                   |    2 +-
+ drivers/dsp/bridge/rmgr/nldr.c                     |    6 ++--
+ drivers/dsp/bridge/rmgr/node.c                     |   10 ++++----
+ drivers/dsp/bridge/rmgr/proc.c                     |   20 ++++++++--------
+ drivers/dsp/bridge/rmgr/pwr.c                      |    8 +++---
+ drivers/dsp/bridge/rmgr/strm.c                     |    8 +++---
+ drivers/dsp/bridge/services/mem.c                  |    6 ++--
+ drivers/dsp/bridge/wmd/io_sm.c                     |    2 +-
+ drivers/dsp/bridge/wmd/mmu_fault.c                 |    2 +-
+ drivers/dsp/bridge/wmd/msg_sm.c                    |    1 +
+ drivers/dsp/bridge/wmd/tiomap_io.c                 |    9 ++-----
+ drivers/dsp/bridge/wmd/ue_deh.c                    |    2 +-
+ 24 files changed, 91 insertions(+), 94 deletions(-)
+
+diff --git a/arch/arm/plat-omap/include/bridge/io.h b/arch/arm/plat-omap/include/bridge/io.h
+index a7451d7..1396350 100644
+--- a/arch/arm/plat-omap/include/bridge/io.h
++++ b/arch/arm/plat-omap/include/bridge/io.h
+@@ -98,7 +98,7 @@
+  *      Resources, if any acquired in IO_Init(), are freed when the last
+  *      client of IO calls IO_Exit().
+  */
+-	extern void IO_Exit();
++	extern void IO_Exit(void);
+ 
+ /*
+  *  ======== IO_Init ========
+@@ -111,7 +111,7 @@
+  *  Ensures:
+  *      A requirement for each of the other public CHNL functions.
+  */
+-	extern bool IO_Init();
++	extern bool IO_Init(void);
+ 
+ /*
+  *  ======== IO_OnLoaded ========
+diff --git a/arch/arm/plat-omap/include/bridge/resourcecleanup.h b/arch/arm/plat-omap/include/bridge/resourcecleanup.h
+index a0da46f..af630ce 100644
+--- a/arch/arm/plat-omap/include/bridge/resourcecleanup.h
++++ b/arch/arm/plat-omap/include/bridge/resourcecleanup.h
+@@ -20,11 +20,10 @@
+ #include <drv.h>
+ 
+ 
+-extern DSP_STATUS DRV_DisplayProcContext(HANDLE hDrvObject);
++extern DSP_STATUS DRV_GetProcCtxtList(struct PROCESS_CONTEXT **pPctxt,
++				struct DRV_OBJECT *hDrvObject);
+ 
+-extern DSP_STATUS DRV_GetProcCtxtList(HANDLE pPctxt, HANDLE hDrvObject);
+-
+-extern DSP_STATUS DRV_InsertProcContext(HANDLE hDrvObject, HANDLE pPctxt);
++extern DSP_STATUS DRV_InsertProcContext(struct DRV_OBJECT *hDrVObject, HANDLE hPCtxt);
+ 
+ extern DSP_STATUS DRV_RemoveAllDMMResElements(HANDLE pCtxt);
+ 
+@@ -35,14 +34,15 @@ extern DSP_STATUS DRV_ProcUpdatestate(HANDLE pCtxt,
+ 
+ extern DSP_STATUS DRV_ProcSetPID(HANDLE pCtxt, s32 hProcess);
+ 
+-extern DSP_STATUS DRV_GetProcContext(HANDLE phProcess, HANDLE hDrvObject,
+-				     HANDLE pCtxt, DSP_HNODE hNode,
+-				     u32 pMapAddr);
++extern DSP_STATUS DRV_GetProcContext(u32 phProcess,
++				struct DRV_OBJECT *hDrvObject,
++				HANDLE hPCtxt, DSP_HNODE hNode,
++				u32 pMapAddr);
+ 
+ extern DSP_STATUS DRV_RemoveAllResources(HANDLE pPctxt);
+ 
+-extern DSP_STATUS DRV_RemoveProcContext(HANDLE hDRVObject, HANDLE hPCtxt,
+-					HANDLE hProcess);
++extern DSP_STATUS DRV_RemoveProcContext(struct DRV_OBJECT *hDRVObject,
++				     HANDLE hPCtxt, HANDLE hProcess);
+ 
+ extern DSP_STATUS DRV_GetNodeResElement(HANDLE hNode, HANDLE nodeRes,
+ 					HANDLE pCtxt);
+@@ -50,13 +50,11 @@ extern DSP_STATUS DRV_GetNodeResElement(HANDLE hNode, HANDLE nodeRes,
+ extern DSP_STATUS DRV_InsertNodeResElement(HANDLE hNode, HANDLE nodeRes,
+ 					    HANDLE pCtxt);
+ 
+-extern DSP_STATUS DRV_ProcNodeUpdateHeapStatus(HANDLE nodeRes, int status);
+-
+-extern DSP_STATUS DRV_ProcNodeUpdateStreamStatus(HANDLE nodeRes, int status);
++extern void DRV_ProcNodeUpdateHeapStatus(HANDLE hNodeRes, s32 status);
+ 
+ extern DSP_STATUS DRV_RemoveNodeResElement(HANDLE nodeRes, HANDLE status);
+ 
+-extern DSP_STATUS DRV_ProcNodeUpdateStatus(HANDLE nodeRes, int status);
++extern void DRV_ProcNodeUpdateStatus(HANDLE hNodeRes, s32 status);
+ 
+ extern DSP_STATUS DRV_UpdateDMMResElement(HANDLE dmmRes, u32 pMpuAddr,
+ 					  u32 ulSize, u32 pReqAddr,
+diff --git a/drivers/dsp/bridge/dynload/cload.c b/drivers/dsp/bridge/dynload/cload.c
+index a90200a..a686a76 100644
+--- a/drivers/dsp/bridge/dynload/cload.c
++++ b/drivers/dsp/bridge/dynload/cload.c
+@@ -122,7 +122,7 @@ void dload_syms_error(struct Dynamic_Loader_Sym *syms, const char *errtxt, ...)
+  *	returned.  Individual errors are reported during the load process
+  *	using syms->Error_Report().
+  ***********************************************************************/
+-extern int Dynamic_Load_Module(struct Dynamic_Loader_Stream *module,
++int Dynamic_Load_Module(struct Dynamic_Loader_Stream *module,
+ 			struct Dynamic_Loader_Sym *syms ,
+ 			struct Dynamic_Loader_Allocate *alloc,
+ 			struct Dynamic_Loader_Initialize *init,
+@@ -234,7 +234,7 @@ extern int Dynamic_Load_Module(struct Dynamic_Loader_Stream *module,
+  *      returned.  Individual errors are reported during the load process
+  *      using syms->Error_Report().
+  ***********************************************************************/
+-extern int
++int
+ Dynamic_Open_Module(struct Dynamic_Loader_Stream *module,
+ 		    struct Dynamic_Loader_Sym *syms,
+ 		    struct Dynamic_Loader_Allocate *alloc,
+@@ -503,7 +503,7 @@ static void allocate_sections(struct dload_state *dlthis)
+ 	}
+ 	/* initialize the handle header */
+ 	hndl->dm.hnext = hndl->dm.hprev = hndl;	/* circular list */
+-	hndl->dm.hroot = 0;
++	hndl->dm.hroot = NULL;
+ 	hndl->dm.dbthis = 0;
+ 	dlthis->myhandle = hndl;	/* save away for return */
+ 	/* pointer to the section list of allocated sections */
+@@ -738,7 +738,6 @@ static void dload_symbols(struct dload_state *dlthis)
+ 		s32 delta;
+ 		struct doff_syment_t *input_sym;
+ 		unsigned syms_in_buf;
+-		int siz;
+ 		struct doff_syment_t my_sym_buf[MY_SYM_BUF_SIZ];
+ 		input_sym = my_sym_buf;
+ 		syms_in_buf = symbols_left > MY_SYM_BUF_SIZ ?
+@@ -821,7 +820,6 @@ static void dload_symbols(struct dload_state *dlthis)
+ 			/* This symbol is an absolute symbol */
+ 			if (sp->secnn == DN_ABS && ((sp->sclass == DN_EXT) ||
+ 						   (sp->sclass == DN_EXTLAB))) {
+-				struct dynload_symbol *symp;
+ 				symp = dlthis->mysym->Find_Matching_Symbol
+ 						      (dlthis->mysym, sname);
+ 				if (!symp)
+@@ -1699,7 +1697,7 @@ static void init_module_handle(struct dload_state *dlthis)
+  *	Zero for success. On error, the number of errors detected is returned.
+  * Individual errors are reported using syms->Error_Report().
+  ************************************************************************/
+-extern int Dynamic_Unload_Module(DLOAD_mhandle mhandle,
++int Dynamic_Unload_Module(DLOAD_mhandle mhandle,
+ 		struct Dynamic_Loader_Sym *syms,
+ 		struct Dynamic_Loader_Allocate *alloc,
+ 		struct Dynamic_Loader_Initialize *init)
+diff --git a/drivers/dsp/bridge/dynload/getsection.c b/drivers/dsp/bridge/dynload/getsection.c
+index 4bb3277..5760162 100644
+--- a/drivers/dsp/bridge/dynload/getsection.c
++++ b/drivers/dsp/bridge/dynload/getsection.c
+@@ -156,7 +156,7 @@ DLOAD_module_info DLOAD_module_open(struct Dynamic_Loader_Stream *module,
+ 
+ 	/* Check that mandatory arguments are present */
+ 	if (!module || !syms) {
+-		if (syms != 0)
++		if (syms != NULL)
+ 			dload_syms_error(syms, "Required parameter is NULL");
+ 
+ 		return NULL;
+diff --git a/drivers/dsp/bridge/pmgr/cmm.c b/drivers/dsp/bridge/pmgr/cmm.c
+index 56d3c29..4043d96 100644
+--- a/drivers/dsp/bridge/pmgr/cmm.c
++++ b/drivers/dsp/bridge/pmgr/cmm.c
+@@ -190,7 +190,7 @@ static struct CMM_ATTRS CMM_DFLTALCTATTRS = {
+ };
+ 
+ /* Address translator default attrs */
+-struct CMM_XLATORATTRS CMM_DFLTXLATORATTRS = {
++static struct CMM_XLATORATTRS CMM_DFLTXLATORATTRS = {
+ 	1,	/* ulSegId, does not have to match CMM_DFLTALCTATTRS ulSegId */
+ 	0,			/* dwDSPBufs */
+ 	0,			/* dwDSPBufSize */
+diff --git a/drivers/dsp/bridge/pmgr/cod.c b/drivers/dsp/bridge/pmgr/cod.c
+index d1065e2..81d1eba 100644
+--- a/drivers/dsp/bridge/pmgr/cod.c
++++ b/drivers/dsp/bridge/pmgr/cod.c
+@@ -209,11 +209,11 @@ DSP_STATUS COD_Create(OUT struct COD_MANAGER **phMgr, char *pstrDummyFile,
+ 	zlAttrs.baseImage = true;
+ 	zlAttrs.logWrite = NULL;
+ 	zlAttrs.logWriteHandle = NULL;
+-	zlAttrs.write = 0;
+-	zlAttrs.rmmHandle = 0;
+-	zlAttrs.wHandle = 0;
+-	zlAttrs.symHandle = 0;
+-	zlAttrs.symArg = 0;
++	zlAttrs.write = NULL;
++	zlAttrs.rmmHandle = NULL;
++	zlAttrs.wHandle = NULL;
++	zlAttrs.symHandle = NULL;
++	zlAttrs.symArg = NULL;
+ 
+ 	hMgrNew->attrs = zlAttrs;
+ 
+diff --git a/drivers/dsp/bridge/pmgr/dbll.c b/drivers/dsp/bridge/pmgr/dbll.c
+index d4c365f..1258e8a 100644
+--- a/drivers/dsp/bridge/pmgr/dbll.c
++++ b/drivers/dsp/bridge/pmgr/dbll.c
+@@ -342,7 +342,7 @@ void DBLL_exit(void)
+ 		CSL_Exit();
+ 		GH_exit();
+ #if GT_TRACE
+-		DBLL_debugMask.flags = 0;
++		DBLL_debugMask.flags = NULL;
+ #endif
+ 	}
+ 
+diff --git a/drivers/dsp/bridge/pmgr/dmm.c b/drivers/dsp/bridge/pmgr/dmm.c
+index a1baed3..6cc02d3 100644
+--- a/drivers/dsp/bridge/pmgr/dmm.c
++++ b/drivers/dsp/bridge/pmgr/dmm.c
+@@ -328,7 +328,7 @@ DSP_STATUS DMM_GetHandle(DSP_HPROCESSOR hProcessor,
+ 		status = DEV_GetDmmMgr(hDevObject, phDmmMgr);
+ 
+ 	GT_2trace(DMM_debugMask, GT_4CLASS, "Leaving DMM_GetHandle status %x, "
+-		 "*phDmmMgr %x\n", status, phDmmMgr ? *phDmmMgr : 0);
++		 "*phDmmMgr %x\n", status, phDmmMgr ? *phDmmMgr : NULL);
+ 	return status;
+ }
+ 
+@@ -542,7 +542,7 @@ DSP_STATUS DMM_UnReserveMemory(struct DMM_OBJECT *hDmmMgr, u32 rsvAddr)
+  *  Purpose:
+  *      Returns a region containing the specified memory region
+  */
+-struct MapPage *GetRegion(u32 aAddr)
++static struct MapPage *GetRegion(u32 aAddr)
+ {
+ 	struct MapPage *currRegion = NULL;
+ 	u32   i = 0;
+@@ -567,7 +567,7 @@ struct MapPage *GetRegion(u32 aAddr)
+  *  Purpose:
+  *  Returns the requested free region
+  */
+-struct MapPage *GetFreeRegion(u32 aSize)
++static struct MapPage *GetFreeRegion(u32 aSize)
+ {
+ 	struct MapPage *currRegion = NULL;
+ 	u32   i = 0;
+@@ -615,7 +615,7 @@ struct MapPage *GetFreeRegion(u32 aSize)
+  *  Purpose:
+  *  Returns the requestedmapped region
+  */
+-struct MapPage *GetMappedRegion(u32 aAddr)
++static struct MapPage *GetMappedRegion(u32 aAddr)
+ {
+ 	u32   i = 0;
+ 	struct MapPage *currRegion = NULL;
+diff --git a/drivers/dsp/bridge/pmgr/io.c b/drivers/dsp/bridge/pmgr/io.c
+index 5b32210..7a74515 100644
+--- a/drivers/dsp/bridge/pmgr/io.c
++++ b/drivers/dsp/bridge/pmgr/io.c
+@@ -59,6 +59,7 @@
+ /*  ----------------------------------- This */
+ #include <ioobj.h>
+ #include <iodefs.h>
++#include <io.h>
+ 
+ /*  ----------------------------------- Globals */
+ static u32 cRefs;
+diff --git a/drivers/dsp/bridge/pmgr/wcd.c b/drivers/dsp/bridge/pmgr/wcd.c
+index 7a6eb1a..1662140 100644
+--- a/drivers/dsp/bridge/pmgr/wcd.c
++++ b/drivers/dsp/bridge/pmgr/wcd.c
+@@ -174,8 +174,8 @@ struct WCD_Cmd {
+ } ;
+ 
+ /*  ----------------------------------- Globals */
+-struct GT_Mask WCD_debugMask = { NULL, NULL };	/* Core VxD Mask */
+-u32 WCD_cRefs;
++static struct GT_Mask WCD_debugMask = { NULL, NULL };	/* Core VxD Mask */
++static u32 WCD_cRefs;
+ 
+ /*
+  *  Function table.
+@@ -183,7 +183,7 @@ u32 WCD_cRefs;
+  *  numbers defined in wcdioctl.h  This is how an IOCTL number in user mode
+  *  turns into a function call in kernel mode.
+  */
+-struct WCD_Cmd WCD_cmdTable[] = {
++static struct WCD_Cmd WCD_cmdTable[] = {
+ 	/* MGR module */
+ 	{MGRWRAP_EnumNode_Info, CMD_MGR_ENUMNODE_INFO_OFFSET},
+ 	{MGRWRAP_EnumProc_Info, CMD_MGR_ENUMPROC_INFO_OFFSET},
+diff --git a/drivers/dsp/bridge/rmgr/drv.c b/drivers/dsp/bridge/rmgr/drv.c
+index dacc8b1..21f72d9 100644
+--- a/drivers/dsp/bridge/rmgr/drv.c
++++ b/drivers/dsp/bridge/rmgr/drv.c
+@@ -123,6 +123,7 @@
+ #include <strm.h>
+ #include <nodepriv.h>
+ #include <wmdchnl.h>
++#include <resourcecleanup.h>
+ #endif
+ 
+ /*  ----------------------------------- Defines, Data Structures, Typedefs */
+@@ -158,11 +159,12 @@ static DSP_STATUS RequestBridgeResources(u32 dwContext, s32 fRequest);
+ static DSP_STATUS RequestBridgeResourcesDSP(u32 dwContext, s32 fRequest);
+ 
+ #ifndef RES_CLEANUP_DISABLE
+-
+-
+ /* GPP PROCESS CLEANUP CODE */
+-static DSP_STATUS PrintProcessInformation(void);
+ 
++static DSP_STATUS PrintProcessInformation(void);
++static DSP_STATUS DRV_ProcFreeNodeRes(HANDLE hPCtxt);
++static DSP_STATUS  DRV_ProcFreeDMMRes(HANDLE hPCtxt);
++static DSP_STATUS  DRV_ProcFreeSTRMRes(HANDLE hPCtxt);
+ extern enum NODE_STATE NODE_GetState(HANDLE hNode);
+ 
+ /* Get the process context list from driver object */
+@@ -533,8 +535,6 @@ DSP_STATUS 	DRV_RemoveDMMResElement(HANDLE hDMMRes, HANDLE hPCtxt)
+ 	return status;
+ }
+ 
+-
+-
+ /* Update DMM resource status */
+ DSP_STATUS DRV_UpdateDMMResElement(HANDLE hDMMRes, u32 pMpuAddr, u32 ulSize,
+ 				  u32 pReqAddr, u32 pMapAddr,
+@@ -555,7 +555,7 @@ DSP_STATUS DRV_UpdateDMMResElement(HANDLE hDMMRes, u32 pMpuAddr, u32 ulSize,
+ }
+ 
+ /* Actual DMM De-Allocation */
+-DSP_STATUS  DRV_ProcFreeDMMRes(HANDLE hPCtxt)
++static DSP_STATUS  DRV_ProcFreeDMMRes(HANDLE hPCtxt)
+ {
+ 	struct PROCESS_CONTEXT *pCtxt = (struct PROCESS_CONTEXT *)hPCtxt;
+ 	DSP_STATUS status = DSP_SOK;
+@@ -761,7 +761,7 @@ DSP_STATUS 	DRV_ProcRemoveSTRMResElement(HANDLE hSTRMRes, HANDLE hPCtxt)
+ 
+ 
+ /* Actual Stream De-Allocation */
+-DSP_STATUS  DRV_ProcFreeSTRMRes(HANDLE hPCtxt)
++static DSP_STATUS  DRV_ProcFreeSTRMRes(HANDLE hPCtxt)
+ {
+ 	struct PROCESS_CONTEXT *pCtxt = (struct PROCESS_CONTEXT *)hPCtxt;
+ 	DSP_STATUS status = DSP_SOK;
+@@ -861,6 +861,7 @@ DSP_STATUS DRV_ProcUpdateSTRMRes(u32 uNumBufs, HANDLE hSTRMRes, HANDLE hPCtxt)
+ 	(*STRMRes)->uNumBufs = uNumBufs;
+ 	return status;
+ }
++
+ /* Displaying the resources allocated by a process */
+ DSP_STATUS DRV_ProcDisplayResInfo(u8 *pBuf1, u32 *pSize)
+ {
+@@ -877,7 +878,7 @@ DSP_STATUS DRV_ProcDisplayResInfo(u8 *pBuf1, u32 *pSize)
+ 	DSP_STATUS status = DSP_SOK;
+ 
+ 	CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+-	DRV_GetProcCtxtList(&pCtxt, hDrvObject);
++	DRV_GetProcCtxtList(&pCtxt, (struct DRV_OBJECT *)hDrvObject);
+ 	GT_0trace(curTrace, GT_ENTER, "*********************"
+ 		 "DRV_ProcDisplayResourceInfo:*\n");
+ 	while (pCtxt != NULL) {
+@@ -1538,7 +1539,7 @@ DSP_STATUS DRV_RequestResources(u32 dwContext, u32 *pDevNodeString)
+ 		GT_0trace(curTrace, GT_7CLASS,
+ 			 "Failed to reserve bridge resources ");
+ 	}
+-	DBC_Ensure((DSP_SUCCEEDED(status) && pDevNodeString != 0 &&
++	DBC_Ensure((DSP_SUCCEEDED(status) && pDevNodeString != NULL &&
+ 		  !LST_IsEmpty(pDRVObject->devNodeString)) ||
+ 		  (DSP_FAILED(status) && *pDevNodeString == 0));
+ 
+diff --git a/drivers/dsp/bridge/rmgr/drv_interface.c b/drivers/dsp/bridge/rmgr/drv_interface.c
+index 7bc8ab5..d13d773 100644
+--- a/drivers/dsp/bridge/rmgr/drv_interface.c
++++ b/drivers/dsp/bridge/rmgr/drv_interface.c
+@@ -132,10 +132,11 @@ static char *num_procs = "C55=1";
+ static s32 shm_size = 0x400000;	/* 4 MB */
+ static u32 phys_mempool_base = 0x87000000;
+ static u32 phys_mempool_size = 0x600000;
++
+ #if !defined(CONFIG_ARCH_OMAP2430) && !defined(CONFIG_ARCH_OMAP3430)
+ static int tc_wordswapon = 1;	/* Default value is always TRUE */
+ #else
+-static int tc_wordswapon = 0;	/* Default value is always TRUE */
++static int tc_wordswapon = 0;	/* Default value is always true */
+ #endif
+ 
+ 
+@@ -544,7 +545,7 @@ static void __exit bridge_exit(void)
+ /* This function is called when an application opens handle to the
+  * bridge driver. */
+ 
+-int bridge_open(struct inode *ip, struct file *filp)
++static int bridge_open(struct inode *ip, struct file *filp)
+ {
+ 	int status = 0;
+ #ifndef RES_CLEANUP_DISABLE
+@@ -564,7 +565,7 @@ int bridge_open(struct inode *ip, struct file *filp)
+ 	if (DSP_FAILED(dsp_status))
+ 		goto func_cont;
+ 
+-	DRV_GetProcCtxtList(&pCtxtclosed, hDrvObject);
++	DRV_GetProcCtxtList(&pCtxtclosed, (struct DRV_OBJECT *)hDrvObject);
+ 	while (pCtxtclosed != NULL) {
+ 		tsk = find_task_by_vpid(pCtxtclosed->pid);
+ 
+@@ -576,7 +577,7 @@ int bridge_open(struct inode *ip, struct file *filp)
+ 			DRV_RemoveAllResources(pCtxtclosed);
+ 			if (pCtxtclosed->hProcessor != NULL) {
+ 				DRV_GetProcCtxtList(&pCtxttraverse,
+-						    hDrvObject);
++						    (struct DRV_OBJECT *)hDrvObject);
+ 				if (pCtxttraverse->next == NULL) {
+ 					PROC_Detach(pCtxtclosed->hProcessor);
+ 				} else {
+@@ -605,7 +606,7 @@ int bridge_open(struct inode *ip, struct file *filp)
+ 				}
+ 			}
+ 			pTmp = pCtxtclosed->next;
+-			DRV_RemoveProcContext(hDrvObject, pCtxtclosed,
++			DRV_RemoveProcContext((struct DRV_OBJECT *)hDrvObject, pCtxtclosed,
+ 					      (void *)pCtxtclosed->pid);
+ 		} else {
+ 			pTmp = pCtxtclosed->next;
+@@ -615,7 +616,7 @@ int bridge_open(struct inode *ip, struct file *filp)
+ func_cont:
+ 	dsp_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_SUCCEEDED(dsp_status))
+-		dsp_status = DRV_InsertProcContext(hDrvObject, &pPctxt);
++		dsp_status = DRV_InsertProcContext((struct DRV_OBJECT *)hDrvObject, &pPctxt);
+ 
+ 	if (pPctxt != NULL) {
+ 		PRCS_GetCurrentHandle(&hProcess);
+@@ -630,7 +631,7 @@ func_cont:
+ 
+ /* This function is called when an application closes handle to the bridge
+  * driver. */
+-int bridge_release(struct inode *ip, struct file *filp)
++static int bridge_release(struct inode *ip, struct file *filp)
+ {
+ 	int status;
+ 	HANDLE pid;
+@@ -657,14 +658,14 @@ static void bridge_free(struct device *dev)
+ 
+ 
+ /* This function provides IO interface to the bridge driver. */
+-int bridge_ioctl(struct inode *ip, struct file *filp, unsigned int code,
++static int bridge_ioctl(struct inode *ip, struct file *filp, unsigned int code,
+ 		unsigned long args)
+ {
+ 	int status;
+ 	u32 retval = DSP_SOK;
+ 	union Trapped_Args pBufIn;
+ 
+-	DBC_Require(filp != 0);
++	DBC_Require(filp != NULL);
+ #ifndef CONFIG_DISABLE_BRIDGE_PM
+ 	status = omap34xxbridge_suspend_lockout(&bridge_suspend_data, filp);
+ 	if (status != 0)
+@@ -699,7 +700,7 @@ int bridge_ioctl(struct inode *ip, struct file *filp, unsigned int code,
+ }
+ 
+ /* This function maps kernel space memory to user space memory. */
+-int bridge_mmap(struct file *filp, struct vm_area_struct *vma)
++static int bridge_mmap(struct file *filp, struct vm_area_struct *vma)
+ {
+ #if GT_TRACE
+ 	u32 offset = vma->vm_pgoff << PAGE_SHIFT;
+diff --git a/drivers/dsp/bridge/rmgr/dspdrv.c b/drivers/dsp/bridge/rmgr/dspdrv.c
+index 6c325a4..eb5a8d7 100644
+--- a/drivers/dsp/bridge/rmgr/dspdrv.c
++++ b/drivers/dsp/bridge/rmgr/dspdrv.c
+@@ -195,7 +195,7 @@ u32 DSP_Init(OUT u32 *initStatus)
+ 		}
+ 		/* Remove the Driver Object */
+ 		(void)DRV_Destroy(drvObject);
+-		drvObject = 0;
++		drvObject = NULL;
+ 		WCD_Exit();
+ 		GT_0trace(curTrace, GT_7CLASS,
+ 			 "DSP_Init:Logical device Failed to Load\n");
+diff --git a/drivers/dsp/bridge/rmgr/nldr.c b/drivers/dsp/bridge/rmgr/nldr.c
+index b1af6de..fcc9a2c 100644
+--- a/drivers/dsp/bridge/rmgr/nldr.c
++++ b/drivers/dsp/bridge/rmgr/nldr.c
+@@ -746,7 +746,7 @@ void NLDR_Exit(void)
+ 
+ 	if (cRefs == 0) {
+ 		RMM_exit();
+-		NLDR_debugMask.flags = 0;
++		NLDR_debugMask.flags = NULL;
+ 	}
+ 
+ 	DBC_Ensure(cRefs >= 0);
+@@ -1403,8 +1403,8 @@ static DSP_STATUS LoadLib(struct NLDR_NODEOBJECT *hNldrNode,
+ 		if (nLibs > 0) {
+ 			depLibUUIDs = MEM_Calloc(sizeof(struct DSP_UUID) *
+ 				      nLibs, MEM_PAGED);
+-			persistentDepLibs = MEM_Calloc(sizeof(bool) *
+-					    nLibs, MEM_PAGED);
++			persistentDepLibs =
++				MEM_Calloc(sizeof(bool) * nLibs, MEM_PAGED);
+ 			if (!depLibUUIDs || !persistentDepLibs)
+ 				status = DSP_EMEMORY;
+ 
+diff --git a/drivers/dsp/bridge/rmgr/node.c b/drivers/dsp/bridge/rmgr/node.c
+index ab6bf8e..db8e8f4 100644
+--- a/drivers/dsp/bridge/rmgr/node.c
++++ b/drivers/dsp/bridge/rmgr/node.c
+@@ -324,7 +324,7 @@ struct NODE_OBJECT {
+ } ;
+ 
+ /* Default buffer attributes */
+-struct DSP_BUFFERATTR NODE_DFLTBUFATTRS = {
++static struct DSP_BUFFERATTR NODE_DFLTBUFATTRS = {
+ 	0, 			/* cbStruct */
+ 	1, 			/* uSegment */
+ 	0, 			/* uAlignment */
+@@ -776,10 +776,10 @@ func_cont2:
+ 		res_status = CFG_GetObject((u32 *)&hDrvObject,
+ 					  REG_DRV_OBJECT);
+ 		if (DSP_SUCCEEDED(res_status)) {
+-			DRV_GetProcContext(hProcess, hDrvObject, &pPctxt,
++			DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pPctxt,
+ 					 *phNode, 0);
+ 			if (pPctxt == NULL) {
+-				DRV_InsertProcContext(hDrvObject, &pPctxt);
++				DRV_InsertProcContext((struct DRV_OBJECT *)hDrvObject, &pPctxt);
+ 				if (pPctxt != NULL) {
+ 					DRV_ProcUpdatestate(pPctxt,
+ 							PROC_RES_ALLOCATED);
+@@ -795,7 +795,7 @@ func_cont2:
+ 		res_status = CFG_GetObject((u32 *)&hDrvObject,
+ 					REG_DRV_OBJECT);
+ 		if (DSP_SUCCEEDED(res_status)) {
+-			DRV_GetProcContext(hProcess, hDrvObject, &pPctxt,
++			DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pPctxt,
+ 					 *phNode, 0);
+ 			if (pPctxt != NULL) {
+ 				DRV_InsertNodeResElement(*phNode, &nodeRes,
+@@ -1775,7 +1775,7 @@ func_cont1:
+ 	if (DSP_FAILED(res_status))
+ 		goto func_cont;
+ 
+-	DRV_GetProcContext(hProcess, hDrvObject, &pCtxt, hNode, 0);
++	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pCtxt, hNode, 0);
+ 	if (pCtxt == NULL)
+ 		goto func_cont;
+ 
+diff --git a/drivers/dsp/bridge/rmgr/proc.c b/drivers/dsp/bridge/rmgr/proc.c
+index 4895a49..d536dbe 100644
+--- a/drivers/dsp/bridge/rmgr/proc.c
++++ b/drivers/dsp/bridge/rmgr/proc.c
+@@ -365,9 +365,9 @@ func_end:
+ 	if (DSP_FAILED(res_status))
+ 		goto func_cont;
+ 
+-	DRV_GetProcContext(hProcess, hDRVObject, &pPctxt, NULL, 0);
++	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDRVObject, &pPctxt, NULL, 0);
+ 	if (pPctxt == NULL) {
+-		DRV_InsertProcContext(hDRVObject, &pPctxt);
++		DRV_InsertProcContext((struct DRV_OBJECT *)hDRVObject, &pPctxt);
+ 		if (pPctxt != NULL) {
+ 			DRV_ProcUpdatestate(pPctxt, PROC_RES_ALLOCATED);
+ 			DRV_ProcSetPID(pPctxt, (s32)hProcess);
+@@ -377,7 +377,7 @@ func_cont:
+ 	PRCS_GetCurrentHandle(&hProcess);
+ 	res_status = CFG_GetObject((u32 *)&hDRVObject, REG_DRV_OBJECT);
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext(hProcess, hDRVObject, &pPctxt, NULL, 0);
++		DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDRVObject, &pPctxt, NULL, 0);
+ 		if (pPctxt != NULL)
+ 			pPctxt->hProcessor = (DSP_HPROCESSOR)*phProcessor;
+ 
+@@ -634,7 +634,7 @@ DSP_STATUS PROC_Detach(DSP_HPROCESSOR hProcessor)
+ 	res_status = CFG_GetObject((u32 *)&hDRVObject, REG_DRV_OBJECT);
+ 	/* res_status = CFG_GetObject(REG_DRV_OBJECT, (u32*)&hDRVObject); */
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext(hProcess, hDRVObject, &pPctxt, NULL, 0);
++		DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDRVObject, &pPctxt, NULL, 0);
+ 		if (pPctxt != NULL)
+ 			pPctxt->hProcessor = NULL;
+ 	}
+@@ -854,7 +854,7 @@ DSP_STATUS PROC_GetDevObject(DSP_HPROCESSOR hProcessor,
+ 		*phDevObject = pProcObject->hDevObject;
+ 		status = DSP_SOK;
+ 	} else {
+-		*phDevObject = 0;
++		*phDevObject = NULL;
+ 	}
+ 
+ 	DBC_Ensure((DSP_SUCCEEDED(status) && *phDevObject > 0) ||
+@@ -1383,11 +1383,11 @@ DSP_STATUS PROC_Map(DSP_HPROCESSOR hProcessor, void *pMpuAddr, u32 ulSize,
+ 		res_status = CFG_GetObject((u32 *)&hDrvObject,
+ 					  REG_DRV_OBJECT);
+ 		if (DSP_SUCCEEDED(res_status)) {
+-			if (DRV_GetProcContext(hProcess, hDrvObject, &pCtxt,
+-			   NULL, (u32) pMpuAddr) != DSP_ENOTFOUND) {
++			if (DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pCtxt,
++			   NULL, (u32)pMpuAddr) != DSP_ENOTFOUND) {
+ 				DRV_InsertDMMResElement(&dmmRes, pCtxt);
+-				DRV_UpdateDMMResElement(dmmRes, (u32) pMpuAddr,
+-						ulSize, (u32) pReqAddr,
++				DRV_UpdateDMMResElement(dmmRes, (u32)pMpuAddr,
++						ulSize, (u32)pReqAddr,
+ 						(u32)*ppMapAddr, hProcessor);
+ 			}
+ 		}
+@@ -1737,7 +1737,7 @@ DSP_STATUS PROC_UnMap(DSP_HPROCESSOR hProcessor, void *pMapAddr)
+ 	if (DSP_FAILED(res_status))
+ 		goto func_end;
+ 
+-	DRV_GetProcContext(hProcess, hDrvObject, &pCtxt, NULL, (u32)pMapAddr);
++	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pCtxt, NULL, (u32)pMapAddr);
+ 	if (pCtxt != NULL) {
+ 		if (DRV_GetDMMResElement((u32)pMapAddr, &dmmRes, pCtxt) !=
+ 		   DSP_ENOTFOUND)
+diff --git a/drivers/dsp/bridge/rmgr/pwr.c b/drivers/dsp/bridge/rmgr/pwr.c
+index 3984b00..56e240f 100644
+--- a/drivers/dsp/bridge/rmgr/pwr.c
++++ b/drivers/dsp/bridge/rmgr/pwr.c
+@@ -61,7 +61,7 @@ DSP_STATUS PWR_SleepDSP(IN CONST u32 sleepCode, IN CONST u32 timeout)
+ 	u32 arg = timeout;
+ 
+ 	for (hDevObject = (struct DEV_OBJECT *)DRV_GetFirstDevObject();
+-			  hDevObject != 0;
++			  hDevObject != NULL;
+ 			hDevObject =
+ 				(struct DEV_OBJECT *)DRV_GetNextDevObject
+ 				((u32)hDevObject)) {
+@@ -101,7 +101,7 @@ DSP_STATUS PWR_WakeDSP(IN CONST u32 timeout)
+ 	u32 arg = timeout;
+ 
+ 	for (hDevObject = (struct DEV_OBJECT *)DRV_GetFirstDevObject();
+-	     hDevObject != 0;
++	     hDevObject != NULL;
+ 	     hDevObject = (struct DEV_OBJECT *)DRV_GetNextDevObject
+ 			  ((u32)hDevObject)) {
+ 		if (DSP_SUCCEEDED(DEV_GetWMDContext(hDevObject,
+@@ -132,7 +132,7 @@ DSP_STATUS PWR_PM_PreScale(IN u16 voltage_domain, u32 level)
+ 	arg[1] = level;
+ 
+ 	for (hDevObject = (struct DEV_OBJECT *)DRV_GetFirstDevObject();
+-	    hDevObject != 0;
++	    hDevObject != NULL;
+ 	    hDevObject = (struct DEV_OBJECT *)DRV_GetNextDevObject
+ 			 ((u32)hDevObject)) {
+ 		if (DSP_SUCCEEDED(DEV_GetWMDContext(hDevObject,
+@@ -164,7 +164,7 @@ DSP_STATUS PWR_PM_PostScale(IN u16 voltage_domain, u32 level)
+ 	arg[1] = level;
+ 
+ 	for (hDevObject = (struct DEV_OBJECT *)DRV_GetFirstDevObject();
+-	     hDevObject != 0;
++	     hDevObject != NULL;
+ 	     hDevObject = (struct DEV_OBJECT *)DRV_GetNextDevObject
+ 			  ((u32)hDevObject)) {
+ 		if (DSP_SUCCEEDED(DEV_GetWMDContext(hDevObject,
+diff --git a/drivers/dsp/bridge/rmgr/strm.c b/drivers/dsp/bridge/rmgr/strm.c
+index 1069dac..55467cd 100644
+--- a/drivers/dsp/bridge/rmgr/strm.c
++++ b/drivers/dsp/bridge/rmgr/strm.c
+@@ -209,7 +209,7 @@ DSP_STATUS STRM_AllocateBuffer(struct STRM_OBJECT *hStrm, u32 uSize,
+ 	if (DSP_FAILED(res_status))
+ 		goto func_end;
+ 
+-	DRV_GetProcContext(hProcess, hDrvObject, &pCtxt, NULL, 0);
++	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pCtxt, NULL, 0);
+ 	if (pCtxt != NULL) {
+ 		if (DRV_GetSTRMResElement(hStrm, &hSTRMRes, pCtxt) !=
+ 		   DSP_ENOTFOUND) {
+@@ -280,7 +280,7 @@ DSP_STATUS STRM_Close(struct STRM_OBJECT *hStrm)
+ 	if (DSP_FAILED(res_status))
+ 		goto func_end;
+ 
+-	DRV_GetProcContext(hProcess, hDrvObject, &pCtxt, NULL, 0);
++	DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pCtxt, NULL, 0);
+ 	if (pCtxt != NULL) {
+ 		if (DRV_GetSTRMResElement(hStrm, &hSTRMRes, pCtxt) !=
+ 		   DSP_ENOTFOUND) {
+@@ -428,7 +428,7 @@ DSP_STATUS STRM_FreeBuffer(struct STRM_OBJECT *hStrm, u8 **apBuffer,
+ 	PRCS_GetCurrentHandle(&hProcess);
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext(hProcess, hDrvObject, &pCtxt, NULL, 0);
++		DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pCtxt, NULL, 0);
+ 		if (pCtxt != NULL) {
+ 			if (DRV_GetSTRMResElement(hStrm, hSTRMRes, pCtxt) !=
+ 			   DSP_ENOTFOUND) {
+@@ -773,7 +773,7 @@ func_cont:
+ 	PRCS_GetCurrentHandle(&hProcess);
+ 	res_status = CFG_GetObject((u32 *)&hDrvObject, REG_DRV_OBJECT);
+ 	if (DSP_SUCCEEDED(res_status)) {
+-		DRV_GetProcContext(hProcess, hDrvObject, &pCtxt, hNode, 0);
++		DRV_GetProcContext((u32)hProcess, (struct DRV_OBJECT *)hDrvObject, &pCtxt, hNode, 0);
+ 		if (pCtxt != NULL)
+ 			DRV_ProcInsertSTRMResElement(*phStrm, &hSTRMRes, pCtxt);
+ 
+diff --git a/drivers/dsp/bridge/services/mem.c b/drivers/dsp/bridge/services/mem.c
+index 186684e..92abff3 100644
+--- a/drivers/dsp/bridge/services/mem.c
++++ b/drivers/dsp/bridge/services/mem.c
+@@ -199,7 +199,7 @@ void MEM_ExtPhysPoolInit(u32 poolPhysBase, u32 poolSize)
+ 	}
+ }
+ 
+-void MEM_ExtPhysPoolRelease(void)
++static void MEM_ExtPhysPoolRelease(void)
+ {
+ 	GT_0trace(MEM_debugMask, GT_1CLASS,
+ 		  "Releasing External memory pool \n");
+@@ -215,7 +215,7 @@ void MEM_ExtPhysPoolRelease(void)
+  *     Allocate physically contiguous, uncached memory from external memory pool
+  */
+ 
+-void *MEM_ExtPhysMemAlloc(u32 bytes, u32 align, OUT u32 *pPhysAddr)
++static void *MEM_ExtPhysMemAlloc(u32 bytes, u32 align, OUT u32 *pPhysAddr)
+ {
+ 	u32 newAllocPtr;
+ 	u32 offset;
+@@ -236,7 +236,7 @@ void *MEM_ExtPhysMemAlloc(u32 bytes, u32 align, OUT u32 *pPhysAddr)
+ 			  "ExtPhysical Memory Allocation "
+ 			  "unable to allocate memory for bytes = 0x%x \n",
+ 			  bytes);
+-		pPhysAddr = 0;
++		pPhysAddr = NULL;
+ 		return NULL;
+ 	} else {
+ 		offset = (extMemPool.nextPhysAllocPtr & (align - 1));
+diff --git a/drivers/dsp/bridge/wmd/io_sm.c b/drivers/dsp/bridge/wmd/io_sm.c
+index afb96bb..b937219 100644
+--- a/drivers/dsp/bridge/wmd/io_sm.c
++++ b/drivers/dsp/bridge/wmd/io_sm.c
+@@ -719,7 +719,7 @@ func_cont:
+ 	mapAttrs |= DSP_MAPELEMSIZE32;
+ 	/* Map the L4 peripherals */
+ 	{
+-		int i = 0;
++		i = 0;
+ 		while (L4PeripheralTable[i].physAddr && DSP_SUCCEEDED(status)) {
+ 				status = hIOMgr->pIntfFxns->pfnBrdMemMap
+ 					(hIOMgr->hWmdContext,
+diff --git a/drivers/dsp/bridge/wmd/mmu_fault.c b/drivers/dsp/bridge/wmd/mmu_fault.c
+index 346756a..b4abee1 100644
+--- a/drivers/dsp/bridge/wmd/mmu_fault.c
++++ b/drivers/dsp/bridge/wmd/mmu_fault.c
+@@ -59,7 +59,7 @@
+ #include "_tiomap.h"
+ #include "mmu_fault.h"
+ 
+-u32 dmmuEventMask;
++static u32 dmmuEventMask;
+ u32 faultAddr;
+ 
+ static bool MMU_CheckIfFault(struct WMD_DEV_CONTEXT *pDevContext);
+diff --git a/drivers/dsp/bridge/wmd/msg_sm.c b/drivers/dsp/bridge/wmd/msg_sm.c
+index 25e3fe1..df37a39 100644
+--- a/drivers/dsp/bridge/wmd/msg_sm.c
++++ b/drivers/dsp/bridge/wmd/msg_sm.c
+@@ -63,6 +63,7 @@
+ 
+ /*  ----------------------------------- This */
+ #include <_msg_sm.h>
++#include <wmdmsg.h>
+ 
+ /*  ----------------------------------- Defines, Data Structures, Typedefs */
+ #define MSGQ_SIGNATURE      0x5147534d	/* "QGSM" */
+diff --git a/drivers/dsp/bridge/wmd/tiomap_io.c b/drivers/dsp/bridge/wmd/tiomap_io.c
+index bce33a4..a3c516c 100644
+--- a/drivers/dsp/bridge/wmd/tiomap_io.c
++++ b/drivers/dsp/bridge/wmd/tiomap_io.c
+@@ -56,9 +56,9 @@ static u32 ulExtEnd;
+ 
+ static u32 ulShm0End;
+ static u32 ulDynExtBase;
+-u32 ulTraceSecBeg;
+-u32 ulTraceSecEnd;
+-u32 ulShmBaseVirt;
++static u32 ulTraceSecBeg;
++static u32 ulTraceSecEnd;
++static u32 ulShmBaseVirt;
+ 
+ bool bSymbolsReloaded = true;
+ 
+@@ -73,11 +73,8 @@ DSP_STATUS ReadExtDspData(struct WMD_DEV_CONTEXT *hDevContext,
+ 	DSP_STATUS	status = DSP_SOK;
+ 	struct WMD_DEV_CONTEXT *pDevContext = hDevContext;
+ 	u32	offset;
+-	static u32	ulShmBaseVirt;
+ 	u32	ulTLBBaseVirt = 0;
+ 	u32	ulShmOffsetVirt = 0;
+-	static u32	ulTraceSecBeg;
+-	static u32	ulTraceSecEnd;
+ 	u32	dwExtProgVirtMem;
+ 	u32	dwBaseAddr = pDevContext->dwDspExtBaseAddr;
+ 	bool	bTraceRead = false;
+diff --git a/drivers/dsp/bridge/wmd/ue_deh.c b/drivers/dsp/bridge/wmd/ue_deh.c
+index 3529230..d1c203c 100644
+--- a/drivers/dsp/bridge/wmd/ue_deh.c
++++ b/drivers/dsp/bridge/wmd/ue_deh.c
+@@ -69,7 +69,7 @@
+ #include "_deh.h"
+ #include <_tiomap_mmu.h>
+ 
+-struct HW_MMUMapAttrs_t  mapAttrs = { HW_LITTLE_ENDIAN, HW_ELEM_SIZE_16BIT,
++static struct HW_MMUMapAttrs_t  mapAttrs = { HW_LITTLE_ENDIAN, HW_ELEM_SIZE_16BIT,
+ 					HW_MMU_CPUES} ;
+ #define VirtToPhys(x)       ((x) - PAGE_OFFSET + PHYS_OFFSET)
+ /*
+-- 
+1.6.0.3.613.g9f8f13
+

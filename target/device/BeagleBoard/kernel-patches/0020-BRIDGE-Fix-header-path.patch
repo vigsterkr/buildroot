@@ -1,0 +1,88 @@
+From 463c2d832133537a872466b981a5ef5644fffc9a Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Wed, 10 Sep 2008 03:12:34 +0300
+Subject: [PATCH 20/43] BRIDGE: Fix header path
+
+sed -i -e 's@asm/arch/@mach/@g' \
+    drivers/dsp/bridge/*/*.[ch] \
+    arch/arm/plat-omap/include/bridge/*.h
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ drivers/dsp/bridge/rmgr/drv_interface.c |    4 ++--
+ drivers/dsp/bridge/rmgr/node.c          |    2 +-
+ drivers/dsp/bridge/rmgr/proc.c          |    2 +-
+ drivers/dsp/bridge/wmd/io_sm.c          |    2 +-
+ drivers/dsp/bridge/wmd/tiomap_sm.c      |    2 +-
+ 5 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/dsp/bridge/rmgr/drv_interface.c b/drivers/dsp/bridge/rmgr/drv_interface.c
+index 2a12d9f..7e6de02 100644
+--- a/drivers/dsp/bridge/rmgr/drv_interface.c
++++ b/drivers/dsp/bridge/rmgr/drv_interface.c
+@@ -63,8 +63,8 @@
+ #ifndef CONFIG_OMAP3_PM
+ #include <mach/omap-pm.h>
+ #else
+-#include <asm/arch/resource.h>
+-#include <asm/arch/prcm_34xx.h>
++#include <mach/resource.h>
++#include <mach/prcm_34xx.h>
+ #endif
+ #endif
+ #endif
+diff --git a/drivers/dsp/bridge/rmgr/node.c b/drivers/dsp/bridge/rmgr/node.c
+index de1af53..f760c0f 100644
+--- a/drivers/dsp/bridge/rmgr/node.c
++++ b/drivers/dsp/bridge/rmgr/node.c
+@@ -159,7 +159,7 @@
+ #include <mach/omap-pm.h>
+ #include <mach/board-3430sdp.h>
+ #else
+-#include <asm/arch/resource.h>
++#include <mach/resource.h>
+ #endif
+ #endif
+ #endif
+diff --git a/drivers/dsp/bridge/rmgr/proc.c b/drivers/dsp/bridge/rmgr/proc.c
+index f0d1f04..86a2c05 100644
+--- a/drivers/dsp/bridge/rmgr/proc.c
++++ b/drivers/dsp/bridge/rmgr/proc.c
+@@ -155,7 +155,7 @@
+ #include <mach/omap-pm.h>
+ #include <mach/board-3430sdp.h>
+ #else
+-#include <asm/arch/resource.h>
++#include <mach/resource.h>
+ #endif
+ #endif
+ #endif
+diff --git a/drivers/dsp/bridge/wmd/io_sm.c b/drivers/dsp/bridge/wmd/io_sm.c
+index d0f6b06..d08421c 100644
+--- a/drivers/dsp/bridge/wmd/io_sm.c
++++ b/drivers/dsp/bridge/wmd/io_sm.c
+@@ -116,7 +116,7 @@
+ #ifndef CONFIG_OMAP3_PM
+ #include <mach/omap-pm.h>
+ #else
+-#include <asm/arch/resource.h>
++#include <mach/resource.h>
+ #endif
+ #endif
+ #endif
+diff --git a/drivers/dsp/bridge/wmd/tiomap_sm.c b/drivers/dsp/bridge/wmd/tiomap_sm.c
+index baf3319..35f6a77 100644
+--- a/drivers/dsp/bridge/wmd/tiomap_sm.c
++++ b/drivers/dsp/bridge/wmd/tiomap_sm.c
+@@ -72,7 +72,7 @@
+ #ifndef CONFIG_OMAP3_PM
+ #include <mach/omap-pm.h>
+ #else
+-#include <asm/arch/resource.h>
++#include <mach/resource.h>
+ extern struct constraint_handle *dsp_constraint_handle;
+ #endif
+ #endif
+-- 
+1.6.0.3.613.g9f8f13
+

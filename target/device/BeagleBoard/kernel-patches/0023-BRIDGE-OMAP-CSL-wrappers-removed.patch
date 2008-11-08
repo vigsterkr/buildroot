@@ -1,0 +1,1307 @@
+From bbfc70a11be0820ca595754899eae43b433fd67f Mon Sep 17 00:00:00 2001
+From: Omar Ramirez Luna <x00omar@ti.com>
+Date: Fri, 5 Sep 2008 22:50:44 -0500
+Subject: [PATCH 23/43] BRIDGE: OMAP CSL wrappers removed
+
+This patch removes all the functions in CSL which are
+kernel functions wrappers.
+Also some minor formatting fixes.
+
+Signed-off-by: Fernando Guzman Lugo <x0095840@ti.com>
+Signed-off-by: Omar Ramirez Luna <x00omar@ti.com>
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ arch/arm/plat-omap/include/bridge/csl.h |  134 -------------------------------
+ arch/arm/plat-omap/include/bridge/reg.h |    4 +-
+ drivers/dsp/bridge/pmgr/cod.c           |    4 +-
+ drivers/dsp/bridge/pmgr/dbll.c          |   39 +++++-----
+ drivers/dsp/bridge/rmgr/dbdcd.c         |  115 +++++++++++++--------------
+ drivers/dsp/bridge/rmgr/disp.c          |    3 +-
+ drivers/dsp/bridge/rmgr/drv.c           |    6 +-
+ drivers/dsp/bridge/rmgr/drv_interface.c |    4 +-
+ drivers/dsp/bridge/rmgr/nldr.c          |   19 +++--
+ drivers/dsp/bridge/rmgr/node.c          |   26 +++---
+ drivers/dsp/bridge/rmgr/proc.c          |   10 +-
+ drivers/dsp/bridge/services/cfg.c       |    9 +-
+ drivers/dsp/bridge/services/csl.c       |  101 -----------------------
+ drivers/dsp/bridge/services/reg.c       |   12 ++--
+ drivers/dsp/bridge/services/regsup.c    |   25 +++---
+ drivers/dsp/bridge/wmd/tiomap3430.c     |   52 ++++++------
+ drivers/dsp/bridge/wmd/ue_deh.c         |    2 +-
+ 17 files changed, 163 insertions(+), 402 deletions(-)
+
+diff --git a/arch/arm/plat-omap/include/bridge/csl.h b/arch/arm/plat-omap/include/bridge/csl.h
+index f62eda1..1cc757d 100644
+--- a/arch/arm/plat-omap/include/bridge/csl.h
++++ b/arch/arm/plat-omap/include/bridge/csl.h
+@@ -21,20 +21,13 @@
+  *
+  *  Public Functions:
+  *      CSL_AnsiToWchar
+- *      CSL_Atoi
+  *      CSL_ByteSwap
+  *      CSL_Exit
+  *      CSL_Init
+  *      CSL_NumToAscii
+- *      CSL_Strcmp
+- *      CSL_Strcpyn
+- *      CSL_Strlen
+- *      CSL_Strncat
+- *      CSL_Strncmp
+  *      CSL_Strtok
+  *      CSL_Strtokr
+  *      CSL_WcharToAnsi
+- *      CSL_Wstrlen
+  *
+  *! Revision History:
+  *! ================
+@@ -57,20 +50,6 @@
+ #define CSL_
+ 
+ #include <host_os.h>
+-/*
+- *  ======== CSL_Atoi ========
+- *  Purpose:
+- *      Convert a 1 or 2 digit string number into an integer
+- *  Parameters:
+- *      ptstrSrc:   pointer to string.
+- *  Returns:
+- *      Integer
+- *  Requires:
+- *      CSL initialized.
+- *      ptstrSrc is a valid string pointer.
+- *  Ensures:
+- */
+-	extern s32 CSL_Atoi(IN CONST char *ptstrSrc);
+ 
+ /*
+  *  ======== CSL_Exit ========
+@@ -113,119 +92,6 @@
+  */
+ 	extern void CSL_NumToAscii(OUT char *pstrNumber, IN u32 dwNum);
+ 
+-/*
+- *  ======== CSL_Strcmp ========
+- *  Purpose:
+- *      Compare 2 ASCII strings.  Works the same way as stdio's strcmp.
+- *  Parameters:
+- *      pstrStr1:   char * 1.
+- *      pstrStr2:   char * 2.
+- *  Returns:
+- *      A signed value that gives the results of the comparison:
+- *      Zero:   String1 equals String2.
+- *      < Zero: String1 is less than String2.
+- *      > Zero: String1 is greater than String2.
+- *  Requires:
+- *      CSL initialized.
+- *      pstrStr1 is valid.
+- *      pstrStr2 is valid.
+- *  Ensures:
+- */
+-	extern s32 CSL_Strcmp(IN CONST char *pstrStr1, IN CONST char *pstrStr2);
+-
+-/*
+- *  ======== CSL_Strcpyn ========
+- *  Purpose:
+- *      Safe strcpy function.
+- *  Parameters:
+- *      pstrDest:   Ptr to destination buffer.
+- *      pstrSrc:    Ptr to source buffer.
+- *      cMax:       Size of destination buffer.
+- *  Returns:
+- *      Ptr to destination buffer; or NULL if error.
+- *  Requires:
+- *      CSL initialized.
+- *      pstrDest is valid.
+- *      pstrSrc is valid.
+- *  Ensures:
+- *      Will not copy more than cMax bytes from pstrSrc into pstrDest.
+- *      pstrDest will be terminated by a NULL character.
+- */
+-	extern char *CSL_Strcpyn(OUT char *pstrDest, IN CONST char *pstrSrc,
+-				IN u32 cMax);
+-
+-/*
+- *  ======== CSL_Strstr ========
+- *  Purpose:
+- *      Find substring in a stringn.
+- *  Parameters:
+- *      haystack:   Ptr to string1.
+- *      needle:    Ptr to substring to catch.
+- *  Returns:
+- *      Ptr to first char matching the substring in the main string.
+- *  Requires:
+- *      CSL initialized.
+- *      haystack is valid.
+- *      needle is valid.
+- *  Ensures:
+- */
+-	extern char *CSL_Strstr(IN CONST char *haystack, IN CONST char *needle);
+-
+-/*
+- *  ======== CSL_Strlen ========
+- *  Purpose:
+- *      Determine the length of a null terminated ASCI string.
+- *  Parameters:
+- *      pstrSrc:    pointer to string.
+- *  Returns:
+- *      String length in bytes.
+- *  Requires:
+- *      CSL initialized.
+- *      pstrSrc is a valid string pointer.
+- *  Ensures:
+- */
+-	extern u32 CSL_Strlen(IN CONST char *pstrSrc);
+-
+-/*
+- *  ======== CSL_Strncat ========
+- *  Purpose:
+- *      Concatenate two strings together.
+- *  Parameters:
+- *      pszDest:    Destination string.
+- *      pszSrc:     Source string.
+- *      dwSize:     Number of characters to copy.
+- *  Returns:
+- *      Pointer to destination string.
+- *  Requires:
+- *      CSL initialized.
+- *      pszDest and pszSrc are valid pointers.
+- *  Ensures:
+- */
+-	extern char *CSL_Strncat(IN char *pszDest,
+-				IN char *pszSrc, IN u32 dwSize);
+-
+-/*
+- *  ======== CSL_Strncmp ========
+- *  Purpose:
+- *      Compare at most n characters of two ASCII strings.  Works the same
+- *      way as stdio's strncmp.
+- *  Parameters:
+- *      pstrStr1:   char * 1.
+- *      pstrStr2:   char * 2.
+- *      n:          Number of characters to compare.
+- *  Returns:
+- *      A signed value that gives the results of the comparison:
+- *      Zero:   String1 equals String2.
+- *      < Zero: String1 is less than String2.
+- *      > Zero: String1 is greater than String2.
+- *  Requires:
+- *      CSL initialized.
+- *      pstrStr1 is valid.
+- *      pstrStr2 is valid.
+- *  Ensures:
+- */
+-	extern s32 CSL_Strncmp(IN CONST char *pstrStr1,
+-				IN CONST char *pstrStr2, IN u32 n);
+ 
+ /*
+  *  ======== CSL_Strtok ========
+diff --git a/arch/arm/plat-omap/include/bridge/reg.h b/arch/arm/plat-omap/include/bridge/reg.h
+index 7c128bc..6d449c1 100644
+--- a/arch/arm/plat-omap/include/bridge/reg.h
++++ b/arch/arm/plat-omap/include/bridge/reg.h
+@@ -122,8 +122,8 @@
+  *      - phKey is NULL.
+  *      - length of pstrKey < REG_MAXREGPATHLENGTH.
+  *  Ensures:
+- *      - CSL_Strlen(pstrSubkey) is > CSL_Strlen(pstrKey) &&
+- *      - CSL_Strlen(pstrSubkey) is < REG_MAXREGPATHLENGTH
++ *      - strlen(pstrSubkey) is > strlen(pstrKey) &&
++ *      - strlen(pstrSubkey) is < REG_MAXREGPATHLENGTH
+  */
+ 	extern DSP_STATUS REG_EnumKey(OPTIONAL IN HANDLE *phKey,
+ 				      IN u32 dwIndex, IN CONST char *pstrKey,
+diff --git a/drivers/dsp/bridge/pmgr/cod.c b/drivers/dsp/bridge/pmgr/cod.c
+index 81d1eba..6a9e818 100644
+--- a/drivers/dsp/bridge/pmgr/cod.c
++++ b/drivers/dsp/bridge/pmgr/cod.c
+@@ -308,7 +308,7 @@ DSP_STATUS CDECL COD_GetBaseName(struct COD_MANAGER *hManager, char *pszName,
+ 	DBC_Require(pszName != NULL);
+ 
+ 	if (uSize <= COD_MAXPATHLENGTH)
+-		CSL_Strcpyn(pszName, hManager->szZLFile, uSize);
++               strncpy(pszName, hManager->szZLFile, uSize);
+ 	else
+ 		status = DSP_EFAIL;
+ 
+@@ -628,7 +628,7 @@ DSP_STATUS COD_OpenBase(struct COD_MANAGER *hMgr, IN char *pszCoffPath,
+ 	} else {
+ 		/* hang onto the library for subsequent sym table usage */
+ 		hMgr->baseLib = lib;
+-		CSL_Strcpyn(hMgr->szZLFile, pszCoffPath, COD_MAXPATHLENGTH);
++               strncpy(hMgr->szZLFile, pszCoffPath, COD_MAXPATHLENGTH);
+ 	}
+ 
+ 	return status;
+diff --git a/drivers/dsp/bridge/pmgr/dbll.c b/drivers/dsp/bridge/pmgr/dbll.c
+index 44a3dce..c8e7f12 100644
+--- a/drivers/dsp/bridge/pmgr/dbll.c
++++ b/drivers/dsp/bridge/pmgr/dbll.c
+@@ -412,7 +412,7 @@ bool DBLL_getCAddr(struct DBLL_LibraryObj *zlLib, char *name,
+ 
+ 	cname[0] = '_';
+ 
+-	CSL_Strcpyn(cname + 1, name, sizeof(cname) - 2);
++       strncpy(cname + 1, name, sizeof(cname) - 2);
+ 	cname[MAXEXPR] = '\0'; 	/* insure '\0' string termination */
+ 
+ 	/* Check for C name, if not found */
+@@ -669,7 +669,7 @@ DSP_STATUS DBLL_open(struct DBLL_TarObj *target, char *file, DBLL_Flags flags,
+ 		 " 0x%x\n", target, file, pLib);
+ 	zlLib = zlTarget->head;
+ 	while (zlLib != NULL) {
+-		if (CSL_Strcmp(zlLib->fileName, file) == 0) {
++               if (strcmp(zlLib->fileName, file) == 0) {
+ 			/* Library is already opened */
+ 			zlLib->openRef++;
+ 			break;
+@@ -691,7 +691,7 @@ DSP_STATUS DBLL_open(struct DBLL_TarObj *target, char *file, DBLL_Flags flags,
+ 			zlLib->openRef++;
+ 			zlLib->pTarget = zlTarget;
+ 			/* Keep a copy of the file name */
+-			zlLib->fileName = MEM_Calloc(CSL_Strlen(file) + 1,
++                       zlLib->fileName = MEM_Calloc(strlen(file) + 1,
+ 							MEM_PAGED);
+ 			if (zlLib->fileName == NULL) {
+ 				GT_0trace(DBLL_debugMask, GT_6CLASS,
+@@ -699,8 +699,8 @@ DSP_STATUS DBLL_open(struct DBLL_TarObj *target, char *file, DBLL_Flags flags,
+ 					 "allocation failed\n");
+ 				status = DSP_EMEMORY;
+ 			} else {
+-				CSL_Strcpyn(zlLib->fileName, file,
+-					   CSL_Strlen(file) + 1);
++                               strncpy(zlLib->fileName, file,
++                                          strlen(file) + 1);
+ 			}
+ 			zlLib->symTab = NULL;
+ 		}
+@@ -1021,10 +1021,8 @@ static bool nameMatch(void *key, void *value)
+ 	DBC_Require(value != NULL);
+ 
+ 	if ((key != NULL) && (value != NULL)) {
+-		if (CSL_Strcmp((char *)key, ((struct Symbol *)value)->
+-		   name) == 0) {
++               if (strcmp((char *)key, ((struct Symbol *)value)->name) == 0)
+ 			return true;
+-		}
+ 	}
+ 	return false;
+ }
+@@ -1182,6 +1180,7 @@ static struct dynload_symbol *addToSymbolTable(struct Dynamic_Loader_Sym *this,
+ 	struct dynload_symbol *retVal;
+ 
+ 	DBC_Require(this != NULL);
++       DBC_Require(name);
+ 	lib = pSymbol->lib;
+ 	DBC_Require(MEM_IsValidHandle(lib, DBLL_LIBSIGNATURE));
+ 
+@@ -1199,15 +1198,15 @@ static struct dynload_symbol *addToSymbolTable(struct Dynamic_Loader_Sym *this,
+ 		}
+ 	}
+ 	/* Allocate string to copy symbol name */
+-	symbol.name = (char *)MEM_Calloc(CSL_Strlen((char *const)name) + 1,
++       symbol.name = (char *)MEM_Calloc(strlen((char *const)name) + 1,
+ 							MEM_PAGED);
+ 	if (symbol.name == NULL)
+ 		return NULL;
+ 
+ 	if (symbol.name != NULL) {
+ 		/* Just copy name (value will be filled in by dynamic loader) */
+-		CSL_Strcpyn(symbol.name, (char *const)name,
+-			   CSL_Strlen((char *const)name) + 1);
++               strncpy(symbol.name, (char *const)name,
++                          strlen((char *const)name) + 1);
+ 
+ 		/* Add symbol to symbol table */
+ 		symPtr = (struct Symbol *)GH_insert(lib->symTab, (void *)name,
+@@ -1324,7 +1323,8 @@ static int rmmAlloc(struct Dynamic_Loader_Allocate *this,
+ 
+ 	/* Attempt to extract the segment ID and requirement information from
+ 	 the name of the section */
+-	tokenLen = CSL_Strlen((char *)(info->name)) + 1;
++       DBC_Require(info->name);
++       tokenLen = strlen((char *)(info->name)) + 1;
+ 
+ 	szSectName = MEM_Calloc(tokenLen, MEM_PAGED);
+ 	szLastToken = MEM_Calloc(tokenLen, MEM_PAGED);
+@@ -1335,12 +1335,11 @@ static int rmmAlloc(struct Dynamic_Loader_Allocate *this,
+ 		status = DSP_EMEMORY;
+ 		goto func_cont;
+ 	}
+-	CSL_Strcpyn(szSectName, (char *)(info->name), tokenLen);
++       strncpy(szSectName, (char *)(info->name), tokenLen);
+ 	pToken = CSL_Strtokr(szSectName, ":", &pszCur);
+ 	while (pToken) {
+-		CSL_Strcpyn(szSecLastToken, szLastToken,
+-			   CSL_Strlen(szLastToken) + 1);
+-		CSL_Strcpyn(szLastToken, pToken, CSL_Strlen(pToken) + 1);
++               strncpy(szSecLastToken, szLastToken, strlen(szLastToken) + 1);
++               strncpy(szLastToken, pToken, strlen(pToken) + 1);
+ 		pToken = CSL_Strtokr(NULL, ":", &pszCur);
+ 		count++; 	/* optimizes processing*/
+ 	}
+@@ -1349,16 +1348,16 @@ static int rmmAlloc(struct Dynamic_Loader_Allocate *this,
+ 	 within the section name - only process if there are at least three
+ 	 tokens within the section name (just a minor optimization)*/
+ 	if (count >= 3)
+-		req = CSL_Atoi(szLastToken);
++               strict_strtol(szLastToken, 10, (long *)&req);
+ 
+ 	if ((req == 0) || (req == 1)) {
+-		if (CSL_Strcmp(szSecLastToken, "DYN_DARAM") == 0) {
++               if (strcmp(szSecLastToken, "DYN_DARAM") == 0) {
+ 			segId = 0;
+ 		} else {
+-			if (CSL_Strcmp(szSecLastToken, "DYN_SARAM") == 0) {
++                       if (strcmp(szSecLastToken, "DYN_SARAM") == 0) {
+ 				segId = 1;
+ 			} else {
+-				if (CSL_Strcmp(szSecLastToken,
++                               if (strcmp(szSecLastToken,
+ 				   "DYN_EXTERNAL") == 0) {
+ 					segId = 2;
+ 				}
+diff --git a/drivers/dsp/bridge/rmgr/dbdcd.c b/drivers/dsp/bridge/rmgr/dbdcd.c
+index 928555f..25040d2 100644
+--- a/drivers/dsp/bridge/rmgr/dbdcd.c
++++ b/drivers/dsp/bridge/rmgr/dbdcd.c
+@@ -50,7 +50,7 @@
+  *! 11-Jan-2001 jeh Changes to DCD_GetObjectDef to match node.cdb, proc.cdb.
+  *! 12-Dec-2000 kc: Added DCD_AutoUnregister. MSGNODE, DAISNODE added in
+  *!                 GetAttrsFromBuf
+- *! 22-Nov-2000 kc: Replaced sprintf() calls with CSL_Strncat.
++ *! 22-Nov-2000 kc: Replaced sprintf() calls with strncat.
+  *! 09-Nov-2000 kc: Optimized DCD module.
+  *! 30-Oct-2000 kc: Added DCD_AutoRegister function; changed local var. names.
+  *! 29-Sep-2000 kc: Added code review changes (src/reviews/dcd_reviews.txt).
+@@ -318,15 +318,15 @@ DSP_STATUS DCD_EnumerateObject(IN s32 cIndex, IN enum DSP_DCDOBJTYPE objType,
+ 		 * Pre-determine final key length. It's length of DCD_REGKEY +
+ 		 *  "_\0" + length of szObjType string + terminating NULL.
+ 		 */
+-		dwKeyLen = CSL_Strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
++               dwKeyLen = strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
+ 		DBC_Assert(dwKeyLen < REG_MAXREGPATHLENGTH);
+ 
+ 		/* Create proper REG key; concatenate DCD_REGKEY with
+ 		 * objType. */
+-		CSL_Strcpyn(szRegKey, DCD_REGKEY, CSL_Strlen(DCD_REGKEY) + 1);
+-		if ((CSL_Strlen(szRegKey) + CSL_Strlen("_\0")) <
++               strncpy(szRegKey, DCD_REGKEY, strlen(DCD_REGKEY) + 1);
++               if ((strlen(szRegKey) + strlen("_\0")) <
+ 		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, "_\0", 2);
++                       strncat(szRegKey, "_\0", 2);
+ 		} else {
+ 			status = DSP_EFAIL;
+ 		}
+@@ -340,10 +340,10 @@ DSP_STATUS DCD_EnumerateObject(IN s32 cIndex, IN enum DSP_DCDOBJTYPE objType,
+ 			status = DSP_EFAIL;
+ 		} else {
+ 			status = DSP_SOK;
+-			if ((CSL_Strlen(szRegKey) + CSL_Strlen(szObjType)) <
++                       if ((strlen(szRegKey) + strlen(szObjType)) <
+ 			   REG_MAXREGPATHLENGTH) {
+-				CSL_Strncat(szRegKey, szObjType,
+-					   CSL_Strlen(szObjType) + 1);
++                               strncat(szRegKey, szObjType,
++                                          strlen(szObjType) + 1);
+ 			} else {
+ 				status = DSP_EFAIL;
+ 			}
+@@ -501,13 +501,13 @@ DSP_STATUS DCD_GetObjectDef(IN struct DCD_MANAGER *hDcdMgr,
+ 	}
+ 	 /* Pre-determine final key length. It's length of DCD_REGKEY +
+ 	 *  "_\0" + length of szObjType string + terminating NULL */
+-	dwKeyLen = CSL_Strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
++       dwKeyLen = strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
+ 	DBC_Assert(dwKeyLen < REG_MAXREGPATHLENGTH);
+ 	/* Create proper REG key; concatenate DCD_REGKEY with objType. */
+-	CSL_Strcpyn(szRegKey, DCD_REGKEY, CSL_Strlen(DCD_REGKEY) + 1);
++       strncpy(szRegKey, DCD_REGKEY, strlen(DCD_REGKEY) + 1);
+ 
+-	if ((CSL_Strlen(szRegKey) + CSL_Strlen("_\0")) < REG_MAXREGPATHLENGTH)
+-		CSL_Strncat(szRegKey, "_\0", 2);
++       if ((strlen(szRegKey) + strlen("_\0")) < REG_MAXREGPATHLENGTH)
++               strncat(szRegKey, "_\0", 2);
+ 	else
+ 		status = DSP_EFAIL;
+ 
+@@ -517,22 +517,20 @@ DSP_STATUS DCD_GetObjectDef(IN struct DCD_MANAGER *hDcdMgr,
+ 	} else {
+ 		status = DSP_SOK;
+ 
+-		if ((CSL_Strlen(szRegKey) + CSL_Strlen(szObjType)) <
++               if ((strlen(szRegKey) + strlen(szObjType)) <
+ 		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szObjType,
+-				   CSL_Strlen(szObjType) + 1);
++                       strncat(szRegKey, szObjType, strlen(szObjType) + 1);
+ 		} else {
+ 			status = DSP_EFAIL;
+ 		}
+ 		/* Create UUID value to set in registry. */
+ 		UUID_UuidToString(pObjUuid, szUuid, MAXUUIDLEN);
+ 
+-		if ((CSL_Strlen(szRegKey) + MAXUUIDLEN) <
+-		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szUuid, MAXUUIDLEN);
+-		} else {
++               if ((strlen(szRegKey) + MAXUUIDLEN) < REG_MAXREGPATHLENGTH)
++                       strncat(szRegKey, szUuid, MAXUUIDLEN);
++               else
+ 			status = DSP_EFAIL;
+-		}
++
+ 		/* Retrieve paths from the registry based on struct DSP_UUID */
+ 		dwBufSize = REG_MAXREGPATHLENGTH;
+ 	}
+@@ -555,12 +553,12 @@ DSP_STATUS DCD_GetObjectDef(IN struct DCD_MANAGER *hDcdMgr,
+ 		goto func_end;
+ 	}
+ 	/* Ensure szUuid + 1 is not greater than sizeof szSectName. */
+-	DBC_Assert((CSL_Strlen(szUuid) + 1) < sizeof(szSectName));
++       DBC_Assert((strlen(szUuid) + 1) < sizeof(szSectName));
+ 	/* Create section name based on node UUID. A period is
+ 	 * pre-pended to the UUID string to form the section name.
+ 	 * I.e. ".24BC8D90_BB45_11d4_B756_006008BDB66F" */
+-	CSL_Strcpyn(szSectName, ".", 2);
+-	CSL_Strncat(szSectName, szUuid, CSL_Strlen(szUuid));
++       strncpy(szSectName, ".", 2);
++       strncat(szSectName, szUuid, strlen(szUuid));
+ 	/* Get section information. */
+ 	status = COD_GetSection(lib, szSectName, &ulAddr, &ulLen);
+ 	if (DSP_FAILED(status)) {
+@@ -574,7 +572,7 @@ DSP_STATUS DCD_GetObjectDef(IN struct DCD_MANAGER *hDcdMgr,
+ #ifdef _DB_TIOMAP
+ 	pTempCoffBuf = MEM_Calloc(ulLen + 4, MEM_PAGED);
+ 
+-	if (CSL_Strstr(szRegData, "iva") == NULL) {
++       if (strstr(szRegData, "iva") == NULL) {
+ 		/* Locate section by objectID and read its content. */
+ 		status = COD_ReadSection(lib, szSectName, pszCoffBuf, ulLen);
+ 	} else {
+@@ -587,7 +585,7 @@ DSP_STATUS DCD_GetObjectDef(IN struct DCD_MANAGER *hDcdMgr,
+ #endif
+ 	if (DSP_SUCCEEDED(status)) {
+ 		/* Compres DSP buffer to conform to PC format. */
+-		if (CSL_Strstr(szRegData, "iva") == NULL) {
++               if (strstr(szRegData, "iva") == NULL) {
+ 			CompressBuf(pszCoffBuf, ulLen, DSPWORDSIZE);
+ 		} else {
+ 			CompressBuf(pszCoffBuf, ulLen, 1);
+@@ -775,12 +773,12 @@ DSP_STATUS DCD_GetLibraryName(IN struct DCD_MANAGER *hDcdMgr,
+ 	 *  Pre-determine final key length. It's length of DCD_REGKEY +
+ 	 *  "_\0" + length of szObjType string + terminating NULL.
+ 	 */
+-	dwKeyLen = CSL_Strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
++       dwKeyLen = strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
+ 	DBC_Assert(dwKeyLen < REG_MAXREGPATHLENGTH);
+ 	/* Create proper REG key; concatenate DCD_REGKEY with objType. */
+-	CSL_Strcpyn(szRegKey, DCD_REGKEY, CSL_Strlen(DCD_REGKEY) + 1);
+-	if ((CSL_Strlen(szRegKey) + CSL_Strlen("_\0")) < REG_MAXREGPATHLENGTH)
+-		CSL_Strncat(szRegKey, "_\0", 2);
++       strncpy(szRegKey, DCD_REGKEY, strlen(DCD_REGKEY) + 1);
++       if ((strlen(szRegKey) + strlen("_\0")) < REG_MAXREGPATHLENGTH)
++               strncat(szRegKey, "_\0", 2);
+ 	else
+ 		status = DSP_EFAIL;
+ 
+@@ -809,18 +807,17 @@ DSP_STATUS DCD_GetLibraryName(IN struct DCD_MANAGER *hDcdMgr,
+ 		status = DSP_EFAIL;
+ 	} else {
+ 		status = DSP_SOK;
+-		if ((CSL_Strlen(szRegKey) + CSL_Strlen(szObjType))
++               if ((strlen(szRegKey) + strlen(szObjType))
+ 		   < REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szObjType,
+-				   CSL_Strlen(szObjType) + 1);
++                       strncat(szRegKey, szObjType, strlen(szObjType) + 1);
+ 		} else {
+ 			status = DSP_EFAIL;
+ 		}
+ 		/* Create UUID value to find match in registry. */
+ 		UUID_UuidToString(pUuid, szUuid, MAXUUIDLEN);
+-		if ((CSL_Strlen(szRegKey) + MAXUUIDLEN) <
++               if ((strlen(szRegKey) + MAXUUIDLEN) <
+ 		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szUuid, MAXUUIDLEN);
++                       strncat(szRegKey, szUuid, MAXUUIDLEN);
+ 		} else {
+ 			status = DSP_EFAIL;
+ 		}
+@@ -835,28 +832,26 @@ DSP_STATUS DCD_GetLibraryName(IN struct DCD_MANAGER *hDcdMgr,
+ 		if (fPhaseSplit)
+ 			*fPhaseSplit = false;
+ 
+-		CSL_Strcpyn(szRegKey, DCD_REGKEY, CSL_Strlen(DCD_REGKEY) + 1);
+-		if ((CSL_Strlen(szRegKey) + CSL_Strlen("_\0")) <
++               strncpy(szRegKey, DCD_REGKEY, strlen(DCD_REGKEY) + 1);
++               if ((strlen(szRegKey) + strlen("_\0")) <
+ 		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, "_\0", 2);
++                       strncat(szRegKey, "_\0", 2);
+ 		} else {
+ 			status = DSP_EFAIL;
+ 		}
+ 		sprintf(szObjType, "%d", DSP_DCDLIBRARYTYPE);
+-		if ((CSL_Strlen(szRegKey) + CSL_Strlen(szObjType))
++               if ((strlen(szRegKey) + strlen(szObjType))
+ 		   < REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szObjType,
+-				   CSL_Strlen(szObjType) + 1);
++                       strncat(szRegKey, szObjType, strlen(szObjType) + 1);
+ 		} else {
+ 			status = DSP_EFAIL;
+ 		}
+ 		UUID_UuidToString(pUuid, szUuid, MAXUUIDLEN);
+-		if ((CSL_Strlen(szRegKey) + MAXUUIDLEN) <
+-		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szUuid, MAXUUIDLEN);
+-		} else {
++               if ((strlen(szRegKey) + MAXUUIDLEN) < REG_MAXREGPATHLENGTH)
++                       strncat(szRegKey, szUuid, MAXUUIDLEN);
++               else
+ 			status = DSP_EFAIL;
+-		}
++
+ 		status = REG_GetValue(NULL, szRegKey, szRegKey,
+ 					(u8 *)pstrLibName, pdwSize);
+ 	}
+@@ -947,12 +942,12 @@ DSP_STATUS DCD_RegisterObject(IN struct DSP_UUID *pUuid,
+ 	 * Pre-determine final key length. It's length of DCD_REGKEY +
+ 	 *  "_\0" + length of szObjType string + terminating NULL.
+ 	 */
+-	dwKeyLen = CSL_Strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
++       dwKeyLen = strlen(DCD_REGKEY) + 1 + sizeof(szObjType) + 1;
+ 	DBC_Assert(dwKeyLen < REG_MAXREGPATHLENGTH);
+ 	/* Create proper REG key; concatenate DCD_REGKEY with objType. */
+-	CSL_Strcpyn(szRegKey, DCD_REGKEY, CSL_Strlen(DCD_REGKEY) + 1);
+-	if ((CSL_Strlen(szRegKey) + CSL_Strlen("_\0")) < REG_MAXREGPATHLENGTH)
+-		CSL_Strncat(szRegKey, "_\0", 2);
++       strncpy(szRegKey, DCD_REGKEY, strlen(DCD_REGKEY) + 1);
++       if ((strlen(szRegKey) + strlen("_\0")) < REG_MAXREGPATHLENGTH)
++               strncat(szRegKey, "_\0", 2);
+ 	else
+ 		status = DSP_EFAIL;
+ 
+@@ -961,21 +956,19 @@ DSP_STATUS DCD_RegisterObject(IN struct DSP_UUID *pUuid,
+ 		status = DSP_EFAIL;
+ 	} else {
+ 		status = DSP_SOK;
+-		if ((CSL_Strlen(szRegKey) + CSL_Strlen(szObjType)) <
++               if ((strlen(szRegKey) + strlen(szObjType)) <
+ 		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szObjType,
+-				   CSL_Strlen(szObjType) + 1);
++                       strncat(szRegKey, szObjType, strlen(szObjType) + 1);
+ 		} else {
+ 			status = DSP_EFAIL;
+ 		}
+ 		/* Create UUID value to set in registry. */
+ 		UUID_UuidToString(pUuid, szUuid, MAXUUIDLEN);
+-		if ((CSL_Strlen(szRegKey) + MAXUUIDLEN) <
+-		   REG_MAXREGPATHLENGTH) {
+-			CSL_Strncat(szRegKey, szUuid, MAXUUIDLEN);
+-		} else {
++               if ((strlen(szRegKey) + MAXUUIDLEN) < REG_MAXREGPATHLENGTH)
++                       strncat(szRegKey, szUuid, MAXUUIDLEN);
++               else
+ 			status = DSP_EFAIL;
+-		}
++
+ 	}
+ 
+ 	if (DSP_SUCCEEDED(status)) {
+@@ -986,7 +979,7 @@ DSP_STATUS DCD_RegisterObject(IN struct DSP_UUID *pUuid,
+ 		if (pszPathName) {
+ 			/* Add new reg value (UUID+objType) with COFF path
+ 			 * info. */
+-			dwPathSize = CSL_Strlen(pszPathName) + 1;
++                       dwPathSize = strlen(pszPathName) + 1;
+ 			status = REG_SetValue(NULL, szRegKey, szRegKey, REG_SZ,
+ 					     (u8 *)pszPathName, dwPathSize);
+ 			GT_3trace(curTrace, GT_6CLASS,
+@@ -1163,11 +1156,12 @@ static DSP_STATUS GetAttrsFromBuf(char *pszBuf, u32 ulBufSize,
+ 		token = CSL_Strtokr(NULL, seps, &pszCur);
+ 
+ 		/* acName */
++               DBC_Require(token);
+ 		cLen = strlen(token);
+ 		if (cLen > DSP_MAXNAMELEN - 1)
+ 			cLen = DSP_MAXNAMELEN - 1;
+ 
+-		CSL_Strcpyn(pGenObj->objData.nodeObj.ndbProps.acName,
++               strncpy(pGenObj->objData.nodeObj.ndbProps.acName,
+ 			   token, cLen);
+ 		pGenObj->objData.nodeObj.ndbProps.acName[cLen] = '\0';
+ 		token = CSL_Strtokr(NULL, seps, &pszCur);
+@@ -1246,6 +1240,7 @@ static DSP_STATUS GetAttrsFromBuf(char *pszBuf, u32 ulBufSize,
+ 		token = CSL_Strtokr(NULL, seps, &pszCur);
+ 
+ 		/* char * pstrCreatePhaseFxn */
++               DBC_Require(token);
+ 		cLen = strlen(token);
+ 		pGenObj->objData.nodeObj.pstrCreatePhaseFxn =
+ 			MEM_Calloc(cLen + 1, MEM_PAGED);
+@@ -1255,6 +1250,7 @@ static DSP_STATUS GetAttrsFromBuf(char *pszBuf, u32 ulBufSize,
+ 		token = CSL_Strtokr(NULL, seps, &pszCur);
+ 
+ 		/* char * pstrExecutePhaseFxn */
++               DBC_Require(token);
+ 		cLen = strlen(token);
+ 		pGenObj->objData.nodeObj.pstrExecutePhaseFxn =
+ 			 MEM_Calloc(cLen + 1, MEM_PAGED);
+@@ -1264,6 +1260,7 @@ static DSP_STATUS GetAttrsFromBuf(char *pszBuf, u32 ulBufSize,
+ 		token = CSL_Strtokr(NULL, seps, &pszCur);
+ 
+ 		/* char * pstrDeletePhaseFxn */
++               DBC_Require(token);
+ 		cLen = strlen(token);
+ 		pGenObj->objData.nodeObj.pstrDeletePhaseFxn =
+ 			MEM_Calloc(cLen + 1, MEM_PAGED);
+diff --git a/drivers/dsp/bridge/rmgr/disp.c b/drivers/dsp/bridge/rmgr/disp.c
+index 759cc5c..f9b312a 100644
+--- a/drivers/dsp/bridge/rmgr/disp.c
++++ b/drivers/dsp/bridge/rmgr/disp.c
+@@ -797,7 +797,8 @@ static DSP_STATUS FillStreamDef(RMS_WORD *pdwBuf, u32 *ptotal, u32 offset,
+ 		 *  1 from total.
+ 		 */
+ 		total += sizeof(struct RMS_StrmDef) / sizeof(RMS_WORD) - 1;
+-		dwLength = CSL_Strlen(strmDef.szDevice) + 1;
++               DBC_Require(strmDef.szDevice);
++               dwLength = strlen(strmDef.szDevice) + 1;
+ 
+ 		/* Number of RMS_WORDS needed to hold device name */
+ 		uNameLen = (dwLength + uCharsInRMSWord - 1) / uCharsInRMSWord;
+diff --git a/drivers/dsp/bridge/rmgr/drv.c b/drivers/dsp/bridge/rmgr/drv.c
+index 515a237..afc0326 100644
+--- a/drivers/dsp/bridge/rmgr/drv.c
++++ b/drivers/dsp/bridge/rmgr/drv.c
+@@ -1507,7 +1507,7 @@ DSP_STATUS DRV_RequestResources(u32 dwContext, u32 *pDevNodeString)
+ 		pszdevNode = MEM_Calloc(sizeof(struct DRV_EXT), MEM_NONPAGED);
+ 		if (pszdevNode) {
+ 			LST_InitElem(&pszdevNode->link);
+-			CSL_Strcpyn((char *) pszdevNode->szString,
++                       strncpy((char *) pszdevNode->szString,
+ 				 (char *)dwContext, MAXREGPATHLENGTH);
+ 			/* Update the Driver Object List */
+ 			*pDevNodeString = (u32)pszdevNode->szString;
+@@ -1526,7 +1526,7 @@ DSP_STATUS DRV_RequestResources(u32 dwContext, u32 *pDevNodeString)
+ 		*pDevNodeString = 0;
+ 	}
+ 
+-	if (!(CSL_Strcmp((char *) dwContext, "TIOMAP1510"))) {
++       if (!(strcmp((char *) dwContext, "TIOMAP1510"))) {
+ 		GT_0trace(curTrace, GT_1CLASS,
+ 			  " Allocating resources for UMA \n");
+ 		status = RequestBridgeResourcesDSP(dwContext, DRV_ASSIGN);
+@@ -1559,7 +1559,7 @@ DSP_STATUS DRV_ReleaseResources(u32 dwContext, struct DRV_OBJECT *hDrvObject)
+ 
+ 	GT_0trace(curTrace, GT_ENTER, "Entering DRV_Release Resources\n");
+ 
+-	if (!(CSL_Strcmp((char *)((struct DRV_EXT *)dwContext)->szString,
++       if (!(strcmp((char *)((struct DRV_EXT *)dwContext)->szString,
+ 	   "TIOMAP1510"))) {
+ 		GT_0trace(curTrace, GT_1CLASS,
+ 			 " Releasing DSP-Bridge resources \n");
+diff --git a/drivers/dsp/bridge/rmgr/drv_interface.c b/drivers/dsp/bridge/rmgr/drv_interface.c
+index 3bd831b..e0642f3 100644
+--- a/drivers/dsp/bridge/rmgr/drv_interface.c
++++ b/drivers/dsp/bridge/rmgr/drv_interface.c
+@@ -441,7 +441,7 @@ static int __init bridge_init(void)
+ 		REG_SetValue(NULL, NULL, AUTOSTART, REG_DWORD, (u8 *)&temp,
+ 			    sizeof(temp));
+ 		REG_SetValue(NULL, NULL, DEFEXEC, REG_SZ, (u8 *)base_img,
+-			    CSL_Strlen(base_img) + 1);
++                           strlen(base_img) + 1);
+ 	} else {
+ 		temp = false;
+ 		REG_SetValue(NULL, NULL, AUTOSTART, REG_DWORD, (u8 *)&temp,
+@@ -449,7 +449,7 @@ static int __init bridge_init(void)
+ 		REG_SetValue(NULL, NULL, DEFEXEC, REG_SZ, (u8 *) "\0", (u32)2);
+ 	}
+ 	REG_SetValue(NULL, NULL, NUMPROCS, REG_SZ, (u8 *) num_procs,
+-		    CSL_Strlen(num_procs) + 1);
++                   strlen(num_procs) + 1);
+ 
+ 	if (shm_size >= 0x10000) {	/* 64 KB */
+ 		initStatus = REG_SetValue(NULL, NULL, SHMSIZE, REG_DWORD,
+diff --git a/drivers/dsp/bridge/rmgr/nldr.c b/drivers/dsp/bridge/rmgr/nldr.c
+index fcc9a2c..bff18d6 100644
+--- a/drivers/dsp/bridge/rmgr/nldr.c
++++ b/drivers/dsp/bridge/rmgr/nldr.c
+@@ -186,7 +186,7 @@
+ 	((uuid1).usData3 == (uuid2).usData3) && \
+ 	((uuid1).ucData4 == (uuid2).ucData4) && \
+ 	((uuid1).ucData5 == (uuid2).ucData5) && \
+-	(CSL_Strncmp((void *)(uuid1).ucData6, (void *)(uuid2).ucData6, 6)) == 0)
++       (strncmp((void *)(uuid1).ucData6, (void *)(uuid2).ucData6, 6)) == 0)
+ 
+     /*
+      *  ======== MemInfo ========
+@@ -1040,8 +1040,9 @@ static DSP_STATUS AddOvlyInfo(void *handle, struct DBLL_SectInfo *sectInfo,
+ 	/* Find the node it belongs to */
+ 	for (i = 0; i < hNldr->nOvlyNodes; i++) {
+ 		pNodeName = hNldr->ovlyTable[i].pNodeName;
+-		if (CSL_Strncmp(pNodeName, pSectName + 1,
+-				CSL_Strlen(pNodeName)) == 0) {
++               DBC_Require(pNodeName);
++               if (strncmp(pNodeName, pSectName + 1,
++                               strlen(pNodeName)) == 0) {
+ 				/* Found the node */
+ 				break;
+ 		}
+@@ -1055,14 +1056,14 @@ static DSP_STATUS AddOvlyInfo(void *handle, struct DBLL_SectInfo *sectInfo,
+ 
+ 	if (*pch) {
+ 		pch++;	/* Skip over the ':' */
+-		if (CSL_Strncmp(pch, PCREATE, CSL_Strlen(PCREATE)) == 0) {
++               if (strncmp(pch, PCREATE, strlen(PCREATE)) == 0) {
+ 			status = AddOvlySect(hNldr, &hNldr->ovlyTable[i].
+ 				pCreateSects, sectInfo, &fExists, addr, nBytes);
+ 			if (DSP_SUCCEEDED(status) && !fExists)
+ 				hNldr->ovlyTable[i].nCreateSects++;
+ 
+ 		} else
+-		if (CSL_Strncmp(pch, PDELETE, CSL_Strlen(PDELETE)) == 0) {
++               if (strncmp(pch, PDELETE, strlen(PDELETE)) == 0) {
+ 			status = AddOvlySect(hNldr, &hNldr->ovlyTable[i].
+ 					    pDeleteSects, sectInfo, &fExists,
+ 					    addr, nBytes);
+@@ -1070,7 +1071,7 @@ static DSP_STATUS AddOvlyInfo(void *handle, struct DBLL_SectInfo *sectInfo,
+ 				hNldr->ovlyTable[i].nDeleteSects++;
+ 
+ 		} else
+-		if (CSL_Strncmp(pch, PEXECUTE, CSL_Strlen(PEXECUTE)) == 0) {
++               if (strncmp(pch, PEXECUTE, strlen(PEXECUTE)) == 0) {
+ 			status = AddOvlySect(hNldr, &hNldr->ovlyTable[i].
+ 					    pExecuteSects, sectInfo, &fExists,
+ 					    addr, nBytes);
+@@ -1120,14 +1121,14 @@ static DSP_STATUS AddOvlyNode(struct DSP_UUID *pUuid,
+ 		} else {
+ 			/* Add node to table */
+ 			hNldr->ovlyTable[hNldr->nNode].uuid = *pUuid;
+-			uLen = CSL_Strlen(objDef.objData.nodeObj.ndbProps.
+-					 acName);
++                       DBC_Require(objDef.objData.nodeObj.ndbProps.acName);
++                       uLen = strlen(objDef.objData.nodeObj.ndbProps.acName);
+ 			pNodeName = objDef.objData.nodeObj.ndbProps.acName;
+ 			pBuf = MEM_Calloc(uLen + 1, MEM_PAGED);
+ 			if (pBuf == NULL) {
+ 				status = DSP_EMEMORY;
+ 			} else {
+-				CSL_Strcpyn(pBuf, pNodeName, uLen);
++                               strncpy(pBuf, pNodeName, uLen);
+ 				hNldr->ovlyTable[hNldr->nNode].pNodeName = pBuf;
+ 				hNldr->nNode++;
+ 			}
+diff --git a/drivers/dsp/bridge/rmgr/node.c b/drivers/dsp/bridge/rmgr/node.c
+index f760c0f..3ce1c32 100644
+--- a/drivers/dsp/bridge/rmgr/node.c
++++ b/drivers/dsp/bridge/rmgr/node.c
+@@ -689,9 +689,9 @@ func_cont2:
+ 	   (char *)pNode->dcdProps.objData.nodeObj.ndbProps.uStackSegName !=
+ 	   NULL) {
+ 		label = MEM_Calloc(sizeof(STACKSEGLABEL)+1, MEM_PAGED);
+-		CSL_Strcpyn(label, STACKSEGLABEL, sizeof(STACKSEGLABEL)+1);
++               strncpy(label, STACKSEGLABEL, sizeof(STACKSEGLABEL)+1);
+ 
+-		if (CSL_Strcmp((char *)pNode->dcdProps.objData.nodeObj.
++               if (strcmp((char *)pNode->dcdProps.objData.nodeObj.
+ 				     ndbProps.uStackSegName, label) == 0) {
+ 			status = hNodeMgr->nldrFxns.pfnGetFxnAddr(pNode->
+ 				 hNldrNode, "DYNEXT_BEG", &dynextBase);
+@@ -1144,13 +1144,13 @@ DSP_STATUS NODE_Connect(struct NODE_OBJECT *hNode1, u32 uStream1,
+ 			} else {
+ 				/* Copy "/dbpipe<pipId>" name to device names */
+ 				pstrDevName1 = pOutput->szDevice;
+-				CSL_Strcpyn(pstrDevName1, PIPEPREFIX,
++                               strncpy(pstrDevName1, PIPEPREFIX,
+ 					   sizeof(PIPEPREFIX));
+-				pstrDevName1 += CSL_Strlen(pstrDevName1);
++                               pstrDevName1 += strlen(pstrDevName1);
+ 				CSL_NumToAscii(pstrDevName1, pipeId);
+ 				pstrDevName1 = pOutput->szDevice;
+ 				pstrDevName2 = pInput->szDevice;
+-				CSL_Strcpyn(pstrDevName2, pstrDevName1,
++                               strncpy(pstrDevName2, pstrDevName1,
+ 					   PIPENAMELEN);
+ 			}
+ 		}
+@@ -1225,9 +1225,8 @@ func_cont2:
+ 				hNode1->outputs[uStream1].devId = chnlId;
+ 				pOutput->szDevice = pstrDevName;
+ 			}
+-			CSL_Strcpyn(pstrDevName, HOSTPREFIX,
+-				   sizeof(HOSTPREFIX));
+-			pstrDevName += CSL_Strlen(pstrDevName);
++                       strncpy(pstrDevName, HOSTPREFIX, sizeof(HOSTPREFIX));
++                       pstrDevName += strlen(pstrDevName);
+ 			CSL_NumToAscii(pstrDevName, chnlId);
+ 		}
+ 	}
+@@ -1249,7 +1248,7 @@ func_cont2:
+ 		}
+ 		/* Set up create args */
+ 		pStream->type = DEVICECONNECT;
+-		dwLength = CSL_Strlen(hDevNode->pstrDevName);
++               dwLength = strlen(hDevNode->pstrDevName);
+ 		if (pConnParam != NULL) {
+ 			pstrmDef->szDevice = MEM_Calloc(dwLength + 1 +
+ 						(u32) pConnParam->cbData,
+@@ -1262,10 +1261,10 @@ func_cont2:
+ 			status = DSP_EMEMORY;
+ 		} else {
+ 			/* Copy device name */
+-			CSL_Strcpyn(pstrmDef->szDevice, hDevNode->pstrDevName,
++                       strncpy(pstrmDef->szDevice, hDevNode->pstrDevName,
+ 				   dwLength);
+ 			if (pConnParam != NULL) {
+-				CSL_Strncat(pstrmDef->szDevice,
++                               strncat(pstrmDef->szDevice,
+ 					   (char *)pConnParam->cData,
+ 					   (u32)pConnParam->cbData);
+ 			}
+@@ -3136,13 +3135,14 @@ static DSP_STATUS GetNodeProps(struct DCD_MANAGER *hDcdMgr,
+ #endif
+ 		} else {
+ 			/* Copy device name */
+-			uLen = CSL_Strlen(pndbProps->acName);
++                       DBC_Require(pndbProps->acName);
++                       uLen = strlen(pndbProps->acName);
+ 			DBC_Assert(uLen < MAXDEVNAMELEN);
+ 			hNode->pstrDevName = MEM_Calloc(uLen + 1, MEM_PAGED);
+ 			if (hNode->pstrDevName == NULL) {
+ 				status = DSP_EMEMORY;
+ 			} else {
+-				CSL_Strcpyn(hNode->pstrDevName,
++                               strncpy(hNode->pstrDevName,
+ 					   pndbProps->acName, uLen);
+ 			}
+ 		}
+diff --git a/drivers/dsp/bridge/rmgr/proc.c b/drivers/dsp/bridge/rmgr/proc.c
+index 86a2c05..5f260ec 100644
+--- a/drivers/dsp/bridge/rmgr/proc.c
++++ b/drivers/dsp/bridge/rmgr/proc.c
+@@ -416,8 +416,8 @@ static DSP_STATUS GetExecFile(struct CFG_DEVNODE *hDevNode,
+ 		return CFG_GetExecFile(hDevNode, size, execFile);
+ 	} else if (devType == IVA_UNIT) {
+ 		if (iva_img) {
+-			len = CSL_Strlen(iva_img);
+-			CSL_Strcpyn(execFile, iva_img, len + 1);
++                       len = strlen(iva_img);
++                       strncpy(execFile, iva_img, len + 1);
+ 			return DSP_SOK;
+ 		}
+ 	}
+@@ -1148,13 +1148,13 @@ DSP_STATUS PROC_Load(DSP_HPROCESSOR hProcessor, IN CONST s32 iArgc,
+ 				DBC_Assert(pProcObject->g_pszLastCoff == NULL);
+ 				/* Allocate memory for pszLastCoff */
+ 				pProcObject->g_pszLastCoff = MEM_Calloc(
+-					(CSL_Strlen((char *)aArgv[0]) + 1),
++                                       (strlen((char *)aArgv[0]) + 1),
+ 					MEM_PAGED);
+ 				/* If memory allocated, save COFF file name*/
+ 				if (pProcObject->g_pszLastCoff) {
+-					CSL_Strcpyn(pProcObject->g_pszLastCoff,
++                                       strncpy(pProcObject->g_pszLastCoff,
+ 						(char *)aArgv[0],
+-						(CSL_Strlen((char *)aArgv[0])
++                                               (strlen((char *)aArgv[0])
+ 						+ 1));
+ 				}
+ 			}
+diff --git a/drivers/dsp/bridge/services/cfg.c b/drivers/dsp/bridge/services/cfg.c
+index 6f16f98..14a1ff6 100644
+--- a/drivers/dsp/bridge/services/cfg.c
++++ b/drivers/dsp/bridge/services/cfg.c
+@@ -46,7 +46,7 @@
+  *! 03-Feb-2000 rr: Module init/exit is handled by SERVICES Init/Exit.
+  *!		    GT Changes.
+  *! 31-Jan-2000 rr: Comments and bugfixes:  modified after code review
+- *! 07-Jan-2000 rr: CFG_GetBoardName Ensure class checks CSL_Strlen of the
++ *! 07-Jan-2000 rr: CFG_GetBoardName Ensure class checks strlen of the
+  *!                 read value from the registry against the passed in BufSize;
+  *!                 CFG_GetZLFile,CFG_GetWMDFileName and
+  *!                 CFG_GetExecFile also modified same way.
+@@ -173,7 +173,7 @@ DSP_STATUS CFG_GetDevObject(struct CFG_DEVNODE *hDevNode, OUT u32 *pdwValue)
+ 	if (DSP_SUCCEEDED(status)) {
+ 
+ 		/* check the device string and then call the REG_SetValue*/
+-		if (!(CSL_Strcmp((char *)((struct DRV_EXT *)hDevNode)->szString,
++               if (!(strcmp((char *)((struct DRV_EXT *)hDevNode)->szString,
+ 							"TIOMAP1510"))) {
+ 			GT_0trace(CFG_debugMask, GT_1CLASS,
+ 				  "Fetching DSP Device from "
+@@ -281,8 +281,7 @@ DSP_STATUS CFG_GetExecFile(struct CFG_DEVNODE *hDevNode, u32 ulBufSize,
+ 	}
+ #endif
+ 	DBC_Ensure(((status == DSP_SOK) &&
+-		  (CSL_Strlen(pstrExecFile) <= ulBufSize))
+-		  || (status != DSP_SOK));
++                 (strlen(pstrExecFile) <= ulBufSize)) || (status != DSP_SOK));
+ 	return status;
+ }
+ 
+@@ -418,7 +417,7 @@ DSP_STATUS CFG_SetDevObject(struct CFG_DEVNODE *hDevNode, u32 dwValue)
+ 	if (DSP_SUCCEEDED(status)) {
+ 		/* Store the WCD device object in the Registry */
+ 
+-		if (!(CSL_Strcmp((char *)hDevNode, "TIOMAP1510"))) {
++               if (!(strcmp((char *)hDevNode, "TIOMAP1510"))) {
+ 			GT_0trace(CFG_debugMask, GT_1CLASS,
+ 				  "Registering the DSP Device \n");
+ 			status = REG_SetValue(NULL, (char *)hDevNode,
+diff --git a/drivers/dsp/bridge/services/csl.c b/drivers/dsp/bridge/services/csl.c
+index a8b2ec8..f8e87f3 100644
+--- a/drivers/dsp/bridge/services/csl.c
++++ b/drivers/dsp/bridge/services/csl.c
+@@ -25,12 +25,6 @@
+  *      CSL_Exit
+  *      CSL_Init
+  *      CSL_NumToAscii
+- *      CSL_Strcmp
+- *      CSL_Strstr
+- *      CSL_Strcpyn
+- *      CSL_Strlen
+- *      CSL_Strncat
+- *      CSL_Strncmp
+  *      CSL_Strtokr
+  *
+  *! Revision History:
+@@ -80,20 +74,6 @@ static struct GT_Mask CSL_DebugMask = { NULL, NULL };	/* GT trace var. */
+ #endif
+ 
+ /*
+- *  ======= CSL_Atoi =======
+- *  Purpose:
+- *      Convert a string to an integer
+- */
+-s32 CSL_Atoi(IN CONST char *ptstrSrc)
+-{
+-	char *end_position;
+-
+-	DBC_Require(ptstrSrc);
+-
+-	return simple_strtol(ptstrSrc, &end_position, 10);
+-}
+-
+-/*
+  *  ======== CSL_Exit ========
+  *  Purpose:
+  *      Discontinue usage of the CSL module.
+@@ -145,89 +125,8 @@ void CSL_NumToAscii(OUT char *pstrNumber, u32 dwNum)
+ 	}
+ }
+ 
+-/*
+- *  ======== CSL_Strcmp ========
+- *  Purpose:
+- *      Compare 2 ASCII strings.  Works the same was as stdio's strcmp.
+- */
+-s32 CSL_Strcmp(IN CONST char *pstrStr1, IN CONST char *pstrStr2)
+-{
+-	return strcmp(pstrStr1, pstrStr2);
+-}
+-
+-/*
+- *  ======== CSL_Strstr ========
+- *  Purpose:
+- *      Find substring in a stringn.
+- *  Parameters:
+- *      haystack:   Ptr to string1.
+- *      needle:    Ptr to substring to catch.
+- *  Returns:
+- *      Ptr to first char matching the substring in the main string.
+- *  Requires:
+- *      CSL initialized.
+- *      haystack is valid.
+- *      needle is valid.
+- *  Ensures:
+- */
+ 
+-char *CSL_Strstr(IN CONST char *haystack, IN CONST char *needle)
+-{
+-	return strstr(haystack, needle);
+-}
+ 
+-/*
+- *  ======== CSL_Strcpyn ========
+- *  Purpose:
+- *      Safe strcpy function.
+- */
+-char *CSL_Strcpyn(OUT char *pstrDest, IN CONST char *pstrSrc, u32 cMax)
+-{
+-	return strncpy(pstrDest, pstrSrc, cMax);
+-}
+-
+-/*
+- *  ======== CSL_Strlen ========
+- *  Purpose:
+- *      Determine the length of a null terminated ASCII string.
+- */
+-u32 CSL_Strlen(IN CONST char *pstrSrc)
+-{
+-	CONST char *pStr = pstrSrc;
+-	u32 retVal;
+-
+-	DBC_Require(pstrSrc);
+-
+-	while (*pStr++)
+-		;;
+-
+-	retVal = (u32) (pStr - pstrSrc - 1);
+-	return retVal;
+-}
+-
+-/*
+- *  ======== CSL_Strncat ========
+- *  Purpose:
+- *      Concatenate two strings together
+- */
+-char *CSL_Strncat(IN char *pszDest, IN char *pszSrc, IN u32 dwSize)
+-{
+-
+-	DBC_Require(pszDest && pszSrc);
+-
+-	return strncat(pszDest, pszSrc, dwSize);
+-}
+-
+-/*
+- *  ======== CSL_Strncmp ========
+- *  Purpose:
+- *      Compare at most n characters of two ASCII strings.  Works the same
+- *      way as stdio's strncmp.
+- */
+-s32 CSL_Strncmp(IN CONST char *pstrStr1, IN CONST char *pstrStr2, u32 n)
+-{
+-	return strncmp(pstrStr1, pstrStr2, n);
+-}
+ 
+ /*
+  *  ======= CSL_Strtokr =======
+diff --git a/drivers/dsp/bridge/services/reg.c b/drivers/dsp/bridge/services/reg.c
+index f540944..ed5ce92 100644
+--- a/drivers/dsp/bridge/services/reg.c
++++ b/drivers/dsp/bridge/services/reg.c
+@@ -71,8 +71,8 @@ DSP_STATUS REG_DeleteValue(OPTIONAL IN HANDLE *phKey, IN CONST char *pstrSubkey,
+ 	DSP_STATUS status;
+ 	DBC_Require(pstrSubkey && pstrValue);
+ 	DBC_Require(phKey == NULL);
+-	DBC_Require(CSL_Strlen(pstrSubkey) < REG_MAXREGPATHLENGTH);
+-	DBC_Require(CSL_Strlen(pstrValue) < REG_MAXREGPATHLENGTH);
++       DBC_Require(strlen(pstrSubkey) < REG_MAXREGPATHLENGTH);
++       DBC_Require(strlen(pstrValue) < REG_MAXREGPATHLENGTH);
+ 
+ 	GT_0trace(REG_debugMask, GT_ENTER, "REG_DeleteValue: entered\n");
+ 
+@@ -102,7 +102,7 @@ DSP_STATUS REG_EnumValue(IN HANDLE *phKey, IN u32 dwIndex,
+ 		    pdwDataSize);
+ 	DBC_Require(*pdwValueSize <= REG_MAXREGPATHLENGTH);
+ 	DBC_Require(phKey == NULL);
+-	DBC_Require(CSL_Strlen(pstrKey) < REG_MAXREGPATHLENGTH);
++       DBC_Require(strlen(pstrKey) < REG_MAXREGPATHLENGTH);
+ 
+ 	GT_0trace(REG_debugMask, GT_ENTER, "REG_EnumValue: entered\n");
+ 
+@@ -135,8 +135,8 @@ DSP_STATUS REG_GetValue(OPTIONAL IN HANDLE *phKey, IN CONST char *pstrSubkey,
+ 
+ 	DBC_Require(pstrSubkey && pstrValue && pbData);
+ 	DBC_Require(phKey == NULL);
+-	DBC_Require(CSL_Strlen(pstrSubkey) < REG_MAXREGPATHLENGTH);
+-	DBC_Require(CSL_Strlen(pstrValue) < REG_MAXREGPATHLENGTH);
++       DBC_Require(strlen(pstrSubkey) < REG_MAXREGPATHLENGTH);
++       DBC_Require(strlen(pstrValue) < REG_MAXREGPATHLENGTH);
+ 
+ 	GT_0trace(REG_debugMask, GT_ENTER, "REG_GetValue: entered\n");
+ 
+@@ -181,7 +181,7 @@ DSP_STATUS REG_SetValue(OPTIONAL IN HANDLE *phKey, IN CONST char *pstrSubkey,
+ 	DBC_Require(pstrValue && pbData);
+ 	DBC_Require(phKey == NULL);
+ 	DBC_Require(dwDataSize > 0);
+-	DBC_Require(CSL_Strlen(pstrValue) < REG_MAXREGPATHLENGTH);
++       DBC_Require(strlen(pstrValue) < REG_MAXREGPATHLENGTH);
+ 
+ 	/*  We need to use regsup calls...  */
+ 	/*  ...for now we don't need the key handle or  */
+diff --git a/drivers/dsp/bridge/services/regsup.c b/drivers/dsp/bridge/services/regsup.c
+index f1d2c51..a9a2b01 100644
+--- a/drivers/dsp/bridge/services/regsup.c
++++ b/drivers/dsp/bridge/services/regsup.c
+@@ -164,7 +164,7 @@ DSP_STATUS regsupGetValue(char *valName, void *pBuf, u32 *dataSize)
+ 	/*  Need to search through the entries looking for the right one.  */
+ 	for (i = 0; i < pRegKey->numValueEntries; i++) {
+ 		/*  See if the name matches.  */
+-		if (CSL_Strncmp(pRegKey->values[i].name, valName,
++               if (strncmp(pRegKey->values[i].name, valName,
+ 		    BRIDGE_MAX_NAME_SIZE) == 0) {
+ 
+ 			/*  We have a match!  Copy out the data.  */
+@@ -208,7 +208,7 @@ DSP_STATUS regsupSetValue(char *valName, void *pBuf, u32 dataSize)
+ 	/*  Need to search through the entries looking for the right one.  */
+ 	for (i = 0; i < pRegKey->numValueEntries; i++) {
+ 		/*  See if the name matches.  */
+-		if (CSL_Strncmp(pRegKey->values[i].name, valName,
++               if (strncmp(pRegKey->values[i].name, valName,
+ 		    BRIDGE_MAX_NAME_SIZE) == 0) {
+ 			/*  Make sure the new data size is the same.  */
+ 			if (dataSize != pRegKey->values[i].dataSize) {
+@@ -238,9 +238,8 @@ DSP_STATUS regsupSetValue(char *valName, void *pBuf, u32 dataSize)
+ 		/*  No match, need to make a new entry  */
+ 		/*  First check to see if we can make any more entries.  */
+ 		if (pRegKey->numValueEntries < BRIDGE_MAX_NUM_REG_ENTRIES) {
+-			CSL_Strcpyn(pRegKey->
+-				values[pRegKey->numValueEntries].name, valName,
+-				BRIDGE_MAX_NAME_SIZE);
++                       strncpy(pRegKey->values[pRegKey->numValueEntries].name,
++                               valName, BRIDGE_MAX_NAME_SIZE);
+ 			pRegKey->values[pRegKey->numValueEntries].pData =
+ 					MEM_Alloc(dataSize, MEM_NONPAGED);
+ 			if (pRegKey->values[pRegKey->numValueEntries].pData !=
+@@ -274,22 +273,25 @@ DSP_STATUS regsupEnumValue(IN u32 dwIndex, IN CONST char *pstrKey,
+ {
+ 	DSP_STATUS retVal = REG_E_INVALIDSUBKEY;
+ 	u32 i;
+-	u32 dwKeyLen = CSL_Strlen(pstrKey);
++       u32 dwKeyLen;
+ 	u32 count = 0;
+ 
++       DBC_Require(pstrKey);
++       dwKeyLen = strlen(pstrKey);
++
+ 	/*  Need to search through the entries looking for the right one.  */
+ 	for (i = 0; i < pRegKey->numValueEntries; i++) {
+ 		/*  See if the name matches.  */
+-		if ((CSL_Strncmp(pRegKey->values[i].name, pstrKey,
++               if ((strncmp(pRegKey->values[i].name, pstrKey,
+ 		    dwKeyLen) == 0) && count++ == dwIndex) {
+ 			/*  We have a match!  Copy out the data.  */
+ 			memcpy(pstrData, pRegKey->values[i].pData,
+ 				pRegKey->values[i].dataSize);
+ 			/*  Get the size for the caller.  */
+ 			*pdwDataSize = pRegKey->values[i].dataSize;
+-			*pdwValueSize = CSL_Strlen(&(pRegKey->
++                       *pdwValueSize = strlen(&(pRegKey->
+ 						values[i].name[dwKeyLen]));
+-			CSL_Strcpyn(pstrValue,
++                       strncpy(pstrValue,
+ 				    &(pRegKey->values[i].name[dwKeyLen]),
+ 				    *pdwValueSize + 1);
+ 			GT_3trace(REG_debugMask, GT_2CLASS,
+@@ -320,7 +322,7 @@ DSP_STATUS regsupDeleteValue(IN CONST char *pstrSubkey,
+ 	for (i = 0; ((i < BRIDGE_MAX_NUM_REG_ENTRIES) &&
+ 	    (i < pRegKey->numValueEntries)); i++) {
+ 		/*  See if the name matches...  */
+-		if (CSL_Strncmp(pRegKey->values[i].name, pstrValue,
++               if (strncmp(pRegKey->values[i].name, pstrValue,
+ 		    BRIDGE_MAX_NAME_SIZE) == 0) {
+ 			/* We have a match!  Delete this key.  To delete a
+ 			 * key, we free all resources associated with this
+@@ -336,8 +338,7 @@ DSP_STATUS regsupDeleteValue(IN CONST char *pstrSubkey,
+ 				pRegKey->values[i].pData = NULL;
+ 			} else {
+ 				/* move the last one here */
+-				CSL_Strcpyn(pRegKey->values[i].name,
+-				    pRegKey->
++                               strncpy(pRegKey->values[i].name, pRegKey->
+ 				    values[pRegKey->numValueEntries - 1].name,
+ 				    BRIDGE_MAX_NAME_SIZE);
+ 				pRegKey->values[i].dataSize =
+diff --git a/drivers/dsp/bridge/wmd/tiomap3430.c b/drivers/dsp/bridge/wmd/tiomap3430.c
+index bf47fc5..a99e553 100644
+--- a/drivers/dsp/bridge/wmd/tiomap3430.c
++++ b/drivers/dsp/bridge/wmd/tiomap3430.c
+@@ -246,7 +246,7 @@ void CDECL WMD_DRV_Entry(OUT struct WMD_DRV_INTERFACE **ppDrvInterface,
+ 	DBC_Require(pstrWMDFileName != NULL);
+ 	DBG_Trace(DBG_ENTER, "In the WMD_DRV_Entry \n");
+ 
+-	if (CSL_Strcmp(pstrWMDFileName, "UMA") == 0)
++       if (strcmp(pstrWMDFileName, "UMA") == 0)
+ 		*ppDrvInterface = &drvInterfaceFxns;
+ 	else
+ 		DBG_Trace(DBG_LEVEL7, "WMD_DRV_Entry Unknown WMD file name");
+@@ -969,33 +969,32 @@ static DSP_STATUS WMD_DEV_Create(OUT struct WMD_DEV_CONTEXT **ppDevContext,
+ 		    align_size, &pg_tbl_pa);
+ 	/* Check if the PA is aligned for us */
+ 	if ((pg_tbl_pa) & (align_size-1)) {
+-	    /* PA not aligned to page table size ,
+-	     * try with more allocation and align */
+-	    MEM_FreePhysMem((void *)pg_tbl_va, pg_tbl_pa, pPtAttrs->L1size);
+-	    /* we like to get aligned on L1 table size */
+-	    pg_tbl_va = (u32) MEM_AllocPhysMem((pPtAttrs->L1size)*2,
++               /* PA not aligned to page table size ,
++                * try with more allocation and align */
++               MEM_FreePhysMem((void *)pg_tbl_va, pg_tbl_pa, pPtAttrs->L1size);
++               /* we like to get aligned on L1 table size */
++               pg_tbl_va = (u32) MEM_AllocPhysMem((pPtAttrs->L1size)*2,
+ 			 align_size, &pg_tbl_pa);
+-	    /* We should be able to get aligned table now */
+-	    pPtAttrs->L1TblAllocPa = pg_tbl_pa;
+-	    pPtAttrs->L1TblAllocVa = pg_tbl_va;
+-	    pPtAttrs->L1TblAllocSz = pPtAttrs->L1size * 2;
+-	    /* Align the PA to the next 'align'  boundary */
+-	    pPtAttrs->L1BasePa = ((pg_tbl_pa) + (align_size-1)) &
++               /* We should be able to get aligned table now */
++               pPtAttrs->L1TblAllocPa = pg_tbl_pa;
++               pPtAttrs->L1TblAllocVa = pg_tbl_va;
++               pPtAttrs->L1TblAllocSz = pPtAttrs->L1size * 2;
++               /* Align the PA to the next 'align'  boundary */
++               pPtAttrs->L1BasePa = ((pg_tbl_pa) + (align_size-1)) &
+ 				 (~(align_size-1));
+-	    pPtAttrs->L1BaseVa = pg_tbl_va + (pPtAttrs->L1BasePa -
++               pPtAttrs->L1BaseVa = pg_tbl_va + (pPtAttrs->L1BasePa -
+ 				 pg_tbl_pa);
+ 	} else {
+-	    /* We got aligned PA, cool */
+-	    pPtAttrs->L1TblAllocPa = pg_tbl_pa;
+-	    pPtAttrs->L1TblAllocVa = pg_tbl_va;
+-	    pPtAttrs->L1TblAllocSz = pPtAttrs->L1size;
+-	    pPtAttrs->L1BasePa = pg_tbl_pa;
+-	    pPtAttrs->L1BaseVa = pg_tbl_va;
+-	}
+-	if (pPtAttrs->L1BaseVa) {
+-			memset((u8 *)pPtAttrs->L1BaseVa, 0x00,
+-			pPtAttrs->L1size);
++               /* We got aligned PA, cool */
++               pPtAttrs->L1TblAllocPa = pg_tbl_pa;
++               pPtAttrs->L1TblAllocVa = pg_tbl_va;
++               pPtAttrs->L1TblAllocSz = pPtAttrs->L1size;
++               pPtAttrs->L1BasePa = pg_tbl_pa;
++               pPtAttrs->L1BaseVa = pg_tbl_va;
+ 	}
++       if (pPtAttrs->L1BaseVa)
++               memset((u8 *)pPtAttrs->L1BaseVa, 0x00, pPtAttrs->L1size);
++
+ 		/* number of L2 page tables = DMM pool used + SHMMEM +EXTMEM +
+ 		 * L4 pages */
+ 		pPtAttrs->L2NumPages = ((DMMPOOLSIZE >> 20) + 6);
+@@ -1010,10 +1009,9 @@ static DSP_STATUS WMD_DEV_Create(OUT struct WMD_DEV_CONTEXT **ppDevContext,
+ 	pPtAttrs->L2TblAllocSz = pPtAttrs->L2size;
+ 	pPtAttrs->L2BasePa = pg_tbl_pa;
+ 	pPtAttrs->L2BaseVa = pg_tbl_va;
+-	if (pPtAttrs->L2BaseVa) {
+-			memset((u8 *)pPtAttrs->L2BaseVa, 0x00,
+-			pPtAttrs->L2size);
+-	}
++       if (pPtAttrs->L2BaseVa)
++               memset((u8 *)pPtAttrs->L2BaseVa, 0x00, pPtAttrs->L2size);
++
+ 	pPtAttrs->pgInfo = MEM_Calloc(pPtAttrs->L2NumPages *
+ 				sizeof(struct PageInfo), MEM_NONPAGED);
+ 		DBG_Trace(DBG_LEVEL1, "L1 pa %x, va %x, size %x\n L2 pa %x, va "
+diff --git a/drivers/dsp/bridge/wmd/ue_deh.c b/drivers/dsp/bridge/wmd/ue_deh.c
+index 6006455..81a2dc9 100644
+--- a/drivers/dsp/bridge/wmd/ue_deh.c
++++ b/drivers/dsp/bridge/wmd/ue_deh.c
+@@ -242,7 +242,7 @@ static DSP_STATUS PackTraceBuffer(char *lpBuf, u32 nBytes, u32 ulNumWords)
+ 		}
+ 		*lpTmpBuf = '\0';    /* Make sure tmp buf is null terminated */
+ 		/* Cut output down to input buf size */
+-		CSL_Strcpyn(lpBufStart, lpTmpStart, nBytes);
++               strncpy(lpBufStart, lpTmpStart, nBytes);
+ 		/*Make sure output is null terminated */
+ 		lpBufStart[nBytes - 1] = '\0';
+ 		MEM_Free(lpTmpStart);
+-- 
+1.6.0.3.613.g9f8f13
+

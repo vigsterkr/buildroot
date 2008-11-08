@@ -1,0 +1,4235 @@
+From 3e835e9b4020f3fa5d8ddd64bf2f069aac4dde2d Mon Sep 17 00:00:00 2001
+From: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+Date: Fri, 15 Aug 2008 01:55:54 +0300
+Subject: [PATCH 03/43] BRIDGE: Doff image dynamic loader
+
+Initial port from omapzoom
+	http://omapzoom.org/gf/project/omapbridge
+
+For details,
+http://omapzoom.org/gf/project/omapbridge/docman/?subdir=3
+
+Signed-off-by: Hiroshi DOYU <Hiroshi.DOYU@nokia.com>
+---
+ drivers/dsp/bridge/dynload/cload.c             | 1856 ++++++++++++++++++++++++
+ drivers/dsp/bridge/dynload/dlclasses_hdr.h     |   41 +
+ drivers/dsp/bridge/dynload/dload_internal.h    |  237 +++
+ drivers/dsp/bridge/dynload/doff.h              |  347 +++++
+ drivers/dsp/bridge/dynload/getsection.c        |  412 ++++++
+ drivers/dsp/bridge/dynload/header.h            |   59 +
+ drivers/dsp/bridge/dynload/module_list.h       |  161 ++
+ drivers/dsp/bridge/dynload/params.h            |  231 +++
+ drivers/dsp/bridge/dynload/reloc.c             |  425 ++++++
+ drivers/dsp/bridge/dynload/reloc_table.h       |  102 ++
+ drivers/dsp/bridge/dynload/reloc_table_c6000.c |  258 ++++
+ 11 files changed, 4129 insertions(+), 0 deletions(-)
+ create mode 100644 drivers/dsp/bridge/dynload/cload.c
+ create mode 100644 drivers/dsp/bridge/dynload/dlclasses_hdr.h
+ create mode 100644 drivers/dsp/bridge/dynload/dload_internal.h
+ create mode 100644 drivers/dsp/bridge/dynload/doff.h
+ create mode 100644 drivers/dsp/bridge/dynload/getsection.c
+ create mode 100644 drivers/dsp/bridge/dynload/header.h
+ create mode 100644 drivers/dsp/bridge/dynload/module_list.h
+ create mode 100644 drivers/dsp/bridge/dynload/params.h
+ create mode 100644 drivers/dsp/bridge/dynload/reloc.c
+ create mode 100644 drivers/dsp/bridge/dynload/reloc_table.h
+ create mode 100644 drivers/dsp/bridge/dynload/reloc_table_c6000.c
+
+diff --git a/drivers/dsp/bridge/dynload/cload.c b/drivers/dsp/bridge/dynload/cload.c
+new file mode 100644
+index 0000000..a90200a
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/cload.c
+@@ -0,0 +1,1856 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/cload.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#include "header.h"
++
++#include "module_list.h"
++#define LINKER_MODULES_HEADER ("_" MODULES_HEADER)
++
++/*
++ * we use the fact that DOFF section records are shaped just like
++ * LDR_SECTION_INFO to reduce our section storage usage.  This macro marks
++ * the places where that assumption is made
++ */
++#define DOFFSEC_IS_LDRSEC(pdoffsec) ((struct LDR_SECTION_INFO *)(pdoffsec))
++
++/*
++ * forward references
++ */
++static void dload_symbols(struct dload_state *dlthis);
++static void dload_data(struct dload_state *dlthis);
++static void allocate_sections(struct dload_state *dlthis);
++static void string_table_free(struct dload_state *dlthis);
++static void symbol_table_free(struct dload_state *dlthis);
++static void section_table_free(struct dload_state *dlthis);
++static void init_module_handle(struct dload_state *dlthis);
++#if BITS_PER_AU > BITS_PER_BYTE
++static char *unpack_name(struct dload_state *dlthis, u32 soffset);
++#endif
++
++static const char CINITNAME[] = { ".cinit" };
++static const char LOADER_DLLVIEW_ROOT[] = { "?DLModules?" };
++
++/*
++ * Error strings
++ */
++static const char E_READSTRM[] = { "Error reading %s from input stream" };
++static const char E_ALLOC[] = { "Syms->Allocate( %d ) failed" };
++static const char E_TGTALLOC[] =
++    { "Target memory allocate failed, section %s size " FMT_UI32 };
++static const char E_INITFAIL[] = { "%s to target address " FMT_UI32 " failed" };
++static const char E_DLVWRITE[] = { "Write to DLLview list failed" };
++static const char E_ICONNECT[] = { "Connect call to init interface failed" };
++static const char E_CHECKSUM[] = { "Checksum failed on %s" };
++
++/*************************************************************************
++ * Procedure dload_error
++ *
++ * Parameters:
++ *	errtxt	description of the error, printf style
++ *	...		additional information
++ *
++ * Effect:
++ *	Reports or records the error as appropriate.
++ ************************************************************************/
++void dload_error(struct dload_state *dlthis, const char *errtxt, ...)
++{
++	va_list args;
++
++	va_start(args, errtxt);
++	dlthis->mysym->Error_Report(dlthis->mysym, errtxt, args);
++	va_end(args);
++	dlthis->dload_errcount += 1;
++
++}				/* dload_error */
++
++#define DL_ERROR(zza, zzb) dload_error(dlthis, zza, zzb)
++
++/*************************************************************************
++ * Procedure dload_syms_error
++ *
++ * Parameters:
++ *	errtxt	description of the error, printf style
++ *	...		additional information
++ *
++ * Effect:
++ *	Reports or records the error as appropriate.
++ ************************************************************************/
++void dload_syms_error(struct Dynamic_Loader_Sym *syms, const char *errtxt, ...)
++{
++	va_list args;
++
++	va_start(args, errtxt);
++	syms->Error_Report(syms, errtxt, args);
++	va_end(args);
++}
++
++/*************************************************************************
++ * Procedure Dynamic_Load_Module
++ *
++ * Parameters:
++ *	module	The input stream that supplies the module image
++ *	syms	Host-side symbol table and malloc/free functions
++ *	alloc	Target-side memory allocation
++ *	init	Target-side memory initialization
++ *	options	Option flags DLOAD_*
++ *	mhandle	A module handle for use with Dynamic_Unload
++ *
++ * Effect:
++ *	The module image is read using *module.  Target storage for the new
++ *	image is
++ * obtained from *alloc.  Symbols defined and referenced by the module are
++ * managed using *syms.  The image is then relocated and references
++ *	resolved as necessary, and the resulting executable bits are placed
++ *	into target memory using *init.
++ *
++ * Returns:
++ *	On a successful load, a module handle is placed in *mhandle,
++ *	and zero is returned.  On error, the number of errors detected is
++ *	returned.  Individual errors are reported during the load process
++ *	using syms->Error_Report().
++ ***********************************************************************/
++extern int Dynamic_Load_Module(struct Dynamic_Loader_Stream *module,
++			struct Dynamic_Loader_Sym *syms ,
++			struct Dynamic_Loader_Allocate *alloc,
++			struct Dynamic_Loader_Initialize *init,
++			unsigned options, DLOAD_mhandle *mhandle)
++{
++	register unsigned *dp, sz;
++	struct dload_state dl_state;	/* internal state for this call */
++
++	/* blast our internal state */
++	dp = (unsigned *)&dl_state;
++	for (sz = sizeof(dl_state) / sizeof(unsigned); sz > 0; sz -= 1)
++		*dp++ = 0;
++
++	/* Enable _only_ BSS initialization if enabled by user */
++	if ((options & DLOAD_INITBSS) == DLOAD_INITBSS)
++		dl_state.myoptions = DLOAD_INITBSS;
++
++	/* Check that mandatory arguments are present */
++	if (!module || !syms) {
++		dload_error(&dl_state, "Required parameter is NULL");
++	} else {
++		dl_state.strm = module;
++		dl_state.mysym = syms;
++		dload_headers(&dl_state);
++		if (!dl_state.dload_errcount)
++			dload_strings(&dl_state, false);
++		if (!dl_state.dload_errcount)
++			dload_sections(&dl_state);
++
++		if (init && !dl_state.dload_errcount) {
++			if (init->connect(init)) {
++				dl_state.myio = init;
++				dl_state.myalloc = alloc;
++				/* do now, before reducing symbols */
++				allocate_sections(&dl_state);
++			} else
++				dload_error(&dl_state, E_ICONNECT);
++		}
++
++		if (!dl_state.dload_errcount) {
++			/* fix up entry point address */
++			unsigned sref = dl_state.dfile_hdr.df_entry_secn - 1;
++			if (sref < dl_state.allocated_secn_count)
++				dl_state.dfile_hdr.df_entrypt +=
++				    dl_state.ldr_sections[sref].run_addr;
++
++			dload_symbols(&dl_state);
++		}
++
++		if (init && !dl_state.dload_errcount)
++			dload_data(&dl_state);
++
++		init_module_handle(&dl_state);
++
++		if (dl_state.myio) {
++			if ((!dl_state.dload_errcount) &&
++			   (dl_state.dfile_hdr.df_entry_secn != DN_UNDEF)) {
++				if (init != NULL) {
++					if (!init->execute(init,
++					   dl_state.dfile_hdr.df_entrypt))
++						dload_error(&dl_state,
++						    "Init->Execute Failed");
++				} else {
++					dload_error(&dl_state, "init is NULL");
++				}
++			}
++			init->release(init);
++		}
++
++		symbol_table_free(&dl_state);
++		section_table_free(&dl_state);
++		string_table_free(&dl_state);
++
++		if (dl_state.dload_errcount) {
++			Dynamic_Unload_Module(dl_state.myhandle, syms, alloc,
++					     init);
++			dl_state.myhandle = NULL;
++		}
++	}
++
++	if (mhandle)
++		*mhandle = dl_state.myhandle;	/* give back the handle */
++
++	return dl_state.dload_errcount;
++}				/* DLOAD_File */
++
++/*************************************************************************
++ * Procedure Dynamic_Open_Module
++ *
++ * Parameters:
++ *      module  The input stream that supplies the module image
++ *      syms    Host-side symbol table and malloc/free functions
++ *      alloc   Target-side memory allocation
++ *      init    Target-side memory initialization
++ *      options Option flags DLOAD_*
++ *      mhandle A module handle for use with Dynamic_Unload
++ *
++ * Effect:
++ *      The module image is read using *module.  Target storage for the new
++ *      image is
++ * 	obtained from *alloc.  Symbols defined and referenced by the module are
++ * 	managed using *syms.  The image is then relocated and references
++ *      resolved as necessary, and the resulting executable bits are placed
++ *      into target memory using *init.
++ *
++ * Returns:
++ *      On a successful load, a module handle is placed in *mhandle,
++ *      and zero is returned.  On error, the number of errors detected is
++ *      returned.  Individual errors are reported during the load process
++ *      using syms->Error_Report().
++ ***********************************************************************/
++extern int
++Dynamic_Open_Module(struct Dynamic_Loader_Stream *module,
++		    struct Dynamic_Loader_Sym *syms,
++		    struct Dynamic_Loader_Allocate *alloc,
++		    struct Dynamic_Loader_Initialize *init,
++		    unsigned options, DLOAD_mhandle *mhandle)
++{
++	register unsigned *dp, sz;
++	struct dload_state dl_state;   /* internal state for this call */
++
++	/* blast our internal state */
++	dp = (unsigned *)&dl_state;
++	for (sz = sizeof(dl_state) / sizeof(unsigned); sz > 0; sz -= 1)
++		*dp++ = 0;
++
++	/* Enable _only_ BSS initialization if enabled by user */
++	if ((options & DLOAD_INITBSS) == DLOAD_INITBSS)
++		dl_state.myoptions = DLOAD_INITBSS;
++
++	/* Check that mandatory arguments are present */
++	if (!module || !syms) {
++		dload_error(&dl_state, "Required parameter is NULL");
++	} else {
++		dl_state.strm = module;
++		dl_state.mysym = syms;
++		dload_headers(&dl_state);
++		if (!dl_state.dload_errcount)
++			dload_strings(&dl_state, false);
++		if (!dl_state.dload_errcount)
++			dload_sections(&dl_state);
++
++		if (init && !dl_state.dload_errcount) {
++			if (init->connect(init)) {
++				dl_state.myio = init;
++				dl_state.myalloc = alloc;
++				/* do now, before reducing symbols */
++				allocate_sections(&dl_state);
++			} else
++				dload_error(&dl_state, E_ICONNECT);
++		}
++
++		if (!dl_state.dload_errcount) {
++			/* fix up entry point address */
++			unsigned sref = dl_state.dfile_hdr.df_entry_secn - 1;
++			if (sref < dl_state.allocated_secn_count)
++				dl_state.dfile_hdr.df_entrypt +=
++				    dl_state.ldr_sections[sref].run_addr;
++
++			dload_symbols(&dl_state);
++		}
++
++		init_module_handle(&dl_state);
++
++		if (dl_state.myio) {
++			if ((!dl_state.dload_errcount)
++			    && (dl_state.dfile_hdr.df_entry_secn != DN_UNDEF))
++				if (!init->execute(init,
++				   dl_state.dfile_hdr.df_entrypt))
++					dload_error(&dl_state,
++					    "Init->Execute Failed");
++			init->release(init);
++		}
++
++		symbol_table_free(&dl_state);
++		section_table_free(&dl_state);
++		string_table_free(&dl_state);
++
++		if (dl_state.dload_errcount) {
++			Dynamic_Unload_Module(dl_state.myhandle, syms, alloc,
++					      init);
++			dl_state.myhandle = NULL;
++		}
++	}
++
++	if (mhandle)
++		*mhandle = dl_state.myhandle;   /* give back the handle */
++
++	return dl_state.dload_errcount;
++}			       /* DLOAD_File */
++
++/*************************************************************************
++ * Procedure dload_headers
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Loads the DOFF header and verify record.  Deals with any byte-order
++ * issues and checks them for validity.
++ ************************************************************************/
++#define COMBINED_HEADER_SIZE (sizeof(struct doff_filehdr_t)+ \
++			     sizeof(struct doff_verify_rec_t))
++
++void dload_headers(struct dload_state *dlthis)
++{
++	u32 map;
++
++	/* Read the header and the verify record as one.  If we don't get it
++	   all, we're done */
++	if (dlthis->strm->read_buffer(dlthis->strm, &dlthis->dfile_hdr,
++	    COMBINED_HEADER_SIZE) != COMBINED_HEADER_SIZE) {
++		DL_ERROR(E_READSTRM, "File Headers");
++		return;
++	}
++	/*
++	 * Verify that we have the byte order of the file correct.
++	 * If not, must fix it before we can continue
++	 */
++	map = REORDER_MAP(dlthis->dfile_hdr.df_byte_reshuffle);
++	if (map != REORDER_MAP(BYTE_RESHUFFLE_VALUE)) {
++		/* input is either byte-shuffled or bad */
++		if ((map & 0xFCFCFCFC) == 0) {	/* no obviously bogus bits */
++			dload_reorder(&dlthis->dfile_hdr, COMBINED_HEADER_SIZE,
++				      map);
++		}
++		if (dlthis->dfile_hdr.df_byte_reshuffle !=
++		    BYTE_RESHUFFLE_VALUE) {
++			/* didn't fix the problem, the byte swap map is bad */
++			dload_error(dlthis,
++				    "Bad byte swap map " FMT_UI32 " in header",
++				    dlthis->dfile_hdr.df_byte_reshuffle);
++			return;
++		}
++		dlthis->reorder_map = map;	/* keep map for future use */
++	}
++
++	/*
++	 * Verify checksum of header and verify record
++	 */
++	if (~dload_checksum(&dlthis->dfile_hdr,
++	    sizeof(struct doff_filehdr_t)) ||
++	    ~dload_checksum(&dlthis->verify,
++	    sizeof(struct doff_verify_rec_t))) {
++		DL_ERROR(E_CHECKSUM, "header or verify record");
++		return;
++	}
++#if HOST_ENDIANNESS
++	dlthis->dfile_hdr.df_byte_reshuffle = map;	/* put back for later */
++#endif
++
++	/* Check for valid target ID */
++	if ((dlthis->dfile_hdr.df_target_id != TARGET_ID) &&
++	  -(dlthis->dfile_hdr.df_target_id != TMS470_ID)) {
++		dload_error(dlthis, "Bad target ID 0x%x and TARGET_ID 0x%x",
++			    dlthis->dfile_hdr.df_target_id, TARGET_ID);
++		return;
++	}
++	/* Check for valid file format */
++	if ((dlthis->dfile_hdr.df_doff_version != DOFF0)) {
++		dload_error(dlthis, "Bad DOFF version 0x%x",
++			    dlthis->dfile_hdr.df_doff_version);
++		return;
++	}
++
++	/*
++	 * Apply reasonableness checks to count fields
++	 */
++	if (dlthis->dfile_hdr.df_strtab_size > MAX_REASONABLE_STRINGTAB) {
++		dload_error(dlthis, "Excessive string table size " FMT_UI32,
++			    dlthis->dfile_hdr.df_strtab_size);
++		return;
++	}
++	if (dlthis->dfile_hdr.df_no_scns > MAX_REASONABLE_SECTIONS) {
++		dload_error(dlthis, "Excessive section count 0x%x",
++			    dlthis->dfile_hdr.df_no_scns);
++		return;
++	}
++#ifndef TARGET_ENDIANNESS
++	/*
++	 * Check that endianness does not disagree with explicit specification
++	 */
++	if ((dlthis->dfile_hdr.df_flags >> ALIGN_COFF_ENDIANNESS) &
++	    dlthis->myoptions & ENDIANNESS_MASK) {
++		dload_error(dlthis,
++			    "Input endianness disagrees with specified option");
++		return;
++	}
++	dlthis->big_e_target = dlthis->dfile_hdr.df_flags & DF_BIG;
++#endif
++
++}				/* dload_headers */
++
++/*	COFF Section Processing
++ *
++ *	COFF sections are read in and retained intact.  Each record is embedded
++ * 	in a new structure that records the updated load and
++ * 	run addresses of the section  */
++
++static const char SECN_ERRID[] = { "section" };
++
++/*************************************************************************
++ * Procedure dload_sections
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Loads the section records into an internal table.
++ ************************************************************************/
++void
++dload_sections(struct dload_state *dlthis)
++{
++	s16 siz;
++	struct doff_scnhdr_t *shp;
++	unsigned nsecs = dlthis->dfile_hdr.df_no_scns;
++
++	/* allocate space for the DOFF section records */
++	siz = nsecs * sizeof(struct doff_scnhdr_t);
++	shp = (struct doff_scnhdr_t *)dlthis->mysym->Allocate(dlthis->mysym,
++	       siz);
++	if (!shp) {		/* not enough storage */
++		DL_ERROR(E_ALLOC, siz);
++		return;
++	}
++	dlthis->sect_hdrs = shp;
++
++	/* read in the section records */
++	if (dlthis->strm->read_buffer(dlthis->strm, shp, siz) != siz) {
++		DL_ERROR(E_READSTRM, SECN_ERRID);
++		return;
++	}
++
++	/* if we need to fix up byte order, do it now */
++	if (dlthis->reorder_map)
++		dload_reorder(shp, siz, dlthis->reorder_map);
++
++	/* check for validity */
++	if (~dload_checksum(dlthis->sect_hdrs, siz) !=
++	    dlthis->verify.dv_scn_rec_checksum) {
++		DL_ERROR(E_CHECKSUM, SECN_ERRID);
++		return;
++	}
++
++}				/* dload_sections */
++
++/*****************************************************************************
++ * Procedure allocate_sections
++ *
++ * Parameters:
++ *	alloc	target memory allocator class
++ *
++ * Effect:
++ *	Assigns new (target) addresses for sections
++ *****************************************************************************/
++static void allocate_sections(struct dload_state *dlthis)
++{
++	u16 curr_sect, nsecs, siz;
++	struct doff_scnhdr_t *shp;
++	struct LDR_SECTION_INFO *asecs;
++	struct my_handle *hndl;
++	nsecs = dlthis->dfile_hdr.df_no_scns;
++	if (!nsecs)
++		return;
++	if ((dlthis->myalloc == NULL) &&
++	   (dlthis->dfile_hdr.df_target_scns > 0)) {
++		DL_ERROR("Arg 3 (alloc) required but NULL", 0);
++		return;
++	}
++	/* allocate space for the module handle, which we will
++	 *	keep for unload purposes */
++	siz = dlthis->dfile_hdr.df_target_scns *
++	      sizeof(struct LDR_SECTION_INFO) + MY_HANDLE_SIZE;
++	hndl = (struct my_handle *)dlthis->mysym->Allocate(dlthis->mysym, siz);
++	if (!hndl) {		/* not enough storage */
++		DL_ERROR(E_ALLOC, siz);
++		return;
++	}
++	/* initialize the handle header */
++	hndl->dm.hnext = hndl->dm.hprev = hndl;	/* circular list */
++	hndl->dm.hroot = 0;
++	hndl->dm.dbthis = 0;
++	dlthis->myhandle = hndl;	/* save away for return */
++	/* pointer to the section list of allocated sections */
++	dlthis->ldr_sections = asecs = hndl->secns;
++	/* * Insert names into all sections, make copies of
++	   the sections we allocate */
++	shp = dlthis->sect_hdrs;
++	for (curr_sect = 0; curr_sect < nsecs; curr_sect++) {
++		u32 soffset = shp->ds_offset;
++#if BITS_PER_AU <= BITS_PER_BYTE
++		/* attempt to insert the name of this section */
++		if (soffset < dlthis->dfile_hdr.df_strtab_size)
++			DOFFSEC_IS_LDRSEC(shp)->name = dlthis->str_head +
++							       soffset;
++		else {
++			dload_error(dlthis, "Bad name offset in section %d",
++				    curr_sect);
++			DOFFSEC_IS_LDRSEC(shp)->name = NULL;
++		}
++#endif
++		/* allocate target storage for sections that require it */
++		if (DS_NEEDS_ALLOCATION(shp)) {
++			*asecs = *DOFFSEC_IS_LDRSEC(shp);
++			asecs->context = 0;	/* zero the context field */
++#if BITS_PER_AU > BITS_PER_BYTE
++			asecs->name = unpack_name(dlthis, soffset);
++			dlthis->debug_string_size = soffset + dlthis->temp_len;
++#else
++			dlthis->debug_string_size = soffset;
++#endif
++		if (dlthis->myalloc != NULL) {
++			if (!dlthis->myalloc->Allocate(dlthis->myalloc, asecs,
++				     DS_ALIGNMENT(asecs->type))) {
++				dload_error(dlthis, E_TGTALLOC, asecs->name,
++					    asecs->size);
++				return;
++			}
++			}
++			/* keep address deltas in original section table */
++			shp->ds_vaddr = asecs->load_addr - shp->ds_vaddr;
++			shp->ds_paddr = asecs->run_addr - shp->ds_paddr;
++			dlthis->allocated_secn_count += 1;
++		}		/* allocate target storage */
++		shp += 1;
++		asecs += 1;
++	}
++#if BITS_PER_AU <= BITS_PER_BYTE
++	dlthis->debug_string_size +=
++	    strlen(dlthis->str_head + dlthis->debug_string_size) + 1;
++#endif
++}				/* allocate sections */
++
++/*************************************************************************
++ * Procedure section_table_free
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Frees any state used by the symbol table.
++ *
++ * WARNING:
++ *	This routine is not allowed to declare errors!
++ ************************************************************************/
++static void section_table_free(struct dload_state *dlthis)
++{
++	struct doff_scnhdr_t *shp;
++
++	shp = dlthis->sect_hdrs;
++	if (shp)
++		dlthis->mysym->Deallocate(dlthis->mysym, shp);
++
++}				/* section_table_free */
++
++/*************************************************************************
++ * Procedure dload_strings
++ *
++ * Parameters:
++ *  sec_names_only   If true only read in the "section names"
++ *		     portion of the string table
++ *
++ * Effect:
++ *	Loads the DOFF string table into memory. DOFF keeps all strings in a
++ * big unsorted array.  We just read that array into memory in bulk.
++ ************************************************************************/
++static const char S_STRINGTBL[] = { "string table" };
++void dload_strings(struct dload_state *dlthis, boolean sec_names_only)
++{
++	u32 ssiz;
++	char *strbuf;
++
++	if (sec_names_only) {
++		ssiz = BYTE_TO_HOST(DOFF_ALIGN
++				   (dlthis->dfile_hdr.df_scn_name_size));
++	} else {
++		ssiz = BYTE_TO_HOST(DOFF_ALIGN
++				   (dlthis->dfile_hdr.df_strtab_size));
++	}
++	if (ssiz == 0)
++		return;
++
++	/* get some memory for the string table */
++#if BITS_PER_AU > BITS_PER_BYTE
++	strbuf = (char *)dlthis->mysym->Allocate(dlthis->mysym, ssiz +
++					     dlthis->dfile_hdr.df_max_str_len);
++#else
++	strbuf = (char *)dlthis->mysym->Allocate(dlthis->mysym, ssiz);
++#endif
++	if (strbuf == NULL) {
++		DL_ERROR(E_ALLOC, ssiz);
++		return;
++	}
++	dlthis->str_head = strbuf;
++#if BITS_PER_AU > BITS_PER_BYTE
++	dlthis->str_temp = strbuf + ssiz;
++#endif
++	/* read in the strings and verify them */
++	if ((unsigned)(dlthis->strm->read_buffer(dlthis->strm, strbuf,
++	    ssiz)) != ssiz) {
++		DL_ERROR(E_READSTRM, S_STRINGTBL);
++	}
++	/* if we need to fix up byte order, do it now */
++#ifndef _BIG_ENDIAN
++	if (dlthis->reorder_map)
++		dload_reorder(strbuf, ssiz, dlthis->reorder_map);
++
++	if ((!sec_names_only) && (~dload_checksum(strbuf, ssiz) !=
++	     dlthis->verify.dv_str_tab_checksum)) {
++		DL_ERROR(E_CHECKSUM, S_STRINGTBL);
++	}
++#else
++	if (dlthis->dfile_hdr.df_byte_reshuffle !=
++	    HOST_BYTE_ORDER(REORDER_MAP(BYTE_RESHUFFLE_VALUE))) {
++		/* put strings in big-endian order, not in PC order */
++		dload_reorder(strbuf, ssiz, HOST_BYTE_ORDER(dlthis->dfile_hdr.
++					      df_byte_reshuffle));
++	}
++	if ((!sec_names_only) && (~dload_reverse_checksum(strbuf, ssiz) !=
++	     dlthis->verify.dv_str_tab_checksum)) {
++		DL_ERROR(E_CHECKSUM, S_STRINGTBL);
++	}
++#endif
++}				/* dload_strings */
++
++/*************************************************************************
++ * Procedure string_table_free
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Frees any state used by the string table.
++ *
++ * WARNING:
++ *	This routine is not allowed to declare errors!
++ *************************************************************************/
++static void string_table_free(struct dload_state *dlthis)
++{
++	if (dlthis->str_head)
++		dlthis->mysym->Deallocate(dlthis->mysym, dlthis->str_head);
++
++}				/* string_table_free */
++
++/*
++ * Symbol Table Maintenance Functions
++ *
++ * COFF symbols are read by dload_symbols(), which is called after
++ * sections have been allocated.  Symbols which might be used in
++ * relocation (ie, not debug info) are retained in an internal temporary
++ * compressed table (type Local_Symbol). A particular symbol is recovered
++ * by index by calling dload_find_symbol().  dload_find_symbol
++ * reconstructs a more explicit representation (type SLOTVEC) which is
++ * used by reloc.c
++ */
++/* real size of debug header */
++#define DBG_HDR_SIZE (sizeof(struct dll_module) - sizeof(struct dll_sect))
++
++static const char SYM_ERRID[] = { "symbol" };
++
++/**************************************************************************
++ * Procedure dload_symbols
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Reads in symbols and retains ones that might be needed for relocation
++ * purposes.
++ ************************************************************************/
++/* size of symbol buffer no bigger than target data buffer, to limit stack
++ * usage*/
++#define MY_SYM_BUF_SIZ (BYTE_TO_HOST(IMAGE_PACKET_SIZE)/\
++			sizeof(struct doff_syment_t))
++
++static void dload_symbols(struct dload_state *dlthis)
++{
++	u32 s_count, siz, dsiz, symbols_left;
++	u32 checks;
++	struct Local_Symbol *sp;
++	struct dynload_symbol *symp;
++	struct dynload_symbol *newsym;
++
++	s_count = dlthis->dfile_hdr.df_no_syms;
++	if (s_count == 0)
++		return;
++
++	/* We keep a local symbol table for all of the symbols in the input.
++	 * This table contains only section & value info, as we do not have
++	 * to do any name processing for locals.  We reuse this storage
++	 * as a temporary for .dllview record construction.
++	 * Allocate storage for the whole table.*/
++	siz = s_count * sizeof(struct Local_Symbol);
++	dsiz = DBG_HDR_SIZE +
++		(sizeof(struct dll_sect) * dlthis->allocated_secn_count) +
++	    BYTE_TO_HOST_ROUND(dlthis->debug_string_size + 1);
++	if (dsiz > siz)
++		siz = dsiz;	/* larger of symbols and .dllview temp */
++	sp = (struct Local_Symbol *)dlthis->mysym->Allocate(dlthis->mysym, siz);
++	if (!sp) {
++		DL_ERROR(E_ALLOC, siz);
++		return;
++	}
++	dlthis->local_symtab = sp;
++	/* Read the symbols in the input, store them in the table, and post any
++	 * globals to the global symbol table.  In the process, externals
++	   become defined from the global symbol table */
++	checks = dlthis->verify.dv_sym_tab_checksum;
++	symbols_left = s_count;
++	do {			/* read all symbols */
++		char *sname;
++		u32 val;
++		s32 delta;
++		struct doff_syment_t *input_sym;
++		unsigned syms_in_buf;
++		int siz;
++		struct doff_syment_t my_sym_buf[MY_SYM_BUF_SIZ];
++		input_sym = my_sym_buf;
++		syms_in_buf = symbols_left > MY_SYM_BUF_SIZ ?
++					     MY_SYM_BUF_SIZ : symbols_left;
++		siz = syms_in_buf * sizeof(struct doff_syment_t);
++		if (dlthis->strm->read_buffer(dlthis->strm, input_sym, siz) !=
++					      siz) {
++			DL_ERROR(E_READSTRM, SYM_ERRID);
++			return;
++		}
++		if (dlthis->reorder_map)
++			dload_reorder(input_sym, siz, dlthis->reorder_map);
++
++		checks += dload_checksum(input_sym, siz);
++		do {		/* process symbols in buffer */
++			symbols_left -= 1;
++			/* attempt to derive the name of this symbol */
++			sname = NULL;
++			if (input_sym->dn_offset > 0) {
++#if BITS_PER_AU <= BITS_PER_BYTE
++				if ((u32) input_sym->dn_offset <
++				    dlthis->dfile_hdr.df_strtab_size)
++					sname = dlthis->str_head +
++					     BYTE_TO_HOST(input_sym->dn_offset);
++				else
++					dload_error(dlthis,
++						 "Bad name offset in symbol %d",
++						 symbols_left);
++#else
++				sname = unpack_name(dlthis,
++						   input_sym->dn_offset);
++#endif
++			}
++			val = input_sym->dn_value;
++			delta = 0;
++			sp->sclass = input_sym->dn_sclass;
++			sp->secnn = input_sym->dn_scnum;
++			/* if this is an undefined symbol,
++			 * define it (or fail) now	  */
++			if (sp->secnn == DN_UNDEF) {
++					/* pointless for static undefined */
++				if (input_sym->dn_sclass != DN_EXT)
++					goto loop_cont;
++
++				/* try to define symbol from previously
++				 * loaded images			  */
++				symp = dlthis->mysym->Find_Matching_Symbol
++						      (dlthis->mysym, sname);
++				if (!symp) {
++					DL_ERROR
++						("Undefined external symbol %s",
++						 sname);
++					goto loop_cont;
++				}
++				val = delta = symp->value;
++				goto loop_cont;
++			}
++			/* symbol defined by this module */
++			if (sp->secnn > 0) {   /* symbol references a section */
++				if ((unsigned)sp->secnn <=
++				    dlthis->allocated_secn_count) {
++					/* section was allocated */
++					struct doff_scnhdr_t *srefp =
++							     &dlthis->sect_hdrs
++							     [sp->secnn - 1];
++
++					if (input_sym->dn_sclass ==
++					    DN_STATLAB ||
++					    input_sym->dn_sclass == DN_EXTLAB){
++						/* load */
++						delta = srefp->ds_vaddr;
++					} else {
++						/* run */
++						delta = srefp->ds_paddr;
++					}
++					val += delta;
++				}
++				goto loop_itr;
++			}
++			/* This symbol is an absolute symbol */
++			if (sp->secnn == DN_ABS && ((sp->sclass == DN_EXT) ||
++						   (sp->sclass == DN_EXTLAB))) {
++				struct dynload_symbol *symp;
++				symp = dlthis->mysym->Find_Matching_Symbol
++						      (dlthis->mysym, sname);
++				if (!symp)
++					goto loop_itr;
++				/* This absolute symbol is already defined.  */
++				if (symp->value == input_sym->dn_value) {
++					/* If symbol values are equal, continue
++					 * but don't add to the global symbol
++					 * table			     */
++					sp->value = val;
++					sp->delta = delta;
++					sp += 1;
++					input_sym += 1;
++					continue;
++				} else {
++					/* If symbol values are not equal,
++					 * return with redefinition error */
++					DL_ERROR("Absolute symbol %s is "
++					   "defined multiple times with "
++					   "different values", sname);
++					return;
++				}
++			}
++loop_itr:
++			/* if this is a global symbol, post it to the
++			 * global table			       */
++			if (input_sym->dn_sclass == DN_EXT ||
++			    input_sym->dn_sclass == DN_EXTLAB) {
++				/* Keep this global symbol for subsequent
++				 * modules. Don't complain on error, to allow
++				 * symbol API to suppress global symbols */
++				if (!sname)
++					goto loop_cont;
++
++				newsym = dlthis->mysym->Add_To_Symbol_Table
++						    (dlthis->mysym, sname,
++						    (unsigned)dlthis->myhandle);
++				if (newsym)
++					newsym->value = val;
++
++			}	/* global */
++loop_cont:
++			sp->value = val;
++			sp->delta = delta;
++			sp += 1;
++			input_sym += 1;
++		} while ((syms_in_buf -= 1) > 0); /* process sym in buffer */
++	} while (symbols_left > 0);	/* read all symbols */
++	if (~checks)
++		dload_error(dlthis, "Checksum of symbols failed");
++
++}				/* dload_symbols */
++
++/*****************************************************************************
++ * Procedure symbol_table_free
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Frees any state used by the symbol table.
++ *
++ * WARNING:
++ *	This routine is not allowed to declare errors!
++ *****************************************************************************/
++static void symbol_table_free(struct dload_state *dlthis)
++{
++	if (dlthis->local_symtab) {
++		if (dlthis->dload_errcount) {	/* blow off our symbols */
++			dlthis->mysym->Purge_Symbol_Table(dlthis->mysym,
++						   (unsigned)dlthis->myhandle);
++		}
++		dlthis->mysym->Deallocate(dlthis->mysym, dlthis->local_symtab);
++	}
++}				/* symbol_table_free */
++
++/* .cinit Processing
++ *
++ * The dynamic loader does .cinit interpretation.  cload_cinit()
++ * acts as a special write-to-target function, in that it takes relocated
++ * data from the normal data flow, and interprets it as .cinit actions.
++ * Because the normal data flow does not  necessarily process the whole
++ * .cinit section in one buffer, cload_cinit() must be prepared to
++ * interpret the data piecemeal.  A state machine is used for this
++ * purpose.
++ */
++
++/* The following are only for use by reloc.c and things it calls */
++static const struct LDR_SECTION_INFO CINIT_INFO_INIT = { CINITNAME, 0, 0,
++					(LDR_ADDR) -1, 0, DLOAD_BSS, 0 };
++
++/*************************************************************************
++ * Procedure cload_cinit
++ *
++ * Parameters:
++ *	ipacket		Pointer to data packet to be loaded
++ *
++ * Effect:
++ *	Interprets the data in the buffer as .cinit data, and performs the
++ * appropriate initializations.
++ ************************************************************************/
++static void cload_cinit(struct dload_state *dlthis,
++			struct image_packet_t *ipacket)
++{
++#if TDATA_TO_HOST(CINIT_COUNT)*BITS_PER_AU > 16
++	s32 init_count, left;
++#else
++	s16 init_count, left;
++#endif
++	unsigned char *pktp = ipacket->i_bits;
++	unsigned char *pktend =	pktp +
++				BYTE_TO_HOST_ROUND(ipacket->i_packet_size);
++	int temp;
++	LDR_ADDR atmp;
++	struct LDR_SECTION_INFO cinit_info;
++
++	/*  PROCESS ALL THE INITIALIZATION RECORDS IN THE BUFFER.  */
++	while (true) {
++		left = pktend - pktp;
++		switch (dlthis->cinit_state) {
++		case CI_count:	/* count field */
++			if (left < TDATA_TO_HOST(CINIT_COUNT))
++				goto loopexit;
++			temp = dload_unpack(dlthis, (TgtAU_t *)pktp,
++					CINIT_COUNT * TDATA_AU_BITS, 0,
++					ROP_SGN);
++			pktp += TDATA_TO_HOST(CINIT_COUNT);
++			/* negative signifies BSS table, zero means done */
++			if (temp <= 0) {
++				dlthis->cinit_state = CI_done;
++				break;
++			}
++			dlthis->cinit_count = temp;
++			dlthis->cinit_state = CI_address;
++			break;
++#if CINIT_ALIGN < CINIT_ADDRESS
++		case CI_partaddress:
++			pktp -= TDATA_TO_HOST(CINIT_ALIGN);
++			/* back up pointer into space courtesy of caller */
++			*(uint16_t *)pktp = dlthis->cinit_addr;
++			/* stuff in saved bits  !! FALL THRU !! */
++#endif
++		case CI_address:	/* Address field for a copy packet */
++			if (left < TDATA_TO_HOST(CINIT_ADDRESS)) {
++#if CINIT_ALIGN < CINIT_ADDRESS
++				if (left == TDATA_TO_HOST(CINIT_ALIGN)) {
++					/* address broken into halves */
++					dlthis->cinit_addr = *(uint16_t *)pktp;
++					/* remember 1st half */
++					dlthis->cinit_state = CI_partaddress;
++					left = 0;
++				}
++#endif
++				goto loopexit;
++			}
++			atmp = dload_unpack(dlthis, (TgtAU_t *)pktp,
++					CINIT_ADDRESS * TDATA_AU_BITS, 0,
++					ROP_UNS);
++			pktp += TDATA_TO_HOST(CINIT_ADDRESS);
++#if CINIT_PAGE_BITS > 0
++			dlthis->cinit_page = atmp &
++					     ((1 << CINIT_PAGE_BITS) - 1);
++			atmp >>= CINIT_PAGE_BITS;
++#else
++			dlthis->cinit_page = CINIT_DEFAULT_PAGE;
++#endif
++			dlthis->cinit_addr = atmp;
++			dlthis->cinit_state = CI_copy;
++			break;
++		case CI_copy:	/* copy bits to the target */
++			init_count = HOST_TO_TDATA(left);
++			if (init_count > dlthis->cinit_count)
++				init_count = dlthis->cinit_count;
++			if (init_count == 0)
++				goto loopexit;	/* get more bits */
++			cinit_info = CINIT_INFO_INIT;
++			cinit_info.page = dlthis->cinit_page;
++			if (!dlthis->myio->writemem(dlthis->myio, pktp,
++					TDATA_TO_TADDR(dlthis->cinit_addr),
++					&cinit_info,
++					TDATA_TO_HOST(init_count))) {
++				dload_error(dlthis, E_INITFAIL, "write",
++					    dlthis->cinit_addr);
++			}
++			dlthis->cinit_count -= init_count;
++			if (dlthis->cinit_count  <= 0) {
++				dlthis->cinit_state = CI_count;
++				init_count = (init_count + CINIT_ALIGN - 1) &
++					     -CINIT_ALIGN;
++				/* align to next init */
++			}
++			pktp += TDATA_TO_HOST(init_count);
++			dlthis->cinit_addr += init_count;
++			break;
++		case CI_done:	/* no more .cinit to do */
++			return;
++		}		/* switch (cinit_state) */
++	}			/* while */
++
++loopexit:
++	if (left > 0) {
++		dload_error(dlthis, "%d bytes left over in cinit packet", left);
++		dlthis->cinit_state = CI_done;	/* left over bytes are bad */
++	}
++}				/* cload_cinit */
++
++/*	Functions to interface to reloc.c
++ *
++ * reloc.c is the relocation module borrowed from the linker, with
++ * minimal (we hope) changes for our purposes.  cload_sect_data() invokes
++ * this module on a section to relocate and load the image data for that
++ * section.  The actual read and write actions are supplied by the global
++ * routines below.
++ */
++
++/************************************************************************
++ * Procedure relocate_packet
++ *
++ * Parameters:
++ *	ipacket		Pointer to an image packet to relocate
++ *
++ * Effect:
++ *	Performs the required relocations on the packet.  Returns a checksum
++ * of the relocation operations.
++ ************************************************************************/
++#define MY_RELOC_BUF_SIZ 8
++/* careful! exists at the same time as the image buffer*/
++static int relocate_packet(struct dload_state *dlthis,
++			   struct image_packet_t *ipacket, u32 *checks)
++{
++	u32 rnum;
++
++	rnum = ipacket->i_num_relocs;
++	do {			/* all relocs */
++		unsigned rinbuf;
++		int siz;
++		struct reloc_record_t *rp, rrec[MY_RELOC_BUF_SIZ];
++		rp = rrec;
++		rinbuf = rnum > MY_RELOC_BUF_SIZ ? MY_RELOC_BUF_SIZ : rnum;
++		siz = rinbuf * sizeof(struct reloc_record_t);
++		if (dlthis->strm->read_buffer(dlthis->strm, rp, siz) != siz) {
++			DL_ERROR(E_READSTRM, "relocation");
++			return 0;
++		}
++		/* reorder the bytes if need be */
++		if (dlthis->reorder_map)
++			dload_reorder(rp, siz, dlthis->reorder_map);
++
++		*checks += dload_checksum(rp, siz);
++		do {
++			/* perform the relocation operation */
++			dload_relocate(dlthis, (TgtAU_t *) ipacket->i_bits, rp);
++			rp += 1;
++			rnum -= 1;
++		} while ((rinbuf -= 1) > 0);
++	} while (rnum > 0);	/* all relocs */
++	return 1;
++}				/* dload_read_reloc */
++
++#define IPH_SIZE (sizeof(struct image_packet_t) - sizeof(u32))
++
++/* VERY dangerous */
++static const char IMAGEPAK[] = { "image packet" };
++
++/*************************************************************************
++ * Procedure dload_data
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Read image data from input file, relocate it, and download it to the
++ *	target.
++ ************************************************************************/
++static void dload_data(struct dload_state *dlthis)
++{
++	u16 curr_sect;
++	struct doff_scnhdr_t *sptr = dlthis->sect_hdrs;
++	struct LDR_SECTION_INFO *lptr = dlthis->ldr_sections;
++#ifdef OPT_ZERO_COPY_LOADER
++	boolean bZeroCopy = false;
++#endif
++	u8 *pDest;
++
++	struct {
++		struct image_packet_t ipacket;
++		u8 bufr[BYTE_TO_HOST(IMAGE_PACKET_SIZE)];
++	} ibuf;
++
++	/* Indicates whether CINIT processing has occurred */
++	boolean cinit_processed = false;
++
++	/* Loop through the sections and load them one at a time.
++	 */
++	for (curr_sect = 0; curr_sect < dlthis->dfile_hdr.df_no_scns;
++	     curr_sect += 1) {
++		if (DS_NEEDS_DOWNLOAD(sptr)) {
++			s32 nip;
++			LDR_ADDR image_offset = 0;
++			/* set relocation info for this section */
++			if (curr_sect < dlthis->allocated_secn_count)
++				dlthis->delta_runaddr = sptr->ds_paddr;
++			else {
++				lptr = DOFFSEC_IS_LDRSEC(sptr);
++				dlthis->delta_runaddr = 0;
++			}
++			dlthis->image_secn = lptr;
++#if BITS_PER_AU > BITS_PER_BYTE
++			lptr->name = unpack_name(dlthis, sptr->ds_offset);
++#endif
++			nip = sptr->ds_nipacks;
++			while ((nip -= 1) >= 0) {	/* process packets */
++
++				s32 ipsize;
++				u32 checks;
++				/* get the fixed header bits */
++				if (dlthis->strm->read_buffer(dlthis->strm,
++				    &ibuf.ipacket, IPH_SIZE) != IPH_SIZE) {
++					DL_ERROR(E_READSTRM, IMAGEPAK);
++					return;
++				}
++				/* reorder the header if need be */
++				if (dlthis->reorder_map) {
++					dload_reorder(&ibuf.ipacket, IPH_SIZE,
++						      dlthis->reorder_map);
++				}
++				/* now read the rest of the packet */
++				ipsize =
++				    BYTE_TO_HOST(DOFF_ALIGN
++						(ibuf.ipacket.i_packet_size));
++				if (ipsize > BYTE_TO_HOST(IMAGE_PACKET_SIZE)) {
++					DL_ERROR("Bad image packet size %d",
++						ipsize);
++					return;
++				}
++				pDest = ibuf.bufr;
++#ifdef OPT_ZERO_COPY_LOADER
++				bZeroCopy = false;
++				if (DLOAD_SECT_TYPE(sptr) != DLOAD_CINIT) {
++					dlthis->myio->writemem(dlthis->myio,
++						&pDest, lptr->load_addr +
++						image_offset, lptr, 0);
++				bZeroCopy = (pDest != ibuf.bufr);
++				}
++#endif
++		/* End of determination */
++
++				if (dlthis->strm->read_buffer(dlthis->strm,
++				    ibuf.bufr, ipsize) != ipsize) {
++					DL_ERROR(E_READSTRM, IMAGEPAK);
++					return;
++				}
++				ibuf.ipacket.i_bits = pDest;
++
++				/* reorder the bytes if need be */
++#if !defined(_BIG_ENDIAN) || (TARGET_AU_BITS > 16)
++				if (dlthis->reorder_map) {
++					dload_reorder(pDest, ipsize,
++						     dlthis->reorder_map);
++				}
++				checks = dload_checksum(pDest, ipsize);
++#else
++				if (dlthis->dfile_hdr.df_byte_reshuffle !=
++				    TARGET_ORDER(REORDER_MAP
++				    (BYTE_RESHUFFLE_VALUE))) {
++					/* put image bytes in big-endian order,
++					 * not PC order */
++					dload_reorder(pDest, ipsize,
++					TARGET_ORDER
++					(dlthis->dfile_hdr.df_byte_reshuffle));
++				}
++#if TARGET_AU_BITS > 8
++				checks = dload_reverse_checksum_16(pDest,
++								   ipsize);
++#else
++				checks = dload_reverse_checksum(pDest,
++								ipsize);
++#endif
++#endif
++
++				checks += dload_checksum(&ibuf.ipacket,
++							IPH_SIZE);
++				/* relocate the image bits as needed */
++				if (ibuf.ipacket.i_num_relocs) {
++					dlthis->image_offset = image_offset;
++					if (!relocate_packet(dlthis,
++					    &ibuf.ipacket, &checks))
++						return;	/* serious error */
++				}
++				if (~checks)
++					DL_ERROR(E_CHECKSUM, IMAGEPAK);
++				/* stuff the result into target memory */
++				if (DLOAD_SECT_TYPE(sptr) == DLOAD_CINIT) {
++					cload_cinit(dlthis, &ibuf.ipacket);
++					cinit_processed = true;
++				} else {
++#ifdef OPT_ZERO_COPY_LOADER
++				    if (!bZeroCopy) {
++#endif
++
++					if (!dlthis->myio->writemem
++					   (dlthis->myio, ibuf.bufr,
++					   lptr->load_addr + image_offset, lptr,
++					   BYTE_TO_HOST
++					   (ibuf.ipacket.i_packet_size))) {
++						DL_ERROR(
++						"Write to " FMT_UI32 " failed",
++						lptr->load_addr + image_offset);
++					}
++#ifdef OPT_ZERO_COPY_LOADER
++				}
++#endif
++
++				}
++				image_offset +=
++				      BYTE_TO_TADDR(ibuf.ipacket.i_packet_size);
++			}	/* process packets */
++			/* if this is a BSS section, we may want to fill it */
++			if (DLOAD_SECT_TYPE(sptr) != DLOAD_BSS)
++				goto loop_cont;
++
++			if (!(dlthis->myoptions & DLOAD_INITBSS))
++				goto loop_cont;
++
++			if (cinit_processed) {
++				/* Don't clear BSS after load-time
++				 * initialization */
++				DL_ERROR
++				  ("Zero-initialization at " FMT_UI32 " after "
++				  "load-time initialization!", lptr->load_addr);
++				goto loop_cont;
++			}
++			/* fill the .bss area */
++			dlthis->myio->fillmem(dlthis->myio,
++					      TADDR_TO_HOST(lptr->load_addr),
++					      lptr, TADDR_TO_HOST(lptr->size),
++					      dload_fill_bss);
++			goto loop_cont;
++		} /* if DS_DOWNLOAD_MASK */
++		/* If not loading, but BSS, zero initialize */
++		if (DLOAD_SECT_TYPE(sptr) != DLOAD_BSS)
++			goto loop_cont;
++
++		if (!(dlthis->myoptions & DLOAD_INITBSS))
++			goto loop_cont;
++
++		if (curr_sect >= dlthis->allocated_secn_count)
++			lptr = DOFFSEC_IS_LDRSEC(sptr);
++
++		if (cinit_processed) {
++			/*Don't clear BSS after load-time initialization */
++			DL_ERROR(
++			 "Zero-initialization at " FMT_UI32 " attempted after "
++			 "load-time initialization!", lptr->load_addr);
++			goto loop_cont;
++		}
++		/* fill the .bss area */
++		dlthis->myio->fillmem(dlthis->myio,
++				     TADDR_TO_HOST(lptr->load_addr), lptr,
++				     TADDR_TO_HOST(lptr->size), dload_fill_bss);
++loop_cont:
++		sptr += 1;
++		lptr += 1;
++	}			/* load sections */
++}				/* dload_data */
++
++/*************************************************************************
++ * Procedure dload_reorder
++ *
++ * Parameters:
++ *	data	32-bit aligned pointer to data to be byte-swapped
++ *	dsiz	size of the data to be reordered in sizeof() units.
++ *	map		32-bit map defining how to reorder the data.  Value
++ *			must be REORDER_MAP() of some permutation
++ *			of 0x00 01 02 03
++ *
++ * Effect:
++ *	Re-arranges the bytes in each word according to the map specified.
++ *
++ ************************************************************************/
++/* mask for byte shift count */
++#define SHIFT_COUNT_MASK (3 << LOG_BITS_PER_BYTE)
++
++void dload_reorder(void *data, int dsiz, unsigned int map)
++{
++	register u32 tmp, tmap, datv;
++	u32 *dp = (u32 *)data;
++
++	map <<= LOG_BITS_PER_BYTE;	/* align map with SHIFT_COUNT_MASK */
++	do {
++		tmp = 0;
++		datv = *dp;
++		tmap = map;
++		do {
++			tmp |= (datv & BYTE_MASK) << (tmap & SHIFT_COUNT_MASK);
++			tmap >>= BITS_PER_BYTE;
++		} while (datv >>= BITS_PER_BYTE);
++		*dp++ = tmp;
++	} while ((dsiz -= sizeof(u32)) > 0);
++}				/* dload_reorder */
++
++/*************************************************************************
++ * Procedure dload_checksum
++ *
++ * Parameters:
++ *	data	32-bit aligned pointer to data to be checksummed
++ *	siz		size of the data to be checksummed in sizeof() units.
++ *
++ * Effect:
++ *	Returns a checksum of the specified block
++ *
++ ************************************************************************/
++u32 dload_checksum(void *data, unsigned siz)
++{
++	u32 sum;
++	u32 *dp;
++	int left;
++
++	sum = 0;
++	dp = (u32 *)data;
++	for (left = siz; left > 0; left -= sizeof(u32))
++		sum += *dp++;
++	return sum;
++}				/* dload_checksum */
++
++#if HOST_ENDIANNESS
++/*************************************************************************
++ * Procedure dload_reverse_checksum
++ *
++ * Parameters:
++ *	data	32-bit aligned pointer to data to be checksummed
++ *	siz		size of the data to be checksummed in sizeof() units.
++ *
++ * Effect:
++ *	Returns a checksum of the specified block, which is assumed to be bytes
++ * in big-endian order.
++ *
++ * Notes:
++ *	In a big-endian host, things like the string table are stored as bytes
++ * in host order. But dllcreate always checksums in little-endian order.
++ * It is most efficient to just handle the difference a word at a time.
++ *
++ ***********************************************************************/
++u32 dload_reverse_checksum(void *data, unsigned siz)
++{
++	u32 sum, temp;
++	u32 *dp;
++	int left;
++
++	sum = 0;
++	dp = (u32 *)data;
++
++	for (left = siz; left > 0; left -= sizeof(u32)) {
++		temp = *dp++;
++		sum += temp << BITS_PER_BYTE * 3;
++		sum += temp >> BITS_PER_BYTE * 3;
++		sum += (temp >> BITS_PER_BYTE) & (BYTE_MASK << BITS_PER_BYTE);
++		sum += (temp & (BYTE_MASK << BITS_PER_BYTE)) << BITS_PER_BYTE;
++	}
++
++	return sum;
++}				/* dload_reverse_checksum */
++
++#if (TARGET_AU_BITS > 8) && (TARGET_AU_BITS < 32)
++u32 dload_reverse_checksum_16(void *data, unsigned siz)
++{
++	uint_fast32_t sum, temp;
++	u32 *dp;
++	int left;
++
++	sum = 0;
++	dp = (u32 *)data;
++
++	for (left = siz; left > 0; left -= sizeof(u32)) {
++		temp = *dp++;
++		sum += temp << BITS_PER_BYTE * 2;
++		sum += temp >> BITS_PER_BYTE * 2;
++	}
++
++	return sum;
++}				/* dload_reverse_checksum_16 */
++#endif
++#endif
++
++/*************************************************************************
++ * Procedure swap_words
++ *
++ * Parameters:
++ *	data	32-bit aligned pointer to data to be swapped
++ *	siz	size of the data to be swapped.
++ *	bitmap	Bit map of how to swap each 32-bit word; 1 => 2 shorts,
++ *		0 => 1 long
++ *
++ * Effect:
++ *	Swaps the specified data according to the specified map
++ *
++ ************************************************************************/
++static void swap_words(void *data, unsigned siz, unsigned bitmap)
++{
++	register int i;
++#if TARGET_AU_BITS < 16
++	register u16 *sp;
++#endif
++	register u32 *lp;
++
++	siz /= sizeof(u16);
++
++#if TARGET_AU_BITS < 16
++	/* pass 1: do all the bytes */
++	i = siz;
++	sp = (u16 *) data;
++	do {
++		register u16 tmp;
++		tmp = *sp;
++		*sp++ = SWAP16BY8(tmp);
++	} while ((i -= 1) > 0);
++#endif
++
++#if TARGET_AU_BITS < 32
++	/* pass 2: fixup the 32-bit words */
++	i = siz >> 1;
++	lp = (u32 *) data;
++	do {
++		if ((bitmap & 1) == 0) {
++			register u32 tmp;
++			tmp = *lp;
++			*lp = SWAP32BY16(tmp);
++		}
++		lp += 1;
++		bitmap >>= 1;
++	} while ((i -= 1) > 0);
++#endif
++}				/* swap_words */
++
++/*************************************************************************
++ * Procedure copy_tgt_strings
++ *
++ * Parameters:
++ *	dstp		Destination address.  Assumed to be 32-bit aligned
++ *	srcp		Source address.  Assumed to be 32-bit aligned
++ *	charcount	Number of characters to copy.
++ *
++ * Effect:
++ *	Copies strings from the source (which is in usual .dof file order on
++ * the loading processor) to the destination buffer (which should be in proper
++ * target addressable unit order).  Makes sure the last string in the
++ * buffer is NULL terminated (for safety).
++ * Returns the first unused destination address.
++ ************************************************************************/
++static char *copy_tgt_strings(void *dstp, void *srcp, unsigned charcount)
++{
++	register TgtAU_t *src = (TgtAU_t *)srcp;
++	register TgtAU_t *dst = (TgtAU_t *)dstp;
++	register int cnt = charcount;
++	do {
++#if TARGET_AU_BITS <= BITS_PER_AU
++		/* byte-swapping issues may exist for strings on target */
++		*dst++ = *src++;
++#elif TARGET_ENDIANNESS_DIFFERS(TARGET_BIG_ENDIAN)
++		register TgtAU_t tmp;
++		tmp = *src++;
++		*dst++ = SWAP16BY8(tmp);  /* right for TARGET_AU_BITS == 16 */
++#else
++		*dst++ = *src++;
++#endif
++	} while ((cnt -= (sizeof(TgtAU_t) * BITS_PER_AU / BITS_PER_BYTE)) > 0);
++	/*apply force to make sure that the string table has null terminator */
++#if (BITS_PER_AU == BITS_PER_BYTE) && (TARGET_AU_BITS == BITS_PER_BYTE)
++	dst[-1] = 0;
++#elif TARGET_BIG_ENDIAN
++	dst[-1] &= ~BYTE_MASK;	/*  big-endian */
++#else
++	dst[-1] &= (1 << (BITS_PER_AU - BITS_PER_BYTE)) - 1; /* little endian */
++#endif
++	return (char *)dst;
++}				/* copy_tgt_strings */
++
++/*************************************************************************
++ * Procedure init_module_handle
++ *
++ * Parameters:
++ *	none
++ *
++ * Effect:
++ *	Initializes the module handle we use to enable unloading, and installs
++ * the debug information required by the target.
++ *
++ * Notes:
++ * The handle returned from Dynamic_Load_Module needs to encapsulate all the
++ * allocations done for the module, and enable them plus the modules symbols to
++ * be deallocated.
++ *
++ ************************************************************************/
++#ifndef _BIG_ENDIAN
++static const struct LDR_SECTION_INFO DLLVIEW_INFO_INIT = { ".dllview", 0, 0,
++				(LDR_ADDR) -1, DBG_LIST_PAGE, DLOAD_DATA, 0 };
++#else
++static const struct LDR_SECTION_INFO DLLVIEW_INFO_INIT = { ".dllview", 0, 0,
++				(LDR_ADDR) -1, DLOAD_DATA, DBG_LIST_PAGE, 0 };
++#endif
++static void init_module_handle(struct dload_state *dlthis)
++{
++	struct my_handle *hndl;
++	u16 curr_sect;
++	struct LDR_SECTION_INFO *asecs;
++	struct dll_module *dbmod;
++	struct dll_sect *dbsec;
++	struct dbg_mirror_root *mlist;
++	register char *cp;
++	struct modules_header mhdr;
++	struct LDR_SECTION_INFO dllview_info;
++	struct dynload_symbol *debug_mirror_sym;
++	hndl = dlthis->myhandle;
++	if (!hndl)
++		return;		/* must be errors detected, so forget it */
++	hndl->secn_count = dlthis->allocated_secn_count << 1;
++#ifndef TARGET_ENDIANNESS
++	if (dlthis->big_e_target)
++		hndl->secn_count += 1;	/* flag for big-endian */
++#endif
++	if (dlthis->dload_errcount)
++		return;		/* abandon if errors detected */
++	 /* Locate the symbol that names the header for the CCS debug list
++	 of modules. If not found, we just don't generate the debug record.
++	 If found, we create our modules list.  We make sure to create the
++	 LOADER_DLLVIEW_ROOT even if there is no relocation info to record,
++	 just to try to put both symbols in the same symbol table and
++	 module.*/
++	debug_mirror_sym = dlthis->mysym->Find_Matching_Symbol(dlthis->mysym,
++						LOADER_DLLVIEW_ROOT);
++	if (!debug_mirror_sym) {
++		struct dynload_symbol *dlmodsym;
++		struct dbg_mirror_root *mlst;
++
++		/* our root symbol is not yet present;
++		   check if we have DLModules defined */
++		dlmodsym = dlthis->mysym->Find_Matching_Symbol(dlthis->mysym,
++							LINKER_MODULES_HEADER);
++		if (!dlmodsym)
++			return;	/* no DLModules list so no debug info */
++		/* if we have DLModules defined, construct our header */
++		mlst = (struct dbg_mirror_root *)
++			dlthis->mysym->Allocate(dlthis->mysym,
++			sizeof(struct dbg_mirror_root));
++		if (!mlst) {
++			DL_ERROR(E_ALLOC, sizeof(struct dbg_mirror_root));
++			return;
++		}
++		mlst->hnext = NULL;
++		mlst->changes = 0;
++		mlst->refcount = 0;
++		mlst->dbthis = TDATA_TO_TADDR(dlmodsym->value);
++		/* add our root symbol */
++		debug_mirror_sym = dlthis->mysym->Add_To_Symbol_Table
++			(dlthis->mysym, LOADER_DLLVIEW_ROOT,
++			(unsigned)dlthis->myhandle);
++		if (!debug_mirror_sym) {
++			/* failed, recover memory */
++			dlthis->mysym->Deallocate(dlthis->mysym, mlst);
++			return;
++		}
++		debug_mirror_sym->value = (u32)mlst;
++	}
++	 /* First create the DLLview record and stuff it into the buffer.
++	 Then write it to the DSP.  Record pertinent locations in our hndl,
++	  and add it to the per-processor list of handles with debug info.*/
++#ifndef DEBUG_HEADER_IN_LOADER
++	mlist = (struct dbg_mirror_root *)debug_mirror_sym->value;
++	if (!mlist)
++		return;
++#else
++	mlist = (struct dbg_mirror_root *)&debug_list_header;
++#endif
++	hndl->dm.hroot = mlist;	/* set pointer to root into our handle */
++	if (!dlthis->allocated_secn_count)
++		return;		/* no load addresses to be recorded */
++	/* reuse temporary symbol storage */
++	dbmod = (struct dll_module *) dlthis->local_symtab;
++	 /* Create the DLLview record in the memory we retain for our handle*/
++	dbmod->num_sects = dlthis->allocated_secn_count;
++	dbmod->timestamp = dlthis->verify.dv_timdat;
++	dbmod->version = INIT_VERSION;
++	dbmod->verification = VERIFICATION;
++	asecs = dlthis->ldr_sections;
++	dbsec = dbmod->sects;
++	for (curr_sect = dlthis->allocated_secn_count;
++	     curr_sect > 0; curr_sect -= 1) {
++		dbsec->sect_load_adr = asecs->load_addr;
++		dbsec->sect_run_adr = asecs->run_addr;
++		dbsec += 1;
++		asecs += 1;
++	}
++	/* now cram in the names */
++	cp = copy_tgt_strings(dbsec, dlthis->str_head,
++			      dlthis->debug_string_size);
++
++	/* round off the size of the debug record, and remember same */
++	hndl->dm.dbsiz = HOST_TO_TDATA_ROUND(cp - (char *)dbmod);
++	*cp = 0;		/* strictly to make our test harness happy */
++	dllview_info = DLLVIEW_INFO_INIT;
++	dllview_info.size = TDATA_TO_TADDR(hndl->dm.dbsiz);
++	/* Initialize memory context to default heap */
++	dllview_info.context = 0;
++	hndl->dm.context = 0;
++	/* fill in next pointer and size */
++	if (mlist->hnext) {
++		dbmod->next_module = TADDR_TO_TDATA(mlist->hnext->dm.dbthis);
++		dbmod->next_module_size = mlist->hnext->dm.dbsiz;
++	} else {
++		dbmod->next_module_size = 0;
++		dbmod->next_module = 0;
++	}
++	/* allocate memory for on-DSP DLLview debug record */
++	if (!dlthis->myalloc)
++		return;
++	if (!dlthis->myalloc->Allocate(dlthis->myalloc, &dllview_info,
++		     HOST_TO_TADDR(sizeof(u32)))) {
++		return;
++	}
++	/* Store load address of .dllview section */
++	hndl->dm.dbthis = dllview_info.load_addr;
++	/* Store memory context (segid) in which .dllview section
++	 * was  allocated */
++	hndl->dm.context = dllview_info.context;
++	mlist->refcount += 1;
++	/* swap bytes in the entire debug record, but not the string table */
++	if (TARGET_ENDIANNESS_DIFFERS(TARGET_BIG_ENDIAN)) {
++		swap_words(dbmod, (char *)dbsec - (char *)dbmod,
++			   DLL_MODULE_BITMAP);
++	}
++	 /* Update the DLLview list on the DSP write new record */
++	if (!dlthis->myio->writemem(dlthis->myio, dbmod,
++		dllview_info.load_addr, &dllview_info,
++		TADDR_TO_HOST(dllview_info.size))) {
++		return;
++	}
++	/* write new header */
++	mhdr.first_module_size = hndl->dm.dbsiz;
++	mhdr.first_module = TADDR_TO_TDATA(dllview_info.load_addr);
++	/* swap bytes in the module header, if needed */
++	if (TARGET_ENDIANNESS_DIFFERS(TARGET_BIG_ENDIAN)) {
++		swap_words(&mhdr, sizeof(struct modules_header) - sizeof(u16),
++			   MODULES_HEADER_BITMAP);
++	}
++	dllview_info = DLLVIEW_INFO_INIT;
++	if (!dlthis->myio->writemem(dlthis->myio, &mhdr, mlist->dbthis,
++			&dllview_info, sizeof(struct modules_header) -
++				       sizeof(u16))) {
++		return;
++	}
++	 /* Add the module handle to this processor's list
++		of handles with debug info */
++	hndl->dm.hnext = mlist->hnext;
++	if (hndl->dm.hnext)
++		hndl->dm.hnext->dm.hprev = hndl;
++	hndl->dm.hprev = (struct my_handle *) mlist;
++	mlist->hnext = hndl;	/* insert after root*/
++}				/* init_module_handle */
++
++/*************************************************************************
++ * Procedure Dynamic_Unload_Module
++ *
++ * Parameters:
++ *	mhandle	A module handle from Dynamic_Load_Module
++ *	syms	Host-side symbol table and malloc/free functions
++ *	alloc	Target-side memory allocation
++ *
++ * Effect:
++ *	The module specified by mhandle is unloaded.  Unloading causes all
++ * target memory to be deallocated, all symbols defined by the module to
++ * be purged, and any host-side storage used by the dynamic loader for
++ * this module to be released.
++ *
++ * Returns:
++ *	Zero for success. On error, the number of errors detected is returned.
++ * Individual errors are reported using syms->Error_Report().
++ ************************************************************************/
++extern int Dynamic_Unload_Module(DLOAD_mhandle mhandle,
++		struct Dynamic_Loader_Sym *syms,
++		struct Dynamic_Loader_Allocate *alloc,
++		struct Dynamic_Loader_Initialize *init)
++{
++	s16 curr_sect;
++	struct LDR_SECTION_INFO *asecs;
++	struct my_handle *hndl;
++	struct dbg_mirror_root *root;
++	unsigned errcount = 0;
++	struct LDR_SECTION_INFO dllview_info = DLLVIEW_INFO_INIT;
++	struct modules_header mhdr;
++
++	hndl = (struct my_handle *)mhandle;
++	if (!hndl)
++		return 0;	/* if handle is null, nothing to do */
++	 /* Clear out the module symbols
++	 * Note that if this is the module that defined MODULES_HEADER
++	  (the head of the target debug list)
++	 * then this operation will blow away that symbol.
++	 It will therefore be impossible for subsequent
++	 * operations to add entries to this un-referenceable list.*/
++	if (!syms)
++		return 1;
++	syms->Purge_Symbol_Table(syms, (unsigned) hndl);
++	 /* Deallocate target memory for sections */
++	asecs = hndl->secns;
++	if (alloc)
++		for (curr_sect = (hndl->secn_count >> 1); curr_sect > 0;
++		     curr_sect -= 1) {
++			asecs->name = NULL;
++			alloc->Deallocate(alloc, asecs++);
++		}
++	root = hndl->dm.hroot;
++	if (!root) {
++		/* there is a debug list containing this module */
++		goto func_end;
++	}
++	if (!hndl->dm.dbthis) {	/* target-side dllview record exists */
++		goto loop_end;
++	}
++	/* Retrieve memory context in which .dllview was allocated */
++	dllview_info.context = hndl->dm.context;
++	if (hndl->dm.hprev == hndl)
++		goto exitunltgt;
++
++	/* target-side dllview record is in list */
++	/* dequeue this record from our GPP-side mirror list */
++	hndl->dm.hprev->dm.hnext = hndl->dm.hnext;
++	if (hndl->dm.hnext)
++		hndl->dm.hnext->dm.hprev = hndl->dm.hprev;
++	 /* Update next_module of previous entry in target list
++	 * We are using mhdr here as a surrogate for either a
++	 struct modules_header or a dll_module	 */
++	if (hndl->dm.hnext) {
++		mhdr.first_module = TADDR_TO_TDATA(hndl->dm.hnext->dm.dbthis);
++		mhdr.first_module_size = hndl->dm.hnext->dm.dbsiz;
++	} else {
++		mhdr.first_module = 0;
++		mhdr.first_module_size = 0;
++	}
++	if (!init)
++		goto exitunltgt;
++
++	if (!init->connect(init)) {
++		dload_syms_error(syms, E_ICONNECT);
++		errcount += 1;
++		goto exitunltgt;
++	}
++	/* swap bytes in the module header, if needed */
++	if (TARGET_ENDIANNESS_DIFFERS(hndl->secn_count & 0x1)) {
++		swap_words(&mhdr, sizeof(struct modules_header) - sizeof(u16),
++			   MODULES_HEADER_BITMAP);
++	}
++	if (!init->writemem(init, &mhdr, hndl->dm.hprev->dm.dbthis,
++			    &dllview_info, sizeof(struct modules_header) -
++			    sizeof(mhdr.update_flag))) {
++		dload_syms_error(syms, E_DLVWRITE);
++		errcount += 1;
++	}
++	/* update change counter */
++	root->changes += 1;
++	if (!init->writemem(init, &(root->changes),
++				root->dbthis + HOST_TO_TADDR
++				      (sizeof(mhdr.first_module) +
++				      sizeof(mhdr.first_module_size)),
++				      &dllview_info,
++				      sizeof(mhdr.update_flag))) {
++		dload_syms_error(syms, E_DLVWRITE);
++		errcount += 1;
++	}
++	init->release(init);
++exitunltgt:
++	/* release target storage */
++	dllview_info.size = TDATA_TO_TADDR(hndl->dm.dbsiz);
++	dllview_info.load_addr = hndl->dm.dbthis;
++	if (alloc)
++		alloc->Deallocate(alloc, &dllview_info);
++	root->refcount -= 1;
++	/* target-side dllview record exists */
++loop_end:
++#ifndef DEBUG_HEADER_IN_LOADER
++	if (root->refcount <= 0) {
++		/* if all references gone, blow off the header */
++		/* our root symbol may be gone due to the Purge above,
++		   but if not, do not destroy the root */
++		if (syms->Find_Matching_Symbol
++			(syms, LOADER_DLLVIEW_ROOT) == NULL)
++			syms->Deallocate(syms, root);
++	}
++#endif
++func_end:
++	/* there is a debug list containing this module */
++	syms->Deallocate(syms, mhandle);	/* release our storage */
++	return errcount;
++}				/* Dynamic_Unload_Module */
++
++#if BITS_PER_AU > BITS_PER_BYTE
++/*************************************************************************
++ * Procedure unpack_name
++ *
++ * Parameters:
++ *	soffset	Byte offset into the string table
++ *
++ * Effect:
++ *	Returns a pointer to the string specified by the offset supplied, or
++ * NULL for error.
++ *
++ ************************************************************************/
++static char *unpack_name(struct dload_state *dlthis, u32 soffset)
++{
++	u8 tmp, *src;
++	char *dst;
++
++	if (soffset >= dlthis->dfile_hdr.df_strtab_size) {
++		dload_error(dlthis, "Bad string table offset " FMT_UI32,
++			    soffset);
++		return NULL;
++	}
++	src = (uint_least8_t *)dlthis->str_head +
++	    (soffset >> (LOG_BITS_PER_AU - LOG_BITS_PER_BYTE));
++	dst = dlthis->str_temp;
++	if (soffset & 1)
++		*dst++ = *src++;	/* only 1 character in first word */
++	do {
++		tmp = *src++;
++		*dst = (tmp >> BITS_PER_BYTE);
++		if (!(*dst++))
++			break;
++	} while ((*dst++ = tmp & BYTE_MASK));
++	dlthis->temp_len = dst - dlthis->str_temp;
++	/* squirrel away length including terminating null */
++	return dlthis->str_temp;
++}				/* unpack_name */
++#endif
+diff --git a/drivers/dsp/bridge/dynload/dlclasses_hdr.h b/drivers/dsp/bridge/dynload/dlclasses_hdr.h
+new file mode 100644
+index 0000000..6c7af58
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/dlclasses_hdr.h
+@@ -0,0 +1,41 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/dlclasses_hdr.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++
++#ifndef _DLCLASSES_HDR_H
++#define _DLCLASSES_HDR_H
++
++/*****************************************************************************
++ *****************************************************************************
++ *
++ *                          DLCLASSES_HDR.H
++ *
++ * Sample classes in support of the dynamic loader
++ *
++ * These are just concrete derivations of the virtual ones in dynamic_loader.h
++ * with a few additional interfaces for init, etc.
++ *****************************************************************************
++ *****************************************************************************/
++
++#include "dynamic_loader.h"
++
++#include "DLstream.h"
++#include "DLsymtab.h"
++#include "DLalloc.h"
++#include "DLinit.h"
++
++#endif				/* _DLCLASSES_HDR_H */
+diff --git a/drivers/dsp/bridge/dynload/dload_internal.h b/drivers/dsp/bridge/dynload/dload_internal.h
+new file mode 100644
+index 0000000..c3b7b36
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/dload_internal.h
+@@ -0,0 +1,237 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/dload_internal.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++
++#ifndef __DLOAD_INTERNAL__
++#define __DLOAD_INTERNAL__
++
++#include <linux/types.h>
++
++/*
++ * Internal state definitions for the dynamic loader
++ */
++
++#define TRUE 1
++#define FALSE 0
++typedef int boolean;
++
++
++/* type used for relocation intermediate results */
++typedef s32 RVALUE;
++
++/* unsigned version of same; must have at least as many bits */
++typedef u32 URVALUE;
++
++/*
++ * Dynamic loader configuration constants
++ */
++/* error issued if input has more sections than this limit */
++#define REASONABLE_SECTION_LIMIT 100
++
++/* (Addressable unit) value used to clear BSS section */
++#define dload_fill_bss 0
++
++/*
++ * Reorder maps explained (?)
++ *
++ * The doff file format defines a 32-bit pattern used to determine the
++ * byte order of an image being read.  That value is
++ * BYTE_RESHUFFLE_VALUE == 0x00010203
++ * For purposes of the reorder routine, we would rather have the all-is-OK
++ * for 32-bits pattern be 0x03020100.  This first macro makes the
++ * translation from doff file header value to MAP value: */
++#define REORDER_MAP(rawmap) ((rawmap) ^ 0x3030303)
++/* This translation is made in dload_headers.  Thereafter, the all-is-OK
++ * value for the maps stored in dlthis is REORDER_MAP(BYTE_RESHUFFLE_VALUE).
++ * But sadly, not all bits of the doff file are 32-bit integers.
++ * The notable exceptions are strings and image bits.
++ * Strings obey host byte order: */
++#if defined(_BIG_ENDIAN)
++#define HOST_BYTE_ORDER(cookedmap) ((cookedmap) ^ 0x3030303)
++#else
++#define HOST_BYTE_ORDER(cookedmap) (cookedmap)
++#endif
++/* Target bits consist of target AUs (could be bytes, or 16-bits,
++ * or 32-bits) stored as an array in host order.  A target order
++ * map is defined by: */
++#if !defined(_BIG_ENDIAN) || TARGET_AU_BITS > 16
++#define TARGET_ORDER(cookedmap) (cookedmap)
++#elif TARGET_AU_BITS > 8
++#define TARGET_ORDER(cookedmap) ((cookedmap) ^ 0x2020202)
++#else
++#define TARGET_ORDER(cookedmap) ((cookedmap) ^ 0x3030303)
++#endif
++
++/* forward declaration for handle returned by dynamic loader */
++struct my_handle;
++
++/*
++ * a list of module handles, which mirrors the debug list on the target
++ */
++struct dbg_mirror_root {
++	/* must be same as dbg_mirror_list; __DLModules address on target */
++	u32 dbthis;
++	struct my_handle *hnext;	/* must be same as dbg_mirror_list */
++	u16 changes;	/* change counter */
++	u16 refcount;	/* number of modules referencing this root */
++} ;
++
++struct dbg_mirror_list {
++	u32 dbthis;
++	struct my_handle *hnext, *hprev;
++	struct dbg_mirror_root *hroot;
++	u16 dbsiz;
++	u32 context;	/* Save context for .dllview memory allocation */
++} ;
++
++#define VARIABLE_SIZE 1
++/*
++ * the structure we actually return as an opaque module handle
++ */
++struct my_handle {
++	struct dbg_mirror_list dm;	/* !!! must be first !!! */
++	/* sections following << 1, LSB is set for big-endian target */
++	u16 secn_count;
++	struct LDR_SECTION_INFO secns[VARIABLE_SIZE];
++} ;
++#define MY_HANDLE_SIZE (sizeof(struct my_handle) -\
++			sizeof(struct LDR_SECTION_INFO))
++/* real size of my_handle */
++
++/*
++ * reduced symbol structure used for symbols during relocation
++ */
++struct Local_Symbol {
++	s32 value;	/* Relocated symbol value */
++	s32 delta;	/* Original value in input file */
++	s16 secnn;		/* section number */
++	s16 sclass;		/* symbol class */
++} ;
++
++/*
++ * States of the .cinit state machine
++ */
++enum cinit_mode {
++	CI_count = 0,		/* expecting a count */
++	CI_address,		/* expecting an address */
++#if CINIT_ALIGN < CINIT_ADDRESS	/* handle case of partial address field */
++	CI_partaddress,		/* have only part of the address */
++#endif
++	CI_copy,		/* in the middle of copying data */
++	CI_done			/* end of .cinit table */
++};
++
++/*
++ * The internal state of the dynamic loader, which is passed around as
++ * an object
++ */
++struct dload_state {
++	struct Dynamic_Loader_Stream *strm;	/* The module input stream */
++	struct Dynamic_Loader_Sym *mysym;	/* Symbols for this session */
++	struct Dynamic_Loader_Allocate *myalloc; /* target memory allocator */
++	struct Dynamic_Loader_Initialize *myio;	/* target memory initializer */
++	unsigned myoptions;	/* Options parameter Dynamic_Load_Module */
++
++	char *str_head;		/* Pointer to string table */
++#if BITS_PER_AU > BITS_PER_BYTE
++	char *str_temp;		/* Pointer to temporary buffer for strings */
++	/* big enough to hold longest string */
++	unsigned temp_len;	/* length of last temporary string */
++	char *xstrings;		/* Pointer to buffer for expanded */
++	/* strings for sec names */
++#endif
++	/* Total size of strings for DLLView section names */
++	unsigned debug_string_size;
++	/* Pointer to parallel section info for allocated sections only */
++	struct doff_scnhdr_t *sect_hdrs;	/* Pointer to section table */
++	struct LDR_SECTION_INFO *ldr_sections;
++#if TMS32060
++	/* The address of the start of the .bss section */
++	LDR_ADDR bss_run_base;
++#endif
++	struct Local_Symbol *local_symtab;	/* Relocation symbol table */
++
++	/* pointer to DL section info for the section being relocated */
++	struct LDR_SECTION_INFO *image_secn;
++	/* change in run address for current section during relocation */
++	LDR_ADDR delta_runaddr;
++	LDR_ADDR image_offset;	/* offset of current packet in section */
++	enum cinit_mode cinit_state;	/* current state of cload_cinit() */
++	int cinit_count;	/* the current count */
++	LDR_ADDR cinit_addr;	/* the current address */
++	s16 cinit_page;	/* the current page */
++	/* Handle to be returned by Dynamic_Load_Module */
++	struct my_handle *myhandle;
++	unsigned dload_errcount;	/* Total # of errors reported so far */
++	/* Number of target sections that require allocation and relocation */
++	unsigned allocated_secn_count;
++#ifndef TARGET_ENDIANNESS
++	boolean big_e_target;	/* Target data in big-endian format */
++#endif
++	/* map for reordering bytes, 0 if not needed */
++	u32 reorder_map;
++	struct doff_filehdr_t dfile_hdr;	/* DOFF file header structure */
++	struct doff_verify_rec_t verify;	/* Verify record */
++
++	int relstkidx;		/* index into relocation value stack */
++	/* relocation value stack used in relexp.c */
++	RVALUE relstk[STATIC_EXPR_STK_SIZE];
++
++} ;
++
++#ifdef TARGET_ENDIANNESS
++#define TARGET_BIG_ENDIAN TARGET_ENDIANNESS
++#else
++#define TARGET_BIG_ENDIAN (dlthis->big_e_target)
++#endif
++
++/*
++ * Exports from cload.c to rest of the world
++ */
++extern void dload_error(struct dload_state *dlthis, const char *errtxt, ...);
++extern void dload_syms_error(struct Dynamic_Loader_Sym *syms,
++			     const char *errtxt, ...);
++extern void dload_headers(struct dload_state *dlthis);
++extern void dload_strings(struct dload_state *dlthis, boolean sec_names_only);
++extern void dload_sections(struct dload_state *dlthis);
++extern void dload_reorder(void *data, int dsiz, u32 map);
++extern u32 dload_checksum(void *data, unsigned siz);
++
++#if HOST_ENDIANNESS
++extern uint32_t dload_reverse_checksum(void *data, unsigned siz);
++#if (TARGET_AU_BITS > 8) && (TARGET_AU_BITS < 32)
++extern uint32_t dload_reverse_checksum_16(void *data, unsigned siz);
++#endif
++#endif
++
++#define is_data_scn(zzz) (DLOAD_SECTION_TYPE((zzz)->type) != DLOAD_TEXT)
++#define is_data_scn_num(zzz) \
++		(DLOAD_SECT_TYPE(&dlthis->sect_hdrs[(zzz)-1]) != DLOAD_TEXT)
++
++/*
++ * exported by reloc.c
++ */
++extern void dload_relocate(struct dload_state *dlthis, TgtAU_t *data,
++			   struct reloc_record_t *rp);
++
++extern RVALUE dload_unpack(struct dload_state *dlthis, TgtAU_t *data,
++			   int fieldsz, int offset, unsigned sgn);
++
++extern int dload_repack(struct dload_state *dlthis, RVALUE val, TgtAU_t *data,
++			int fieldsz, int offset, unsigned sgn);
++
++#endif				/* __DLOAD_INTERNAL__ */
+diff --git a/drivers/dsp/bridge/dynload/doff.h b/drivers/dsp/bridge/dynload/doff.h
+new file mode 100644
+index 0000000..6ebe2da
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/doff.h
+@@ -0,0 +1,347 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/doff.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/*****************************************************************************/
++/*  DOFF.H - Structures & definitions used for dynamically                   */
++/*           loaded modules file format.  This format is a reformatted       */
++/*           version of COFF.(see coff.h for details)  It optimizes the      */
++/*           layout for the dynamic loader.                                  */
++/*                                                                           */
++/*  .dof files, when viewed as a sequence of 32-bit integers, look the same  */
++/*  on big-endian and little-endian machines.                                */
++/*****************************************************************************/
++#ifndef _DOFF_H
++#define _DOFF_H
++
++#ifndef UINT32_C
++#define UINT32_C(zzz) ((u32)zzz)
++#endif
++
++#define BYTE_RESHUFFLE_VALUE UINT32_C(0x00010203)
++
++/* DOFF file header containing fields categorizing the remainder of the file */
++struct doff_filehdr_t {
++
++	/* string table size, including filename, in bytes   */
++	u32 df_strtab_size;
++
++	/* entry point if one exists */
++	u32 df_entrypt;
++
++	/* identifies byte ordering of file;
++	 * always set to BYTE_RESHUFFLE_VALUE  */
++	u32 df_byte_reshuffle;
++
++	/* Size of the string table up to and including the last section name */
++	/* Size includes the name of the COFF file also     */
++	u32 df_scn_name_size;
++
++#ifndef _BIG_ENDIAN
++	/* number of symbols */
++	u16 df_no_syms;
++
++	/* length in bytes of the longest string, including terminating NULL */
++	/* excludes the name of the file     */
++	u16 df_max_str_len;
++
++	/* total number of sections including no-load ones   */
++	u16 df_no_scns;
++
++	/* number of sections containing target code allocated or downloaded */
++	u16 df_target_scns;
++
++	/* unique id for dll file format & version   */
++	u16 df_doff_version;
++
++	/* identifies ISA */
++	u16 df_target_id;
++
++	/* useful file flags */
++	u16 df_flags;
++
++	/* section reference for entry point, N_UNDEF for none,   */
++	/* N_ABS for absolute address */
++	s16 df_entry_secn;
++#else
++	/* length of the longest string, including terminating NULL  */
++	u16 df_max_str_len;
++
++	/* number of symbols */
++	u16 df_no_syms;
++
++	/* number of sections containing target code allocated or downloaded */
++	u16 df_target_scns;
++
++	/* total number of sections including no-load ones */
++	u16 df_no_scns;
++
++	/* identifies ISA */
++	u16 df_target_id;
++
++	/* unique id for dll file format & version */
++	u16 df_doff_version;
++
++	/* section reference for entry point, N_UNDEF for none,  */
++	/* N_ABS for absolute address */
++	s16 df_entry_secn;
++
++	/* useful file flags */
++	u16 df_flags;
++#endif
++	/* checksum for file header record */
++	u32 df_checksum;
++
++} ;
++
++/* flags in the df_flags field */
++#define  DF_LITTLE   0x100
++#define  DF_BIG      0x200
++#define  DF_BYTE_ORDER (DF_LITTLE | DF_BIG)
++
++/* Supported processors */
++#define TMS470_ID   0x97
++#define LEAD_ID     0x98
++#define TMS32060_ID 0x99
++#define LEAD3_ID    0x9c
++
++/* Primary processor for loading */
++#if TMS32060
++#define TARGET_ID   TMS32060_ID
++#endif
++
++/* Verification record containing values used to test integrity of the bits */
++struct doff_verify_rec_t {
++
++	/* time and date stamp */
++	u32 dv_timdat;
++
++	/* checksum for all section records */
++	u32 dv_scn_rec_checksum;
++
++	/* checksum for string table */
++	u32 dv_str_tab_checksum;
++
++	/* checksum for symbol table */
++	u32 dv_sym_tab_checksum;
++
++	/* checksum for verification record */
++	u32 dv_verify_rec_checksum;
++
++} ;
++
++/* String table is an array of null-terminated strings.  The first entry is
++ * the filename, which is added by DLLcreate.  No new structure definitions
++ * are required.
++ */
++
++/* Section Records including information on the corresponding image packets */
++/*
++ *      !!WARNING!!
++ *
++ * This structure is expected to match in form LDR_SECTION_INFO in
++ * dynamic_loader.h
++ */
++
++struct doff_scnhdr_t {
++
++	s32 ds_offset;	/* offset into string table of name    */
++	s32 ds_paddr;	/* RUN address, in target AU           */
++	s32 ds_vaddr;	/* LOAD address, in target AU          */
++	s32 ds_size;	/* section size, in target AU          */
++#ifndef _BIG_ENDIAN
++	u16 ds_page;	/* memory page id                      */
++	u16 ds_flags;	/* section flags                       */
++#else
++	u16 ds_flags;	/* section flags                       */
++	u16 ds_page;	/* memory page id                      */
++#endif
++	u32 ds_first_pkt_offset;
++	/* Absolute byte offset into the file  */
++	/* where the first image record resides */
++
++	s32 ds_nipacks;	/* number of image packets             */
++
++};
++
++/* Symbol table entry */
++struct doff_syment_t {
++
++	s32 dn_offset;	/* offset into string table of name    */
++	s32 dn_value;	/* value of symbol                     */
++#ifndef _BIG_ENDIAN
++	s16 dn_scnum;	/* section number                      */
++	s16 dn_sclass;	/* storage class                       */
++#else
++	s16 dn_sclass;	/* storage class                       */
++	s16 dn_scnum;	/* section number, 1-based             */
++#endif
++
++} ;
++
++/* special values for dn_scnum */
++#define  DN_UNDEF  0		/* undefined symbol               */
++#define  DN_ABS    (-1)		/* value of symbol is absolute    */
++/* special values for dn_sclass */
++#define DN_EXT     2
++#define DN_STATLAB 20
++#define DN_EXTLAB  21
++
++/* Default value of image bits in packet */
++/* Configurable by user on the command line */
++#define IMAGE_PACKET_SIZE 1024
++
++/* An image packet contains a chunk of data from a section along with */
++/* information necessary for its processing.                          */
++struct image_packet_t {
++
++	s32 i_num_relocs;	/* number of relocations for   */
++	/* this packet                 */
++
++	s32 i_packet_size;	/* number of bytes in array    */
++	/* "bits" occupied  by         */
++	/* valid data.  Could be       */
++	/* < IMAGE_PACKET_SIZE to      */
++	/* prevent splitting a         */
++	/* relocation across packets.  */
++	/* Last packet of a section    */
++	/* will most likely contain    */
++	/* < IMAGE_PACKET_SIZE bytes   */
++	/* of valid data               */
++
++	s32 i_checksum;	/* Checksum for image packet   */
++	/* and the corresponding       */
++	/* relocation records          */
++
++	u8 *i_bits;	/* Actual data in section      */
++
++};
++
++/* The relocation structure definition matches the COFF version.  Offsets  */
++/* however are relative to the image packet base not the section base.     */
++struct reloc_record_t {
++
++	s32 r_vaddr;
++
++	/* expressed in target AUs          */
++
++	union {
++		struct {
++#ifndef _BIG_ENDIAN
++			u8 _offset;	/* bit offset of rel fld      */
++			u8 _fieldsz;	/* size of rel fld            */
++			u8 _wordsz;	/* # bytes containing rel fld */
++			u8 _dum1;
++			u16 _dum2;
++			u16 _type;
++#else
++			unsigned _dum1:8;
++			unsigned _wordsz:8;	/* # bytes containing rel fld */
++			unsigned _fieldsz:8;	/* size of rel fld            */
++			unsigned _offset:8;	/* bit offset of rel fld      */
++			u16 _type;
++			u16 _dum2;
++#endif
++		} _r_field;
++
++		struct {
++			u32 _spc;	/* image packet relative PC   */
++#ifndef _BIG_ENDIAN
++			u16 _dum;
++			u16 _type;	/* relocation type            */
++#else
++			u16 _type;	/* relocation type            */
++			u16 _dum;
++#endif
++		} _r_spc;
++
++		struct {
++			u32 _uval;	/* constant value             */
++#ifndef _BIG_ENDIAN
++			u16 _dum;
++			u16 _type;	/* relocation type            */
++#else
++			u16 _type;	/* relocation type            */
++			u16 _dum;
++#endif
++		} _r_uval;
++
++		struct {
++			s32 _symndx;	/* 32-bit sym tbl index       */
++#ifndef _BIG_ENDIAN
++			u16 _disp;	/* extra addr encode data     */
++			u16 _type;	/* relocation type            */
++#else
++			u16 _type;	/* relocation type            */
++			u16 _disp;	/* extra addr encode data     */
++#endif
++		} _r_sym;
++	} _u_reloc;
++
++} ;
++
++/* abbreviations for convenience */
++#ifndef r_type
++#define r_type      _u_reloc._r_sym._type
++#define r_uval      _u_reloc._r_uval._uval
++#define r_symndx    _u_reloc._r_sym._symndx
++#define r_offset    _u_reloc._r_field._offset
++#define r_fieldsz   _u_reloc._r_field._fieldsz
++#define r_wordsz    _u_reloc._r_field._wordsz
++#define r_disp      _u_reloc._r_sym._disp
++#endif
++
++/*****************************************************************************/
++/*                                                                           */
++/* Important DOFF macros used for file processing                            */
++/*                                                                           */
++/*****************************************************************************/
++
++/* DOFF Versions */
++#define         DOFF0                       0
++
++/* Return the address/size >= to addr that is at a 32-bit boundary           */
++/* This assumes that a byte is 8 bits                                        */
++#define         DOFF_ALIGN(addr)            (((addr) + 3) & ~UINT32_C(3))
++
++/*****************************************************************************/
++/*                                                                           */
++/* The DOFF section header flags field is laid out as follows:               */
++/*                                                                           */
++/*  Bits 0-3 : Section Type                                                  */
++/*  Bit    4 : Set when section requires target memory to be allocated by DL */
++/*  Bit    5 : Set when section requires downloading                         */
++/*  Bits 8-11: Alignment, same as COFF                                       */
++/*                                                                           */
++/*****************************************************************************/
++
++/* Enum for DOFF section types (bits 0-3 of flag): See dynamic_loader.h      */
++
++/* Macros to help processing of sections                                     */
++#define DLOAD_SECT_TYPE(s_hdr)      ((s_hdr)->ds_flags & 0xF)
++
++/* DS_ALLOCATE indicates whether a section needs space on the target         */
++#define DS_ALLOCATE_MASK            0x10
++#define DS_NEEDS_ALLOCATION(s_hdr)  ((s_hdr)->ds_flags & DS_ALLOCATE_MASK)
++
++/* DS_DOWNLOAD indicates that the loader needs to copy bits                  */
++#define DS_DOWNLOAD_MASK            0x20
++#define DS_NEEDS_DOWNLOAD(s_hdr)    ((s_hdr)->ds_flags & DS_DOWNLOAD_MASK)
++
++/* Section alignment requirement in AUs */
++#define DS_ALIGNMENT(ds_flags) (1 << (((ds_flags) >> 8) & 0xF))
++
++#endif				/* _DOFF_H */
+diff --git a/drivers/dsp/bridge/dynload/getsection.c b/drivers/dsp/bridge/dynload/getsection.c
+new file mode 100644
+index 0000000..4bb3277
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/getsection.c
+@@ -0,0 +1,412 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/getsection.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++
++#include "getsection.h"
++#include "header.h"
++
++/*
++ * Error strings
++ */
++static const char E_READSTRM[] = { "Error reading %s from input stream" };
++static const char E_SEEK[] = { "Set file position to %d failed" };
++static const char E_ISIZ[] = { "Bad image packet size %d" };
++static const char E_CHECKSUM[] = { "Checksum failed on %s" };
++static const char E_RELOC[] = { "DLOAD_GetSection unable to read"
++	"sections containing relocation entries"};
++#if BITS_PER_AU > BITS_PER_BYTE
++static const char E_ALLOC[] = { "Syms->Allocate( %d ) failed" };
++static const char E_STBL[] = { "Bad string table offset " FMT_UI32 };
++#endif
++
++/*
++ * we use the fact that DOFF section records are shaped just like
++ * LDR_SECTION_INFO to reduce our section storage usage.  These macros
++ * marks the places where that assumption is made
++ */
++#define DOFFSEC_IS_LDRSEC(pdoffsec) ((struct LDR_SECTION_INFO *)(pdoffsec))
++#define LDRSEC_IS_DOFFSEC(ldrsec) ((struct doff_scnhdr_t *)(ldrsec))
++
++/***************************************************************/
++/********************* SUPPORT FUNCTIONS ***********************/
++/***************************************************************/
++
++#if BITS_PER_AU > BITS_PER_BYTE
++/**************************************************************************
++ * Procedure unpack_sec_name
++ *
++ * Parameters:
++ *  dlthis		Handle from DLOAD_module_open for this module
++ *	soffset	    Byte offset into the string table
++ *  dst         Place to store the expanded string
++ *
++ * Effect:
++ *	Stores a string from the string table into the destination, expanding
++ * it in the process.  Returns a pointer just past the end of the stored
++ * string on success, or NULL on failure.
++ *
++ *************************************************************************/
++static char *unpack_sec_name(struct dload_state *dlthis,
++			     u32 soffset, char *dst)
++{
++	u8 tmp, *src;
++
++	if (soffset >= dlthis->dfile_hdr.df_scn_name_size) {
++		dload_error(dlthis, E_STBL, soffset);
++		return NULL;
++	}
++	src = (u8 *)dlthis->str_head +
++	    (soffset >> (LOG_BITS_PER_AU - LOG_BITS_PER_BYTE));
++	if (soffset & 1)
++		*dst++ = *src++;	/* only 1 character in first word */
++	do {
++		tmp = *src++;
++		*dst = (tmp >> BITS_PER_BYTE)
++		if (!(*dst++))
++			break;
++	} while ((*dst++ = tmp & BYTE_MASK));
++
++	return dst;
++}
++
++/**************************************************************************
++ * Procedure expand_sec_names
++ *
++ * Parameters:
++ *  dlthis		Handle from DLOAD_module_open for this module
++ *
++ * Effect:
++ *    Allocates a buffer, unpacks and copies strings from string table into it.
++ * Stores a pointer to the buffer into a state variable.
++ **************************************************************************/
++static void expand_sec_names(struct dload_state *dlthis)
++{
++	char *xstrings, *curr, *next;
++	u32 xsize;
++	u16 sec;
++	struct LDR_SECTION_INFO *shp;
++	/* assume worst-case size requirement */
++	xsize = dlthis->dfile_hdr.df_max_str_len * dlthis->dfile_hdr.df_no_scns;
++	xstrings = (char *)dlthis->mysym->Allocate(dlthis->mysym, xsize);
++	if (xstrings == NULL) {
++		dload_error(dlthis, E_ALLOC, xsize);
++		return;
++	}
++	dlthis->xstrings = xstrings;
++	/* For each sec, copy and expand its name */
++	curr = xstrings;
++	for (sec = 0; sec < dlthis->dfile_hdr.df_no_scns; sec++) {
++		shp = DOFFSEC_IS_LDRSEC(&dlthis->sect_hdrs[sec]);
++		next = unpack_sec_name(dlthis, *(u32 *) &shp->name, curr);
++		if (next == NULL)
++			break;	/* error */
++		shp->name = curr;
++		curr = next;
++	}
++}
++
++#endif
++
++/***************************************************************/
++/********************* EXPORTED FUNCTIONS **********************/
++/***************************************************************/
++
++/**************************************************************************
++ * Procedure DLOAD_module_open
++ *
++ * Parameters:
++ *	module	The input stream that supplies the module image
++ *	syms	Host-side malloc/free and error reporting functions.
++ *			Other methods are unused.
++ *
++ * Effect:
++ *	Reads header information from a dynamic loader module using the
++    specified
++ * stream object, and returns a handle for the module information.  This
++ * handle may be used in subsequent query calls to obtain information
++ * contained in the module.
++ *
++ * Returns:
++ *	NULL if an error is encountered, otherwise a module handle for use
++ * in subsequent operations.
++ **************************************************************************/
++DLOAD_module_info DLOAD_module_open(struct Dynamic_Loader_Stream *module,
++				    struct Dynamic_Loader_Sym *syms)
++{
++	struct dload_state *dlthis;	/* internal state for this call */
++	unsigned *dp, sz;
++	u32 sec_start;
++#if BITS_PER_AU <= BITS_PER_BYTE
++	u16 sec;
++#endif
++
++	/* Check that mandatory arguments are present */
++	if (!module || !syms) {
++		if (syms != 0)
++			dload_syms_error(syms, "Required parameter is NULL");
++
++		return NULL;
++	}
++
++	dlthis = (struct dload_state *)
++		 syms->Allocate(syms, sizeof(struct dload_state));
++	if (!dlthis) {
++		/* not enough storage */
++		dload_syms_error(syms, "Can't allocate module info");
++		return NULL;
++	}
++
++	/* clear our internal state */
++	dp = (unsigned *)dlthis;
++	for (sz = sizeof(struct dload_state) / sizeof(unsigned);
++	     sz > 0; sz -= 1)
++		*dp++ = 0;
++
++	dlthis->strm = module;
++	dlthis->mysym = syms;
++
++	/* read in the doff image and store in our state variable */
++	dload_headers(dlthis);
++
++	if (!dlthis->dload_errcount)
++		dload_strings(dlthis, true);
++
++	/* skip ahead past the unread portion of the string table */
++	sec_start = sizeof(struct doff_filehdr_t) +
++		    sizeof(struct doff_verify_rec_t) +
++		    BYTE_TO_HOST(DOFF_ALIGN(dlthis->dfile_hdr.df_strtab_size));
++
++	if (dlthis->strm->set_file_posn(dlthis->strm, sec_start) != 0) {
++		dload_error(dlthis, E_SEEK, sec_start);
++		return NULL;
++	}
++
++	if (!dlthis->dload_errcount)
++		dload_sections(dlthis);
++
++	if (dlthis->dload_errcount) {
++		DLOAD_module_close(dlthis);	/* errors, blow off our state */
++		dlthis = NULL;
++		return NULL;
++	}
++#if BITS_PER_AU > BITS_PER_BYTE
++	/* Expand all section names from the string table into the   */
++	/* state variable, and convert section names from a relative */
++	/* string table offset to a pointers to the expanded string. */
++	expand_sec_names(dlthis);
++#else
++	/* Convert section names from a relative string table offset */
++	/* to a pointer into the string table.                       */
++	for (sec = 0; sec < dlthis->dfile_hdr.df_no_scns; sec++) {
++		struct LDR_SECTION_INFO *shp =
++		    DOFFSEC_IS_LDRSEC(&dlthis->sect_hdrs[sec]);
++		shp->name = dlthis->str_head + *(u32 *)&shp->name;
++	}
++#endif
++
++	return dlthis;
++}
++
++/***************************************************************************
++ * Procedure DLOAD_GetSectionInfo
++ *
++ * Parameters:
++ *  minfo		Handle from DLOAD_module_open for this module
++ *	sectionName	Pointer to the string name of the section desired
++ *	sectionInfo	Address of a section info structure pointer to be
++ *			initialized
++ *
++ * Effect:
++ *	Finds the specified section in the module information, and initializes
++ * the provided struct LDR_SECTION_INFO pointer.
++ *
++ * Returns:
++ *	true for success, false for section not found
++ **************************************************************************/
++int DLOAD_GetSectionInfo(DLOAD_module_info minfo, const char *sectionName,
++		     const struct LDR_SECTION_INFO **const sectionInfo)
++{
++	struct dload_state *dlthis;
++	struct LDR_SECTION_INFO *shp;
++	u16 sec;
++
++	dlthis = (struct dload_state *)minfo;
++	if (!dlthis)
++		return false;
++
++	for (sec = 0; sec < dlthis->dfile_hdr.df_no_scns; sec++) {
++		shp = DOFFSEC_IS_LDRSEC(&dlthis->sect_hdrs[sec]);
++		if (strcmp(sectionName, shp->name) == 0) {
++			*sectionInfo = shp;
++			return true;
++		}
++	}
++
++	return false;
++}
++
++#define IPH_SIZE (sizeof(struct image_packet_t) - sizeof(u32))
++#define REVERSE_REORDER_MAP(rawmap) ((rawmap) ^ 0x3030303)
++
++/**************************************************************************
++ * Procedure DLOAD_GetSection
++ *
++ * Parameters:
++ *  minfo		Handle from DLOAD_module_open for this module
++ *	sectionInfo	Pointer to a section info structure for the desired
++ *			section
++ *	sectionData	Buffer to contain the section initialized data
++ *
++ * Effect:
++ *	Copies the initialized data for the specified section into the
++ * supplied buffer.
++ *
++ * Returns:
++ *	true for success, false for section not found
++ **************************************************************************/
++int DLOAD_GetSection(DLOAD_module_info minfo,
++		 const struct LDR_SECTION_INFO *sectionInfo, void *sectionData)
++{
++	struct dload_state *dlthis;
++	u32 pos;
++	struct doff_scnhdr_t *sptr = NULL;
++	s32 nip;
++	struct image_packet_t ipacket;
++	s32 ipsize;
++	u32 checks;
++	s8 *dest = (s8 *)sectionData;
++
++	dlthis = (struct dload_state *)minfo;
++	if (!dlthis)
++		return false;
++	sptr = LDRSEC_IS_DOFFSEC(sectionInfo);
++	if (sptr == NULL)
++		return false;
++
++	/* skip ahead to the start of the first packet */
++	pos = BYTE_TO_HOST(DOFF_ALIGN((u32) sptr->ds_first_pkt_offset));
++	if (dlthis->strm->set_file_posn(dlthis->strm, pos) != 0) {
++		dload_error(dlthis, E_SEEK, pos);
++		return false;
++	}
++
++	nip = sptr->ds_nipacks;
++	while ((nip -= 1) >= 0) {	/* for each packet */
++		/* get the fixed header bits */
++		if (dlthis->strm->
++		    read_buffer(dlthis->strm, &ipacket, IPH_SIZE) != IPH_SIZE) {
++			dload_error(dlthis, E_READSTRM, "image packet");
++			return false;
++		}
++		/* reorder the header if need be */
++		if (dlthis->reorder_map)
++			dload_reorder(&ipacket, IPH_SIZE, dlthis->reorder_map);
++
++		/* Now read the packet image bits. Note: round the size up to
++		 * the next multiple of 4 bytes; this is what checksum
++		 * routines want. */
++		ipsize = BYTE_TO_HOST(DOFF_ALIGN(ipacket.i_packet_size));
++		if (ipsize > BYTE_TO_HOST(IMAGE_PACKET_SIZE)) {
++			dload_error(dlthis, E_ISIZ, ipsize);
++			return false;
++		}
++		if (dlthis->strm->read_buffer
++		    (dlthis->strm, dest, ipsize) != ipsize) {
++			dload_error(dlthis, E_READSTRM, "image packet");
++			return false;
++		}
++		/* reorder the bytes if need be */
++#if !defined(_BIG_ENDIAN) || (TARGET_AU_BITS > 16)
++		if (dlthis->reorder_map)
++			dload_reorder(dest, ipsize, dlthis->reorder_map);
++
++		checks = dload_checksum(dest, ipsize);
++#else
++		if (dlthis->dfile_hdr.df_byte_reshuffle !=
++		    TARGET_ORDER(REORDER_MAP(BYTE_RESHUFFLE_VALUE))) {
++			/* put image bytes in big-endian order, not PC order */
++			dload_reorder(dest, ipsize,
++				      TARGET_ORDER(dlthis->dfile_hdr.
++				      df_byte_reshuffle));
++		}
++#if TARGET_AU_BITS > 8
++		checks = dload_reverse_checksum_16(dest, ipsize);
++#else
++		checks = dload_reverse_checksum(dest, ipsize);
++#endif
++#endif
++		checks += dload_checksum(&ipacket, IPH_SIZE);
++
++		/* NYI: unable to handle relocation entries here.  Reloc
++		 * entries referring to fields that span the packet boundaries
++		 * may result in packets of sizes that are not multiple of
++		 * 4 bytes. Our checksum implementation works on 32-bit words
++		 * only.     */
++		if (ipacket.i_num_relocs != 0) {
++			dload_error(dlthis, E_RELOC, ipsize);
++			return false;
++		}
++
++		if (~checks) {
++			dload_error(dlthis, E_CHECKSUM, "image packet");
++			return false;
++		}
++
++		/*Advance destination ptr by the size of the just-read packet*/
++		dest += ipsize;
++	}
++
++	return true;
++}
++
++/***************************************************************************
++ * Procedure DLOAD_module_close
++ *
++ * Parameters:
++ *  minfo		Handle from DLOAD_module_open for this module
++ *
++ * Effect:
++ *	Releases any storage associated with the module handle.  On return,
++ * the module handle is invalid.
++ *
++ * Returns:
++ *	Zero for success. On error, the number of errors detected is returned.
++ * Individual errors are reported using syms->Error_Report(), where syms was
++ * an argument to DLOAD_module_open
++ **************************************************************************/
++void DLOAD_module_close(DLOAD_module_info minfo)
++{
++	struct dload_state *dlthis;
++
++	dlthis = (struct dload_state *)minfo;
++	if (!dlthis)
++		return;
++
++	if (dlthis->str_head)
++		dlthis->mysym->Deallocate(dlthis->mysym, dlthis->str_head);
++
++	if (dlthis->sect_hdrs)
++		dlthis->mysym->Deallocate(dlthis->mysym, dlthis->sect_hdrs);
++
++#if BITS_PER_AU > BITS_PER_BYTE
++	if (dlthis->xstrings)
++		dlthis->mysym->Deallocate(dlthis->mysym, dlthis->xstrings);
++
++#endif
++
++	dlthis->mysym->Deallocate(dlthis->mysym, dlthis);
++}
+diff --git a/drivers/dsp/bridge/dynload/header.h b/drivers/dsp/bridge/dynload/header.h
+new file mode 100644
+index 0000000..9d6ed2b
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/header.h
+@@ -0,0 +1,59 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/header.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++
++#define TRUE 1
++#define FALSE 0
++#ifndef NULL
++#define NULL 0
++#endif
++
++#include <linux/string.h>
++#define DL_STRCMP  strcmp
++
++/* maximum parenthesis nesting in relocation stack expressions */
++#define STATIC_EXPR_STK_SIZE 10
++
++#include <linux/types.h>
++typedef unsigned int            uint_least32_t;
++typedef unsigned short int	uint_least16_t;
++
++#include "doff.h"
++#include "dynamic_loader.h"
++#include "params.h"
++#include "dload_internal.h"
++#include "reloc_table.h"
++
++/*
++ * Plausibility limits
++ *
++ * These limits are imposed upon the input DOFF file as a check for validity.
++ * They are hard limits, in that the load will fail if they are exceeded.
++ * The numbers selected are arbitrary, in that the loader implementation does
++ * not require these limits.
++ */
++
++/* maximum number of bytes in string table */
++#define MAX_REASONABLE_STRINGTAB (0x100000)
++/* maximum number of code,data,etc. sections */
++#define MAX_REASONABLE_SECTIONS (200)
++/* maximum number of linker symbols */
++#define MAX_REASONABLE_SYMBOLS (100000)
++
++/* shift count to align F_BIG with DLOAD_LITTLE */
++#define ALIGN_COFF_ENDIANNESS 7
++#define ENDIANNESS_MASK (DF_BYTE_ORDER >> ALIGN_COFF_ENDIANNESS)
+diff --git a/drivers/dsp/bridge/dynload/module_list.h b/drivers/dsp/bridge/dynload/module_list.h
+new file mode 100644
+index 0000000..9c4876a
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/module_list.h
+@@ -0,0 +1,161 @@
++/*
++ * dspbridge/mpu_driver/src/dynload/module_list.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2008 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++/*============================================================================
++ Filename:     module_list.h
++
++ Copyright (C) 2002 Texas Instruments Incorporated
++
++
++ This C header file gives the layout of the data structure created by the
++ dynamic loader to describe the set of modules loaded into the DSP.
++
++ Linked List Structure:
++ ----------------------
++ The data structure defined here is a singly-linked list.  The list
++ represents the set of modules which are currently loaded in the DSP memory.
++ The first entry in the list is a header record which contains a flag
++ representing the state of the list.  The rest of the entries in the list
++ are module records.
++
++ Global symbol  _DLModules designates the first record in the list (i.e. the
++ header record).  This symbol must be defined in any program that wishes to
++ use DLLview plug-in.
++
++ String Representation:
++ ----------------------
++ The string names of the module and its sections are stored in a block of
++ memory which follows the module record itself.  The strings are ordered:
++ module name first, followed by section names in order from the first
++ section to the last.  String names are tightly packed arrays of 8-bit
++ characters (two characters per 16-bit word on the C55x).  Strings are
++ zero-byte-terminated.
++
++ Creating and updating the list:
++-------------------------------
++ Upon loading a new module into the DSP memory the dynamic loader inserts a
++new module record as the first module record in the list.  The fields of
++ this module record are initialized to reflect the properties of the module.
++ The dynamic loader does NOT increment the flag/counter in the list's header
++ record.
++
++ Upon unloading a module from the DSP memory the dynamic loader removes the
++module's record from this list.  The dynamic loader also increments the
++ flag/counter in the list's header record to indicate that the list has been
++ changed.
++
++============================================================================*/
++
++#ifndef _MODULE_LIST_H_
++#define _MODULE_LIST_H_
++
++#include <linux/types.h>
++
++/* Global pointer to the modules_header structure*/
++#define MODULES_HEADER "_DLModules"
++#define MODULES_HEADER_NO_UNDERSCORE "DLModules"
++
++/* Initial version number*/
++#define INIT_VERSION 1
++
++/* Verification number -- to be recorded in each module record */
++#define VERIFICATION 0x79
++
++/* forward declarations */
++struct dll_module;
++struct dll_sect;
++
++/* the first entry in the list is the modules_header record;
++ * its address is contained in the global _DLModules pointer */
++struct modules_header {
++
++	/* Address of the first dll_module record in the list or NULL.
++	 Note: for C55x this is a word address (C55x data is word-addressable)*/
++	u32 first_module;
++
++	/* Combined storage size (in target addressable units) of the
++	 * dll_module record which follows this header record, or zero
++	 * if the list is empty.  This size includes the module's string table.
++	 * Note: for C55x the unit is a 16-bit word */
++	u16 first_module_size;
++
++	/* Counter is incremented whenever a module record is removed from
++	 * the list */
++	u16 update_flag;
++
++} ;
++
++/* for each 32-bits in above structure, a bitmap, LSB first, whose bits are:
++ * 0 => a 32-bit value, 1 => 2 16-bit values */
++#define MODULES_HEADER_BITMAP 0x2 /* swapping bitmap for type modules_header */
++
++/* information recorded about each section in a module */
++struct dll_sect {
++
++	/* Load-time address of the section.
++	 * Note: for C55x this is a byte address for program sections, and
++	 * a word address for data sections.  C55x program memory is
++	 * byte-addressable, while data memory is word-addressable. */
++	u32 sect_load_adr;
++
++	/* Run-time address of the section.
++	 * Note 1: for C55x this is a byte address for program sections, and
++	 * a word address for data sections.
++	 * Note 2: for C55x two most significant bits of this field indicate
++	 * the section type: '00' for a code section, '11' for a data section
++	 * (C55 addresses are really only 24-bits wide). */
++	u32 sect_run_adr;
++
++} ;
++
++/* the rest of the entries in the list are module records */
++struct dll_module {
++
++	/* Address of the next dll_module record in the list, or 0 if this is
++	 * the last record in the list.
++	 * Note: for C55x this is a word address (C55x data is
++	 * word-addressable) */
++	u32 next_module;
++
++	/* Combined storage size (in target addressable units) of the
++	 * dll_module record which follows this one, or zero if this is the
++	 * last record in the list.  This size includes the module's string
++	 * table.
++	 * Note: for C55x the unit is a 16-bit word. */
++	u16 next_module_size;
++
++	/* version number of the tooling; set to INIT_VERSION for Phase 1 */
++	u16 version;
++
++	/* the verification word; set to VERIFICATION */
++	u16 verification;
++
++	/* Number of sections in the sects array */
++	u16 num_sects;
++
++	/* Module's "unique" id; copy of the timestamp from the host
++	 * COFF file */
++	u32 timestamp;
++
++	/* Array of num_sects elements of the module's section records */
++	struct dll_sect sects[1];
++} ;
++
++/* for each 32 bits in above structure, a bitmap, LSB first, whose bits are:
++ * 0 => a 32-bit value, 1 => 2 16-bit values */
++#define DLL_MODULE_BITMAP 0x6	/* swapping bitmap for type dll_module */
++
++#endif				/* _MODULE_LIST_H_ */
+diff --git a/drivers/dsp/bridge/dynload/params.h b/drivers/dsp/bridge/dynload/params.h
+new file mode 100644
+index 0000000..493c36f
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/params.h
+@@ -0,0 +1,231 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/params.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++
++/******************************************************************************
++ *
++ * This file defines host and target properties for all machines
++ * supported by the dynamic loader.  To be tedious...
++ *
++ *		host == the machine on which the dynamic loader runs
++ *		target == the machine that the dynamic loader is loading
++ *
++ * Host and target may or may not be the same, depending upon the particular
++ * use.
++ *****************************************************************************/
++
++/******************************************************************************
++ *
++ *							Host Properties
++ *
++ *****************************************************************************/
++
++#define BITS_PER_BYTE 8		/* bits in the standard PC/SUN byte */
++#define LOG_BITS_PER_BYTE 3	/* log base 2 of same */
++#define BYTE_MASK ((1U<<BITS_PER_BYTE)-1)
++
++#if defined(__TMS320C55X__) || defined(_TMS320C5XX)
++#define BITS_PER_AU 16
++#define LOG_BITS_PER_AU 4
++ /* use this print string in error messages for uint32_t */
++#define FMT_UI32 "0x%lx"
++#define FMT8_UI32 "%08lx"	/* same but no 0x, fixed width field */
++#else
++#define BITS_PER_AU 8	/* bits in the smallest addressable data storage unit */
++#define LOG_BITS_PER_AU 3  /* log base 2 of the same; useful for shift counts */
++#define FMT_UI32 "0x%x"
++#define FMT8_UI32 "%08x"
++#endif
++
++/* generic fastest method for swapping bytes and shorts */
++#define SWAP32BY16(zz) (((zz) << 16) | ((zz) >> 16))
++#define SWAP16BY8(zz) (((zz) << 8) | ((zz) >> 8))
++
++/* !! don't be tempted to insert type definitions here; use <stdint.h> !! */
++
++/******************************************************************************
++ *
++ *							Target Properties
++ *
++ *****************************************************************************/
++
++
++/*--------------------------------------------------------------------------*/
++/* TMS320C6x Target Specific Parameters (byte-addressable)                  */
++/*--------------------------------------------------------------------------*/
++#if TMS32060
++#define MEMORG          0x0L	/* Size of configured memory  */
++#define MEMSIZE         0x0L	/* (full address space)  */
++
++#define CINIT_ALIGN     8	/* alignment of cinit record in TDATA AUs */
++#define CINIT_COUNT	4	/* width of count field in TDATA AUs */
++#define CINIT_ADDRESS	4	/* width of address field in TDATA AUs */
++#define CINIT_PAGE_BITS	0	/* Number of LSBs of address that
++				 * are page number */
++
++#define LENIENT_SIGNED_RELEXPS 0	/* DOES SIGNED ALLOW MAX UNSIGNED   */
++
++#undef TARGET_ENDIANNESS	/* may be big or little endian */
++
++/* align a target address to a word boundary */
++#define TARGET_WORD_ALIGN(zz) (((zz) + 0x3) & -0x4)
++#endif
++
++
++/*--------------------------------------------------------------------------
++ *
++ *			DEFAULT SETTINGS and DERIVED PROPERTIES
++ *
++ * This section establishes defaults for values not specified above
++ *--------------------------------------------------------------------------*/
++#ifndef TARGET_AU_BITS
++#define TARGET_AU_BITS 8	/* width of the target addressable unit */
++#define LOG_TARGET_AU_BITS 3	/* log2 of same */
++#endif
++
++#ifndef CINIT_DEFAULT_PAGE
++#define CINIT_DEFAULT_PAGE 0	/* default .cinit page number */
++#endif
++
++#ifndef DATA_RUN2LOAD
++#define DATA_RUN2LOAD(zz) (zz)	/* translate data run address to load address */
++#endif
++
++#ifndef DBG_LIST_PAGE
++#define DBG_LIST_PAGE 0		/* page number for .dllview section */
++#endif
++
++#ifndef TARGET_WORD_ALIGN
++/* align a target address to a word boundary */
++#define TARGET_WORD_ALIGN(zz) (zz)
++#endif
++
++#ifndef TDATA_TO_TADDR
++#define TDATA_TO_TADDR(zz) (zz)	/* target data address to target AU address */
++#define TADDR_TO_TDATA(zz) (zz)	/* target AU address to target data address */
++#define TDATA_AU_BITS	TARGET_AU_BITS	/* bits per data AU */
++#define LOG_TDATA_AU_BITS	LOG_TARGET_AU_BITS
++#endif
++
++/*
++ *
++ * Useful properties and conversions derived from the above
++ *
++ */
++
++/*
++ * Conversions between host and target addresses
++ */
++#if LOG_BITS_PER_AU == LOG_TARGET_AU_BITS
++/* translate target addressable unit to host address */
++#define TADDR_TO_HOST(x) (x)
++/* translate host address to target addressable unit */
++#define HOST_TO_TADDR(x) (x)
++#elif LOG_BITS_PER_AU > LOG_TARGET_AU_BITS
++#define TADDR_TO_HOST(x) ((x) >> (LOG_BITS_PER_AU-LOG_TARGET_AU_BITS))
++#define HOST_TO_TADDR(x) ((x) << (LOG_BITS_PER_AU-LOG_TARGET_AU_BITS))
++#else
++#define TADDR_TO_HOST(x) ((x) << (LOG_TARGET_AU_BITS-LOG_BITS_PER_AU))
++#define HOST_TO_TADDR(x) ((x) >> (LOG_TARGET_AU_BITS-LOG_BITS_PER_AU))
++#endif
++
++#if LOG_BITS_PER_AU == LOG_TDATA_AU_BITS
++/* translate target addressable unit to host address */
++#define TDATA_TO_HOST(x) (x)
++/* translate host address to target addressable unit */
++#define HOST_TO_TDATA(x) (x)
++/* translate host address to target addressable unit, round up */
++#define HOST_TO_TDATA_ROUND(x) (x)
++/* byte offset to host offset, rounded up for TDATA size */
++#define BYTE_TO_HOST_TDATA_ROUND(x) BYTE_TO_HOST_ROUND(x)
++#elif LOG_BITS_PER_AU > LOG_TDATA_AU_BITS
++#define TDATA_TO_HOST(x) ((x) >> (LOG_BITS_PER_AU-LOG_TDATA_AU_BITS))
++#define HOST_TO_TDATA(x) ((x) << (LOG_BITS_PER_AU-LOG_TDATA_AU_BITS))
++#define HOST_TO_TDATA_ROUND(x) ((x) << (LOG_BITS_PER_AU-LOG_TDATA_AU_BITS))
++#define BYTE_TO_HOST_TDATA_ROUND(x) BYTE_TO_HOST_ROUND(x)
++#else
++#define TDATA_TO_HOST(x) ((x) << (LOG_TDATA_AU_BITS-LOG_BITS_PER_AU))
++#define HOST_TO_TDATA(x) ((x) >> (LOG_TDATA_AU_BITS-LOG_BITS_PER_AU))
++#define HOST_TO_TDATA_ROUND(x) (((x) +\
++				(1<<(LOG_TDATA_AU_BITS-LOG_BITS_PER_AU))-1) >>\
++				(LOG_TDATA_AU_BITS-LOG_BITS_PER_AU))
++#define BYTE_TO_HOST_TDATA_ROUND(x) (BYTE_TO_HOST((x) +\
++	(1<<(LOG_TDATA_AU_BITS-LOG_BITS_PER_BYTE))-1) &\
++	-(TDATA_AU_BITS/BITS_PER_AU))
++#endif
++
++/*
++ * Input in DOFF format is always expresed in bytes, regardless of loading host
++ * so we wind up converting from bytes to target and host units even when the
++ * host is not a byte machine.
++ */
++#if LOG_BITS_PER_AU == LOG_BITS_PER_BYTE
++#define BYTE_TO_HOST(x) (x)
++#define BYTE_TO_HOST_ROUND(x) (x)
++#define HOST_TO_BYTE(x) (x)
++#elif LOG_BITS_PER_AU >= LOG_BITS_PER_BYTE
++#define BYTE_TO_HOST(x) ((x) >> (LOG_BITS_PER_AU - LOG_BITS_PER_BYTE))
++#define BYTE_TO_HOST_ROUND(x) ((x + (BITS_PER_AU/BITS_PER_BYTE-1)) >>\
++			      (LOG_BITS_PER_AU - LOG_BITS_PER_BYTE))
++#define HOST_TO_BYTE(x) ((x) << (LOG_BITS_PER_AU - LOG_BITS_PER_BYTE))
++#else
++/* lets not try to deal with sub-8-bit byte machines */
++#endif
++
++#if LOG_TARGET_AU_BITS == LOG_BITS_PER_BYTE
++/* translate target addressable unit to byte address */
++#define TADDR_TO_BYTE(x) (x)
++/* translate byte address to target addressable unit */
++#define BYTE_TO_TADDR(x) (x)
++#elif LOG_TARGET_AU_BITS > LOG_BITS_PER_BYTE
++#define TADDR_TO_BYTE(x) ((x) << (LOG_TARGET_AU_BITS-LOG_BITS_PER_BYTE))
++#define BYTE_TO_TADDR(x) ((x) >> (LOG_TARGET_AU_BITS-LOG_BITS_PER_BYTE))
++#else
++/* lets not try to deal with sub-8-bit byte machines */
++#endif
++
++#ifdef _BIG_ENDIAN
++#define HOST_ENDIANNESS 1
++#else
++#define HOST_ENDIANNESS 0
++#endif
++
++#ifdef TARGET_ENDIANNESS
++#define TARGET_ENDIANNESS_DIFFERS(rtend) (HOST_ENDIANNESS^TARGET_ENDIANNESS)
++#elif HOST_ENDIANNESS
++#define TARGET_ENDIANNESS_DIFFERS(rtend) (!(rtend))
++#else
++#define TARGET_ENDIANNESS_DIFFERS(rtend) (rtend)
++#endif
++
++/* the unit in which we process target image data */
++#if TARGET_AU_BITS <= 8
++typedef u8 TgtAU_t;
++#elif TARGET_AU_BITS <= 16
++typedef u16 TgtAU_t;
++#else
++typedef u32 TgtAU_t;
++#endif
++
++/* size of that unit */
++#if TARGET_AU_BITS < BITS_PER_AU
++#define TGTAU_BITS BITS_PER_AU
++#define LOG_TGTAU_BITS LOG_BITS_PER_AU
++#else
++#define TGTAU_BITS TARGET_AU_BITS
++#define LOG_TGTAU_BITS LOG_TARGET_AU_BITS
++#endif
+diff --git a/drivers/dsp/bridge/dynload/reloc.c b/drivers/dsp/bridge/dynload/reloc.c
+new file mode 100644
+index 0000000..d65dfb7
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/reloc.c
+@@ -0,0 +1,425 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/reloc.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++#include "header.h"
++
++#if TMS32060
++/* the magic symbol for the start of BSS */
++static const char BSSSYMBOL[] = {".bss"};
++#endif
++
++#if TMS32060
++#include "reloc_table_c6000.c"
++#endif
++
++#if TMS32060
++/* From coff.h - ignore these relocation operations */
++#define R_C60ALIGN     0x76       /* C60: Alignment info for compressor   */
++#define R_C60FPHEAD    0x77       /* C60: Explicit assembly directive     */
++#define R_C60NOCMP    0x100       /* C60: Don't compress this code scn    */
++#endif
++
++/**************************************************************************
++ * Procedure dload_unpack
++ *
++ * Parameters:
++ *	data	pointer to storage unit containing lowest host address of
++ *		image data
++ *	fieldsz	Size of bit field, 0 < fieldsz <= sizeof(RVALUE)*BITS_PER_AU
++ *	offset	Offset from LSB, 0 <= offset < BITS_PER_AU
++ *	sgn	Signedness of the field (ROP_SGN, ROP_UNS, ROP_MAX, ROP_ANY)
++ *
++ * Effect:
++ *	Extracts the specified field and returns it.
++ **************************************************************************/
++RVALUE dload_unpack(struct dload_state *dlthis, TgtAU_t *data, int fieldsz,
++		    int offset, unsigned sgn)
++{
++	register RVALUE objval;
++	register int shift, direction;
++	register TgtAU_t *dp = data;
++
++	fieldsz -= 1;	/* avoid nastiness with 32-bit shift of 32-bit value*/
++	/* * collect up enough bits to contain the desired field */
++	if (TARGET_BIG_ENDIAN) {
++		dp += (fieldsz + offset) >> LOG_TGTAU_BITS;
++		direction = -1;
++	} else
++		direction = 1;
++	objval = *dp >> offset;
++	shift = TGTAU_BITS - offset;
++	while (shift <= fieldsz) {
++		dp += direction;
++		objval += (RVALUE)*dp << shift;
++		shift += TGTAU_BITS;
++	}
++
++	/* * sign or zero extend the value appropriately */
++	if (sgn == ROP_UNS)
++		objval &= (2 << fieldsz) - 1;
++	else {
++		shift = sizeof(RVALUE) * BITS_PER_AU-1 - fieldsz;
++		objval = (objval << shift) >> shift;
++	}
++
++	return objval;
++
++} /* dload_unpack */
++
++
++/**************************************************************************
++ * Procedure dload_repack
++ *
++ * Parameters:
++ *	val		Value to insert
++ *	data	Pointer to storage unit containing lowest host address of
++ * 		image data
++ *	fieldsz	Size of bit field, 0 < fieldsz <= sizeof(RVALUE)*BITS_PER_AU
++ *	offset	Offset from LSB, 0 <= offset < BITS_PER_AU
++ *	sgn	Signedness of the field (ROP_SGN, ROP_UNS, ROP_MAX, ROP_ANY)
++ *
++ * Effect:
++ *	Stuffs the specified value in the specified field.  Returns 0 for
++ *	success
++ * or 1 if the value will not fit in the specified field according to the
++ * specified signedness rule.
++ **************************************************************************/
++static const unsigned char ovf_limit[] = {1, 2, 2};
++int dload_repack(struct dload_state *dlthis, RVALUE val, TgtAU_t *data,
++		 int fieldsz, int offset, unsigned sgn)
++{
++	register URVALUE objval, mask;
++	register int shift, direction;
++	register TgtAU_t *dp = data;
++
++
++	fieldsz -= 1;	/* avoid nastiness with 32-bit shift of 32-bit value */
++	/* clip the bits */
++	mask = ((UINT32_C(2) << fieldsz) - 1);
++	objval = (val & mask);
++	/* * store the bits through the specified mask */
++	if (TARGET_BIG_ENDIAN) {
++		dp += (fieldsz + offset) >> LOG_TGTAU_BITS;
++		direction = -1;
++	} else
++		direction = 1;
++
++	/* insert LSBs */
++	*dp = (*dp & ~(mask << offset)) + (objval << offset);
++	shift = TGTAU_BITS-offset;
++	/* align mask and objval with AU boundary */
++	objval >>= shift;
++	mask >>= shift;
++
++	while (mask) {
++		dp += direction;
++		*dp = (*dp & ~mask) + objval;
++		objval >>= TGTAU_BITS;
++		mask >>= TGTAU_BITS;
++	}
++
++	/*
++	 * check for overflow
++	 */
++	if (sgn) {
++		unsigned tmp = (val >> fieldsz) + (sgn & 0x1);
++		if (tmp > ovf_limit[sgn-1])
++			return 1;
++	}
++	return 0;
++
++} /* dload_repack */
++
++/* lookup table for the scaling amount in a C6x instruction */
++#if TMS32060
++#define SCALE_BITS 4		/* there are 4 bits in the scale field */
++#define SCALE_MASK 0x7		/* we really only use the bottom 3 bits */
++static const u8 C60_Scale[SCALE_MASK+1] = {
++	1, 0, 0, 0, 1, 1, 2, 2
++};
++#endif
++
++/**************************************************************************
++ * Procedure dload_relocate
++ *
++ * Parameters:
++ *	data	Pointer to base of image data
++ *	rp		Pointer to relocation operation
++ *
++ * Effect:
++ *	Performs the specified relocation operation
++ **************************************************************************/
++void dload_relocate(struct dload_state *dlthis, TgtAU_t *data,
++		    struct reloc_record_t *rp)
++{
++	RVALUE val = 0;
++	RVALUE reloc_amt = 0;
++	unsigned int fieldsz = 0;
++	unsigned int offset = 0;
++	unsigned int reloc_info = 0;
++	unsigned int reloc_action = 0;
++	register int rx = 0;
++	RVALUE    *stackp = NULL;
++	int top;
++	struct Local_Symbol *svp = NULL;
++#ifdef RFV_SCALE
++	unsigned int scale = 0;
++#endif
++
++	rx = HASH_FUNC(rp->r_type);
++	while (rop_map1[rx] != rp->r_type) {
++		rx = HASH_L(rop_map2[rx]);
++		if (rx < 0) {
++#if TMS32060
++		switch (rp->r_type) {
++		case R_C60ALIGN:
++		case R_C60NOCMP:
++		case R_C60FPHEAD:
++		    /* Ignore these reloc types and return */
++		    break;
++		default:
++		    /* Unknown reloc type, print error and return */
++		    dload_error(dlthis, "Bad coff operator 0x%x", rp->r_type);
++	    }
++#else
++	    dload_error(dlthis, "Bad coff operator 0x%x", rp->r_type);
++#endif
++	    return;
++		}
++	}
++	rx = HASH_I(rop_map2[rx]);
++	if ((rx < (sizeof(rop_action)/sizeof(uint_least16_t)))
++	   && (rx < (sizeof(rop_info)/sizeof(uint_least16_t))) && (rx > 0)) {
++		reloc_action = rop_action[rx]; reloc_info = rop_info[rx];
++	} else {
++	    dload_error(dlthis, "Buffer Overflow - Array Index Out of Bounds");
++	}
++
++	/* Compute the relocation amount for the referenced symbol, if any */
++	reloc_amt = rp->r_uval;
++	if (RFV_SYM(reloc_info)) {	/* relocation uses a symbol reference */
++		if ((u32)rp->r_symndx < dlthis->dfile_hdr.df_no_syms) {
++			/* real symbol reference */
++			svp = &dlthis->local_symtab[rp->r_symndx];
++			reloc_amt = (RFV_SYM(reloc_info) == ROP_SYMD) ?
++				    svp->delta : svp->value;
++		}
++		/* reloc references current section */
++		else if (rp->r_symndx == -1)
++			reloc_amt = (RFV_SYM(reloc_info) == ROP_SYMD) ?
++			  dlthis->delta_runaddr : dlthis->image_secn->run_addr;
++	}	/* relocation uses a symbol reference */
++	/* Handle stack adjustment */
++	val = 0;
++	top = RFV_STK(reloc_info);
++	if (top) {
++		top += dlthis->relstkidx - RSTK_UOP;
++		if (top >= STATIC_EXPR_STK_SIZE) {
++			dload_error(dlthis,
++			"Expression stack overflow in %s at offset "
++			FMT_UI32, dlthis->image_secn->name,
++			rp->r_vaddr + dlthis->image_offset);
++			return;
++		}
++		val = dlthis->relstk[dlthis->relstkidx];
++		dlthis->relstkidx = top;
++		stackp = &dlthis->relstk[top];
++	}
++	/* Derive field position and size, if we need them */
++	if (reloc_info & ROP_RW) {	/* read or write action in our future */
++		fieldsz = RFV_WIDTH(reloc_action);
++		if (fieldsz) {	/* field info from table */
++			offset = RFV_POSN(reloc_action);
++			if (TARGET_BIG_ENDIAN)
++				/* make sure r_vaddr is the lowest target
++				 * address containing bits */
++				rp->r_vaddr += RFV_BIGOFF(reloc_info);
++		} else {	/* field info from relocation op */
++			fieldsz = rp->r_fieldsz; offset = rp->r_offset;
++			if (TARGET_BIG_ENDIAN)
++				/* make sure r_vaddr is the lowest target
++				   address containing bits */
++				rp->r_vaddr += (rp->r_wordsz - offset - fieldsz)
++						>> LOG_TARGET_AU_BITS;
++		}
++		data = (TgtAU_t *)((char *)data + TADDR_TO_HOST(rp->r_vaddr));
++		/* compute lowest host location of referenced data */
++#if BITS_PER_AU > TARGET_AU_BITS
++		/* conversion from target address to host address may lose
++		   address bits; add loss to offset */
++		if (TARGET_BIG_ENDIAN) {
++			offset += -((rp->r_vaddr << LOG_TARGET_AU_BITS) +
++				  offset + fieldsz) &
++				  (BITS_PER_AU-TARGET_AU_BITS);
++		} else {
++			offset += (rp->r_vaddr << LOG_TARGET_AU_BITS) &
++				  (BITS_PER_AU-1);
++		}
++#endif
++#ifdef RFV_SCALE
++		scale = RFV_SCALE(reloc_info);
++#endif
++	}
++	/* read the object value from the current image, if so ordered */
++	if (reloc_info & ROP_R) {    /* relocation reads current image value */
++		val = dload_unpack(dlthis, data, fieldsz, offset,
++		      RFV_SIGN(reloc_info));
++#ifdef RFV_SCALE
++		val <<= scale;
++#endif
++	}
++	/* perform the necessary arithmetic */
++	switch (RFV_ACTION(reloc_action)) {	/* relocation actions */
++	case RACT_VAL:
++		break;
++	case RACT_ASGN:
++		val = reloc_amt;
++		break;
++	case RACT_ADD:
++		val += reloc_amt;
++		break;
++	case RACT_PCR:
++		/*-----------------------------------------------------------
++		 * Handle special cases of jumping from absolute sections
++		 * (special reloc type) or to absolute destination
++		 * (symndx == -1).  In either case, set the appropriate
++		 * relocation amount to 0.
++		 *-----------------------------------------------------------*/
++		if (rp->r_symndx == -1)
++			reloc_amt = 0;
++		val += reloc_amt - dlthis->delta_runaddr;
++		break;
++	case RACT_ADDISP:
++		val += rp->r_disp + reloc_amt;
++		break;
++	case RACT_ASGPC:
++		val = dlthis->image_secn->run_addr + reloc_amt;
++		break;
++	case RACT_PLUS:
++		if (stackp != NULL)
++			val += *stackp;
++		break;
++	case RACT_SUB:
++		if (stackp != NULL)
++			val = *stackp - val;
++		break;
++	case RACT_NEG:
++		val = -val;
++		break;
++	case RACT_MPY:
++		if (stackp != NULL)
++			val *= *stackp;
++		break;
++	case RACT_DIV:
++		if (stackp != NULL)
++			val = *stackp / val;
++		break;
++	case RACT_MOD:
++		if (stackp != NULL)
++			val = *stackp % val;
++		break;
++	case RACT_SR:
++		if (val >= sizeof(RVALUE) * BITS_PER_AU)
++			val = 0;
++		else if (stackp != NULL)
++			val = (URVALUE)*stackp >> val;
++		break;
++	case RACT_ASR:
++		if (val >= sizeof(RVALUE)*BITS_PER_AU)
++			val = sizeof(RVALUE)*BITS_PER_AU - 1;
++		else if (stackp != NULL)
++			val = *stackp >> val;
++		break;
++	case RACT_SL:
++		if (val >= sizeof(RVALUE)*BITS_PER_AU)
++			val = 0;
++		else if (stackp != NULL)
++			val = *stackp << val;
++		break;
++	case RACT_AND:
++		if (stackp != NULL)
++			val &= *stackp;
++		break;
++	case RACT_OR:
++		if (stackp != NULL)
++			val |= *stackp;
++		break;
++	case RACT_XOR:
++		if (stackp != NULL)
++			val ^= *stackp;
++		break;
++	case RACT_NOT:
++		val = ~val;
++		break;
++#if TMS32060
++	case RACT_C6SECT:
++		/* actually needed address of secn containing symbol */
++		if (svp != NULL) {
++			if (rp->r_symndx >= 0)
++				if (svp->secnn > 0)
++					reloc_amt = dlthis->ldr_sections
++						[svp->secnn-1].run_addr;
++		}
++	/* !!! FALL THRU !!! */
++	case RACT_C6BASE:
++		if (dlthis->bss_run_base == 0) {
++			struct dynload_symbol *symp;
++			symp = dlthis->mysym->Find_Matching_Symbol
++				(dlthis->mysym, BSSSYMBOL);
++			/* lookup value of global BSS base */
++			if (symp)
++				dlthis->bss_run_base = symp->value;
++			else
++				dload_error(dlthis,
++				     "Global BSS base referenced in %s offset"\
++				     FMT_UI32 " but not defined",
++				     dlthis->image_secn->name,
++				     rp->r_vaddr + dlthis->image_offset);
++		}
++		reloc_amt -= dlthis->bss_run_base;
++		/* !!! FALL THRU !!! */
++	case RACT_C6DSPL:
++		/* scale factor determined by 3 LSBs of field */
++		scale = C60_Scale[val & SCALE_MASK];
++		offset += SCALE_BITS;
++		fieldsz -= SCALE_BITS;
++		val >>= SCALE_BITS;	/* ignore the scale field hereafter */
++		val <<= scale;
++		val += reloc_amt;		/* do the usual relocation */
++		if (((1 << scale)-1) & val)
++			dload_error(dlthis,
++				"Unaligned reference in %s offset " FMT_UI32,
++				dlthis->image_secn->name,
++				rp->r_vaddr + dlthis->image_offset);
++		break;
++#endif
++	}	/* relocation actions */
++	/* * Put back result as required */
++	if (reloc_info & ROP_W) {	/* relocation writes image value */
++#ifdef RFV_SCALE
++		val >>= scale;
++#endif
++		if (dload_repack(dlthis, val, data, fieldsz, offset,
++		   RFV_SIGN(reloc_info))) {
++			dload_error(dlthis, "Relocation value " FMT_UI32
++			    " overflows %d bits in %s offset " FMT_UI32, val,
++			    fieldsz, dlthis->image_secn->name,
++			    dlthis->image_offset + rp->r_vaddr);
++		}
++	} else if (top)
++		*stackp = val;
++} /* reloc_value */
++
+diff --git a/drivers/dsp/bridge/dynload/reloc_table.h b/drivers/dsp/bridge/dynload/reloc_table.h
+new file mode 100644
+index 0000000..815dffa
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/reloc_table.h
+@@ -0,0 +1,102 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/reloc_table.h
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++
++#ifndef __RELOC_TABLE_H__
++#define __RELOC_TABLE_H__
++/*
++ * Table of relocation operator properties
++ */
++#include <linux/types.h>
++
++/* How does this relocation operation access the program image? */
++#define ROP_N	0		/* does not access image */
++#define ROP_R	1		/* read from image */
++#define ROP_W	2		/* write to image */
++#define ROP_RW	3		/* read from and write to image */
++
++/* For program image access, what are the overflow rules for the bit field? */
++/* Beware! Procedure repack depends on this encoding */
++#define ROP_ANY	0		/* no overflow ever, just truncate the value */
++#define ROP_SGN	1		/* signed field */
++#define ROP_UNS	2		/* unsigned field */
++#define ROP_MAX 3	  /* allow maximum range of either signed or unsigned */
++
++/* How does the relocation operation use the symbol reference */
++#define ROP_IGN	0		/* no symbol is referenced */
++#define ROP_LIT 0		/* use rp->r_uval literal field */
++#define ROP_SYM	1		/* symbol value is used in relocation */
++#define ROP_SYMD 2		/* delta value vs last link is used */
++
++/* How does the reloc op use the stack? */
++#define RSTK_N 0		/* Does not use */
++#define RSTK_POP 1		/* Does a POP */
++#define RSTK_UOP 2		/* Unary op, stack position unaffected */
++#define RSTK_PSH 3		/* Does a push */
++
++/*
++ * Computational actions performed by the dynamic loader
++ */
++enum Dload_Actions {
++	RACT_VAL,    /* don't alter the current val (from stack or mem fetch) */
++	RACT_ASGN,   /* set value to reference amount (from symbol reference) */
++	RACT_ADD,		/* add reference to value */
++	RACT_PCR,		/* add reference minus PC delta to value */
++	RACT_ADDISP,		/* add reference plus r_disp */
++	RACT_ASGPC,	/* set value to section address plus reference */
++
++	RACT_PLUS,		/* stack + */
++	RACT_SUB,		/* stack - */
++	RACT_NEG,		/* stack unary - */
++
++	RACT_MPY,		/* stack * */
++	RACT_DIV,		/* stack / */
++	RACT_MOD,		/* stack % */
++
++	RACT_SR,		/* stack unsigned >> */
++	RACT_ASR,		/* stack signed >> */
++	RACT_SL,		/* stack << */
++	RACT_AND,		/* stack & */
++	RACT_OR,		/* stack | */
++	RACT_XOR,		/* stack ^ */
++	RACT_NOT,		/* stack ~ */
++	RACT_C6SECT,		/* for C60 R_SECT op */
++	RACT_C6BASE,		/* for C60 R_BASE op */
++	RACT_C6DSPL,		/* for C60 scaled 15-bit displacement */
++	RACT_PCR23T		/* for ARM Thumb long branch */
++};
++
++/*
++ * macros used to extract values
++ */
++#define RFV_POSN(aaa) ((aaa) & 0xF)
++#define RFV_WIDTH(aaa) (((aaa) >> 4) & 0x3F)
++#define RFV_ACTION(aaa) ((aaa) >> 10)
++
++#define RFV_SIGN(iii) (((iii) >> 2) & 0x3)
++#define RFV_SYM(iii) (((iii) >> 4) & 0x3)
++#define RFV_STK(iii) (((iii) >> 6) & 0x3)
++#define RFV_ACCS(iii) ((iii) & 0x3)
++
++#if (TMS32060)
++#define RFV_SCALE(iii) ((iii) >> 11)
++#define RFV_BIGOFF(iii) (((iii) >> 8) & 0x7)
++#else
++#define RFV_BIGOFF(iii) ((iii) >> 8)
++#endif
++
++#endif				/* __RELOC_TABLE_H__ */
+diff --git a/drivers/dsp/bridge/dynload/reloc_table_c6000.c b/drivers/dsp/bridge/dynload/reloc_table_c6000.c
+new file mode 100644
+index 0000000..f1b8d0c
+--- /dev/null
++++ b/drivers/dsp/bridge/dynload/reloc_table_c6000.c
+@@ -0,0 +1,258 @@
++/*
++ * linux/drivers/dsp/bridge/dynload/reloc_table_c6000.c
++ *
++ * DSP-BIOS Bridge driver support functions for TI OMAP processors.
++ *
++ * Copyright (C) 2005-2006 Texas Instruments, Inc.
++ *
++ * This package is free software; you can redistribute it and/or modify
++ * it under the terms of the GNU General Public License version 2 as
++ * published by the Free Software Foundation.
++ *
++ * THIS PACKAGE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
++ * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
++ */
++
++
++/* Tables generated for c6000 */
++
++#define HASH_FUNC(zz) (((((zz) + 1) * UINT32_C(1845)) >> 11) & 63)
++#define HASH_L(zz) ((zz) >> 8)
++#define HASH_I(zz) ((zz) & 0xFF)
++
++static const u16 rop_map1[] = {
++	0,
++	1,
++	2,
++	20,
++	4,
++	5,
++	6,
++	15,
++	80,
++	81,
++	82,
++	83,
++	84,
++	85,
++	86,
++	87,
++	17,
++	18,
++	19,
++	21,
++	16,
++	16394,
++	16404,
++	65535,
++	65535,
++	65535,
++	65535,
++	65535,
++	65535,
++	32,
++	65535,
++	65535,
++	65535,
++	65535,
++	65535,
++	65535,
++	40,
++	112,
++	113,
++	65535,
++	16384,
++	16385,
++	16386,
++	16387,
++	16388,
++	16389,
++	16390,
++	16391,
++	16392,
++	16393,
++	16395,
++	16396,
++	16397,
++	16398,
++	16399,
++	16400,
++	16401,
++	16402,
++	16403,
++	16405,
++	16406,
++	65535,
++	65535,
++	65535
++};
++
++static const s16 rop_map2[] = {
++	-256,
++	-255,
++	-254,
++	-245,
++	-253,
++	-252,
++	-251,
++	-250,
++	-241,
++	-240,
++	-239,
++	-238,
++	-237,
++	-236,
++	1813,
++	5142,
++	-248,
++	-247,
++	778,
++	-244,
++	-249,
++	-221,
++	-211,
++	-1,
++	-1,
++	-1,
++	-1,
++	-1,
++	-1,
++	-243,
++	-1,
++	-1,
++	-1,
++	-1,
++	-1,
++	-1,
++	-242,
++	-233,
++	-232,
++	-1,
++	-231,
++	-230,
++	-229,
++	-228,
++	-227,
++	-226,
++	-225,
++	-224,
++	-223,
++	5410,
++	-220,
++	-219,
++	-218,
++	-217,
++	-216,
++	-215,
++	-214,
++	-213,
++	5676,
++	-210,
++	-209,
++	-1,
++	-1,
++	-1
++};
++
++static const u16 rop_action[] = {
++	2560,
++	2304,
++	2304,
++	2432,
++	2432,
++	2560,
++	2176,
++	2304,
++	2560,
++	3200,
++	3328,
++	3584,
++	3456,
++	2304,
++	4208,
++	20788,
++	21812,
++	3415,
++	3245,
++	2311,
++	4359,
++	19764,
++	2311,
++	3191,
++	3280,
++	6656,
++	7680,
++	8704,
++	9728,
++	10752,
++	11776,
++	12800,
++	13824,
++	14848,
++	15872,
++	16896,
++	17920,
++	18944,
++	0,
++	0,
++	0,
++	0,
++	1536,
++	1536,
++	1536,
++	5632,
++	512,
++	0
++};
++
++static const u16 rop_info[] = {
++	0,
++	35,
++	35,
++	35,
++	35,
++	35,
++	35,
++	35,
++	35,
++	39,
++	39,
++	39,
++	39,
++	35,
++	34,
++	283,
++	299,
++	4135,
++	4391,
++	291,
++	33059,
++	283,
++	295,
++	4647,
++	4135,
++	64,
++	64,
++	128,
++	64,
++	64,
++	64,
++	64,
++	64,
++	64,
++	64,
++	64,
++	64,
++	128,
++	201,
++	197,
++	74,
++	70,
++	208,
++	196,
++	200,
++	192,
++	192,
++	66
++};
+-- 
+1.6.0.3.613.g9f8f13
+
